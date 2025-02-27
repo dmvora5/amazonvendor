@@ -12,9 +12,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useSession } from "next-auth/react";
 
 export default function ForgetPasswordForm() {
+    const { data } = useSession();
 
+    console.log('data', data)
 
     const [otp, setOtp] = useState("");
     const [showPassword, setShowPassword] = useState(false);

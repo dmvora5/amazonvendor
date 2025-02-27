@@ -9,9 +9,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
+import { signIn } from "next-auth/react";
+import Image from "next/image";
 
 
 export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const formSchema = z.object({
@@ -28,8 +31,22 @@ export default function LoginPage() {
     }
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
+    setLoading(true)
+    try {
+      console.log("call")
+      const res = await signIn('credentials', {
+        email: values?.email,
+        password: values?.password,
+        redirect: false
+      })
+      console.log("res", res)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -92,7 +109,17 @@ export default function LoginPage() {
               </div>
               <Link href="/forget-password" className="text-green-600 hover:underline text-sm">Forgot Password?</Link>
             </div>
-            <Button type="submit" className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">Log In</Button>
+            <Button disabled={loading} type="submit" className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+              {loading ? (
+                <Image
+                  src="/assets/icons/loader.svg"
+                  alt="loader"
+                  width={24}
+                  height={24}
+                  className="ml-2 animate-spin"
+                />
+              ) : "Log In"}
+            </Button>
           </form>
         </Form>
 

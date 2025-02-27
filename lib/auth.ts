@@ -13,8 +13,9 @@ export const authOptions: AuthOptions = {
                 const { email, password } = credentials
 
                 try {
+                    console.log(`${process.env.NEXT_PUBLIC_API_BASE_URL}login`)
                     // ** Login API Call to match the user credentials and receive user data in response along with his role
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}v1/auth/loginWithPassword`, {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}login`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -24,16 +25,20 @@ export const authOptions: AuthOptions = {
 
                     const data = await res.json()
 
+                    console.log('res.status', ![200, 201].includes(res.status))
+
+                    console.log('data', data)
+
                     if (![200, 201].includes(res.status)) {
                         throw new Error(JSON.stringify(data))
                     }
 
-                    if ([200, 201].includes(res.status) && data?.response?.userData?.isEmailVerified === false) {
-                        throw new Error(JSON.stringify(data))
-                    }
+                    // if ([200, 201].includes(res.status) && data?.response?.userData?.isEmailVerified === false) {
+                    //     throw new Error(JSON.stringify(data))
+                    // }
 
-                    if (data?.response?.userData) {
-                        return { ...data?.response?.userData, access_token: data?.response?.access_token }
+                    if (data?.user) {
+                        return { ...data?.user, access_token: data?.user?.access_token }
                     }
 
                     return null
@@ -97,20 +102,7 @@ export const authOptions: AuthOptions = {
 
             if (token?.user) {
                 const userKeysToKeep = [
-                    '_id',
-                    'first_name',
-                    'last_name',
-                    'email',
-                    'phoneNo',
-                    'role',
-                    'isApproved',
-                    'status',
-                    'verificationStatus',
-                    'thresHoldApprove',
-                    'isEmailVerified',
-                    'approvedKids',
-                    'createdAt',
-                    'updatedAt'
+                    "email"
                 ]
 
                 token.user = Object.fromEntries(Object.entries(token?.user)?.filter(([key]) => userKeysToKeep?.includes(key)))
