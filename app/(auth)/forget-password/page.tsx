@@ -13,17 +13,23 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSession } from "next-auth/react";
+import { AxiosError } from "axios";
+import { toast } from "react-toastify";
+import axiosInstance from "@/utils/axiosInstance";
+import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function ForgetPasswordForm() {
-    const { data } = useSession();
 
-    console.log('data', data)
+    const router = useRouter()
 
-    const [otp, setOtp] = useState("");
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const [responseOtp, setResponseOtp] = useState(true);
+    const [responseOtp, setResponseOtp] = useState(false);
 
 
     const forgetPasswordFormSchema = z.object({
@@ -37,10 +43,37 @@ export default function ForgetPasswordForm() {
         }
     })
 
-    function forgetPasswordOnSubmit(values: z.infer<typeof forgetPasswordFormSchema>) {
-        console.log(values)
+    async function sendOtp(values: any) {
+        try {
+            setLoading(true);
+            console.log(forgetPasswordForm.getValues())
+            const response = await axiosInstance.post(API_ROUTES.AUTH.FORGETPASSWORD, {
+                email: values?.email,
+            })
+
+            if (response.status === 200) {
+                toast.success("otp sent successfully");
+                setResponseOtp(true);
+            }
+
+            console.log('response', response)
+        } catch (err) {
+            console.log('err', err)
+            if (err instanceof AxiosError) {
+                toast.error(err.response?.data?.detail?.at(0))
+            }
+        } finally {
+            setLoading(false);
+        }
     }
 
+    async function forgetPasswordOnSubmit(values: z.infer<typeof forgetPasswordFormSchema>) {
+        await sendOtp(values)
+    }
+
+    async function resendOtp() {
+        await sendOtp(forgetPasswordForm.getValues())
+    }
 
 
     const resetPasswordFormSchema = z
@@ -64,8 +97,31 @@ export default function ForgetPasswordForm() {
         }
     })
 
-    function resetPasswordOnSubmit(values: z.infer<typeof resetPasswordFormSchema>) {
+    async function resetPasswordOnSubmit(values: z.infer<typeof resetPasswordFormSchema>) {
         console.log(values)
+        try {
+            setLoading(true);
+            const response = await axiosInstance.post(API_ROUTES.AUTH.RESETPASSWORD, {
+                code: values.otp,
+                email: forgetPasswordForm.getValues()?.email,
+                password: values.password,
+                confirm_password: values.confirmPassword
+            });
+
+            if (response.status === 201) {
+                toast.success("Password reset successfully");
+                router.push(PAGE_ROUTES.AUTH.LOGIN);
+            }
+
+        } catch (err) {
+            if (err instanceof AxiosError) {
+                console.log('err', err)
+                toast.error(err.response?.data?.details?.at(0))
+            }
+
+        } finally {
+            setLoading(false);
+        }
     }
 
 
@@ -93,7 +149,7 @@ export default function ForgetPasswordForm() {
                                         <FormItem>
                                             <FormLabel className="text-lg font-light">Email Address</FormLabel>
                                             <FormControl>
-                                                <Input {...field} id="email" type="email" placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" />
+                                                <Input disabled={loading} {...field} id="email" type="email" placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -104,9 +160,19 @@ export default function ForgetPasswordForm() {
                             <div className="flex items-center justify-between text-base">
 
                             </div>
-                            <Button className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">Send Otp</Button>
+                            <Button disabled={loading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+                                {loading ? (
+                                    <Image
+                                        src="/assets/icons/loader.svg"
+                                        alt="loader"
+                                        width={24}
+                                        height={24}
+                                        className="ml-2 animate-spin"
+                                    />
+                                ) : "Send OTP"}
+                            </Button>
                             <Link href="/">
-                                <Button className="w-full hover:bg-brand-100 text-md font-semibold rounded-lg" variant="link">Login</Button>
+                                <Button disabled={loading} className="w-full hover:bg-brand-100 text-md font-semibold rounded-lg" variant="link">Login</Button>
                             </Link>
 
                         </form>
@@ -141,8 +207,8 @@ export default function ForgetPasswordForm() {
                             </div>
 
                             <div className="mt-0 flex justify-between">
-                                <p>3:00</p>
-                                <Button type="button" variant="link" className="text-green-600 hover:underline text-sm">Resend</Button>
+                                <p></p>
+                                <Button onClick={resendOtp} disabled={loading} type="button" variant="link" className="text-green-600 hover:underline text-sm">Resend</Button>
                             </div>
 
                             <div className="h-24">
@@ -154,13 +220,14 @@ export default function ForgetPasswordForm() {
                                             <FormItem>
                                                 <FormLabel className="text-lg font-light">Password</FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
+                                                    <Input disabled={loading} {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                     <button
+                                        disabled={loading}
                                         type="button"
                                         className="absolute inset-y-0 right-3 top-8 flex items-center"
                                         onClick={() => setShowPassword(!showPassword)}
@@ -178,22 +245,33 @@ export default function ForgetPasswordForm() {
                                             <FormItem>
                                                 <FormLabel className="text-lg font-light">Confirm Password</FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
+                                                    <Input disabled={loading} {...field} id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                     <button
+                                        disabled={loading}
                                         type="button"
                                         className="absolute inset-y-0 right-3 top-8 flex items-center"
-                                        onClick={() => setShowPassword(!showConfirmPassword)}
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     >
                                         {showConfirmPassword ? <EyeOff className="w-6 h-6 text-gray-500" /> : <Eye className="w-6 h-6 text-gray-500" />}
                                     </button>
                                 </div>
                             </div>
-                            <Button className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">Reset Password</Button>
+                            <Button disabled={loading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+                                {loading ? (
+                                    <Image
+                                        src="/assets/icons/loader.svg"
+                                        alt="loader"
+                                        width={24}
+                                        height={24}
+                                        className="ml-2 animate-spin"
+                                    />
+                                ) : "Reset Password"}
+                            </Button>
                         </form>
                     </Form>}
             </div>

@@ -19,5 +19,9 @@ export const API_ROUTES = {
         USERDETAILS: "/users/user-detail/",
         UPDATEUSER: "/users/user-detail/",
         DELETEUESR: "/users/user-detail/"
+    },
+    AUTH: {
+        FORGETPASSWORD: '/users/send-password-reset-code-mail/',
+        RESETPASSWORD: "/users/reset-password/"
     }
 }

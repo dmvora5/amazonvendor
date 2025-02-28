@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +19,21 @@ import { toast } from "react-toastify";
 
 export default function LoginPage() {
 
+
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+
+  useEffect(() => {
+    (async () => {
+      const session: any = await getSession();
+      if (session && session.user?.is_superuser) {
+        router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
+      }
+    })()
+  }, [])
 
   const formSchema = z.object({
     // fullName: z.string({ message: "fullName mustbe a string" }).min(2, { message: "fullName must be at least 2 characters long" }),
@@ -48,15 +59,15 @@ export default function LoginPage() {
         redirect: false
       })
 
-      if(!res?.ok) {
+      if (!res?.ok) {
         return showErrorInToast(res);
       }
 
-      if(res && res.ok) {
+      if (res && res.ok) {
         const session: any = await getSession();
         toast.success("Login sussfully!");
         //change in future
-        if(session?.user?.is_superuser) {
+        if (session?.user?.is_superuser) {
           router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS)
         }
       }

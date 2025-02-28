@@ -7,7 +7,7 @@ export const showErrorInToast = (response: any) => {
     if(response?.error) {
         const parsedError = JSON.parse(response.error);
         if(parsedError?.details) {
-            toast.error(parsedError.details[0]);
+           return toast.error(parsedError.details[0]);
         }
     }
 

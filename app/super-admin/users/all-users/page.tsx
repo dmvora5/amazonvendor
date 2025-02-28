@@ -78,6 +78,7 @@ function DataTableDemo() {
             const response = await axiosInstance.delete(API_ROUTES.SUPERADMIN.DELETEUESR + id + "/");
             console.log('response', response)
             if(response.status === 200) {
+                toast.success('User deleted successfully');
                 await fetchUsers();
             }
         } catch (err) {
