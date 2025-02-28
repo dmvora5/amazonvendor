@@ -13,28 +13,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Link from "next/link";
 import axiosInstance from "@/utils/axiosInstance";
-import { API_ROUTES } from "@/constant/routes";
+import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
-import { useParams } from "next/navigation";
+
+import { AxiosError } from "axios";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 const userFormSchema = z.object({
   first_name: z.string().min(1, { message: "First Name is required" }),
-  email: z.string().email({ message: "Invalid email" }),
   last_name: z.string().min(2, { message: "Last Name must be at least 2 characters" }),
-  password: z.string({ message: "password must be a string" }).min(8, { message: "password must be at least 8 characters long" }),
-  role: z.string().min(1, { message: "Role is required" }),
-  permissions: z.array(
-    z.object({
-      name: z.string(),
-      value: z.boolean(),
-    })
-  ),
+  id: z.string()
+  // password: z.string({ message: "password must be a string" }).min(8, { message: "password must be at least 8 characters long" }),
+  // role: z.string().min(1, { message: "Role is required" }),
+  // permissions: z.array(
+  //   z.object({
+  //     name: z.string(),
+  //     value: z.boolean(),
+  //   })
+  // ),
 });
 
 export default function EditUserForm() {
 
   const query = useParams();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,24 +47,24 @@ export default function EditUserForm() {
     defaultValues: {
       first_name: "",
       last_name: "",
-      email: "",
-      password: "",
-      role: "",
-      permissions: [],
+      id: ""
+      // password: "",
+      // role: "",
+      // permissions: [],
     },
   });
-  
+
 
   const { control, handleSubmit, setValue } = form;
-  const { fields, update, replace } = useFieldArray({
-    control,
-    name: "permissions",
-  });
+  // const { fields, update, replace } = useFieldArray({
+  //   control,
+  //   name: "permissions",
+  // });
 
 
 
   // ✅ Fetch permissions from API
-  async function fetchPermissions() {
+  async function fetchUserDetails() {
     // try {
     //   setLoading(true);
     //   const response = await fetch("/api/permissions"); // Replace with your actual API endpoint
@@ -82,28 +85,37 @@ export default function EditUserForm() {
 
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`${API_ROUTES.SUPERADMIN.USERDETAILS}/${query.id}/`);
-      console.log('response', response.data)
+      const response = await axiosInstance.get(`${API_ROUTES.SUPERADMIN.USERDETAILS}${query.id}/`);
+      console.log('response', response)
+      if (response.status === 200) {
+        form.setValue('first_name', response.data.first_name);
+        form.setValue('last_name', response.data.last_name)
+        form.setValue('id', String(response.data.id))
+
+      }
     } catch (err) {
-      console.log('err', err)
+      if (err instanceof AxiosError) {
+        if (err.status === 404) {
+          toast.error(err.response?.data?.detail);
+          router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
+        }
+      }
     } finally {
       setLoading(false);
     }
   }
   useEffect(() => {
-    if(!query?.id) return;
-    fetchPermissions();
+    if (!query?.id) return;
+    fetchUserDetails();
   }, [query]);
 
   async function onSubmit(data: any) {
     console.log("Form Submitted:", data);
     try {
       setLoading(true);
-      const response = await axiosInstance.post(API_ROUTES.SUPERADMIN.CREATEUSER, {
+      const response = await axiosInstance.patch(API_ROUTES.SUPERADMIN.UPDATEUSER + data.id + "/", {
         first_name: data.first_name,
         last_name: data.last_name,
-        email: data.email,
-        password: data.password
       })
 
       console.log('response', response)
@@ -118,7 +130,7 @@ export default function EditUserForm() {
   return (
     <>
       <div className="flex flex-col justify-center items-center space-y-6">
-        <div className="p-10 m-16 bg-white rounded-2xl shadow-lg border w-4/5">
+        <div className="p-10 m-16 bg-white rounded-2xl shadow-lg border w-3/5">
           <div className="flex p-2 justify-between">
             <h2 className="text-xl font-semibold mb-4">Update User</h2>
             <Link href="/super-admin/users/all-users">
@@ -132,52 +144,64 @@ export default function EditUserForm() {
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-6">
               {/* User Details */}
-              <div className="flex gap-4">
-                <FormField
-                  control={control}
-                  name="first_name"
-                  render={({ field }) => (
-                    <FormItem className="w-1/2">
-                      <Label>First Name</Label>
-                      <FormControl>
-                        <Input placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="last_name"
-                  render={({ field }) => (
-                    <FormItem className="w-1/2">
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* <div className="flex gap-4"> */}
+              {/* <FormField
+                control={control}
+                name="id"
+                render={({ field }) => (
+                  <FormItem className="">
+                    <FormControl>
+                      <Input type="hidden" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              /> */}
+              <FormField
+                control={control}
+                name="first_name"
+                render={({ field }) => (
+                  <FormItem className="">
+                    <FormLabel className="text-lg font-light">First Name</FormLabel>
+                    <FormControl>
+                      <Input disabled={loading} placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="last_name"
+                render={({ field }) => (
+                  <FormItem className="">
+                    <FormLabel className="text-lg font-light">Last Name</FormLabel>
+                    <FormControl>
+                      <Input disabled={loading}  placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
 
-              </div>
+              {/* </div> */}
 
-              <div className="flex gap-4">
-                <FormField
-                  control={control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem className="w-1/2">
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="relative w-1/2">
+              {/* <div className="flex gap-4"> */}
+              {/* <FormField
+                control={control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="">
+                    <FormLabel className="text-lg font-light">Email Address</FormLabel>
+                    <FormControl>
+                      <Input disabled={loading}  placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              /> */}
+              {/* <div className="relative w-1/2">
                   <FormField
                     control={form.control}
                     name="password"
@@ -198,8 +222,8 @@ export default function EditUserForm() {
                   >
                     {showPassword ? <EyeOff className="w-6 h-6 text-gray-500" /> : <Eye className="w-6 h-6 text-gray-500" />}
                   </button>
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
               {/* <div className="flex">
                 <FormField
                   control={control}
@@ -223,7 +247,7 @@ export default function EditUserForm() {
               </div> */}
 
               {/* Permissions Section */}
-              <h5 className="font-semibold">Permissions</h5>
+              {/* <h5 className="font-semibold">Permissions</h5>
               {loading ? (
                 <p>Loading permissions...</p>
               ) : (
@@ -245,21 +269,21 @@ export default function EditUserForm() {
                     </Card>
                   ))}
                 </div>
-              )}
+              )} */}
 
               {/* Buttons */}
               <div className="flex justify-end mt-4">
-                <Button variant="outline" className="mr-2">
+                <Button disabled={loading} variant="outline" className="mr-2 w-20 p-4">
                   Cancel
                 </Button>
-                <Button className="bg-brand" type="submit">
+                <Button disabled={loading} className=" text-center bg-brand w-20 p-4" type="submit">
                   {loading ? (
                     <Image
                       src="/assets/icons/loader.svg"
                       alt="loader"
                       width={24}
                       height={24}
-                      className="ml-2 animate-spin"
+                      className="animate-spin"
                     />
                   ) : "Update"}
                 </Button>

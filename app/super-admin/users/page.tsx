@@ -13,26 +13,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Link from "next/link";
 import axiosInstance from "@/utils/axiosInstance";
-import { API_ROUTES } from "@/constant/routes";
+import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const userFormSchema = z.object({
   first_name: z.string().min(1, { message: "First Name is required" }),
   email: z.string().email({ message: "Invalid email" }),
   last_name: z.string().min(2, { message: "Last Name must be at least 2 characters" }),
   password: z.string({ message: "password must be a string" }).min(8, { message: "password must be at least 8 characters long" }),
-  role: z.string().min(1, { message: "Role is required" }),
-  permissions: z.array(
-    z.object({
-      name: z.string(),
-      value: z.boolean(),
-    })
-  ),
+  // role: z.string().min(1, { message: "Role is required" }),
+  // permissions: z.array(
+  //   z.object({
+  //     name: z.string(),
+  //     value: z.boolean(),
+  //   })
+  // ),
 });
 
 export default function CreateUserForm() {
-  const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm({
@@ -42,41 +46,41 @@ export default function CreateUserForm() {
       last_name: "",
       email: "",
       password: "",
-      role: "",
-      permissions: [],
+      // role: "",
+      // permissions: [],
     },
   });
 
   const { control, handleSubmit, setValue } = form;
-  const { fields, update, replace } = useFieldArray({
-    control,
-    name: "permissions",
-  });
+  // const { fields, update, replace } = useFieldArray({
+  //   control,
+  //   name: "permissions",
+  // });
 
   // ✅ Fetch permissions from API
-  useEffect(() => {
-    async function fetchPermissions() {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/permissions"); // Replace with your actual API endpoint
-        const data = await response.json();
+  // useEffect(() => {
+  //   async function fetchPermissions() {
+  //     try {
+  //       setLoading(true);
+  //       const response = await fetch("/api/permissions"); // Replace with your actual API endpoint
+  //       const data = await response.json();
 
-        // Convert API response to correct format
-        const formattedPermissions = data.permissions.map((perm: string) => ({
-          name: perm,
-          value: false, // Default all permissions to false
-        }));
+  //       // Convert API response to correct format
+  //       const formattedPermissions = data.permissions.map((perm: string) => ({
+  //         name: perm,
+  //         value: false, // Default all permissions to false
+  //       }));
 
-        setValue("permissions", formattedPermissions);
-      } catch (error) {
-        console.log("Error fetching permissions:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  //       // setValue("permissions", formattedPermissions);
+  //     } catch (error) {
+  //       console.log("Error fetching permissions:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
 
-    fetchPermissions();
-  }, [setValue]);
+  //   fetchPermissions();
+  // }, [setValue]);
 
   async function onSubmit(data: any) {
     console.log("Form Submitted:", data);
@@ -88,6 +92,10 @@ export default function CreateUserForm() {
         email: data.email,
         password: data.password
       })
+
+      if(response.status === 201) {
+        router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
+      }
 
       console.log('response', response)
 
@@ -121,9 +129,9 @@ export default function CreateUserForm() {
                   name="first_name"
                   render={({ field }) => (
                     <FormItem className="w-1/2">
-                      <Label>First Name</Label>
+                      <Label className="text-lg font-light">First Name</Label>
                       <FormControl>
-                        <Input placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                        <Input disabled={loading} placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -134,9 +142,9 @@ export default function CreateUserForm() {
                   name="last_name"
                   render={({ field }) => (
                     <FormItem className="w-1/2">
-                      <FormLabel>Last Name</FormLabel>
+                      <FormLabel className="text-lg font-light">Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                        <Input disabled={loading} placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -152,9 +160,9 @@ export default function CreateUserForm() {
                   name="email"
                   render={({ field }) => (
                     <FormItem className="w-1/2">
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel className="text-lg font-light">Email Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                        <Input disabled={loading} placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -168,7 +176,7 @@ export default function CreateUserForm() {
                       <FormItem className="">
                         <FormLabel className="text-lg font-light">Password</FormLabel>
                         <FormControl>
-                          <Input {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
+                          <Input disabled={loading} {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -206,7 +214,7 @@ export default function CreateUserForm() {
               </div> */}
 
               {/* Permissions Section */}
-              <h5 className="font-semibold">Permissions</h5>
+              {/* <h5 className="font-semibold">Permissions</h5>
               {loading ? (
                 <p>Loading permissions...</p>
               ) : (
@@ -228,21 +236,21 @@ export default function CreateUserForm() {
                     </Card>
                   ))}
                 </div>
-              )}
+              )} */}
 
               {/* Buttons */}
               <div className="flex justify-end mt-4">
-                <Button variant="outline" className="mr-2">
+                <Button disabled={loading} variant="outline" className="mr-2 w-20 p-4">
                   Cancel
                 </Button>
-                <Button className="bg-brand" type="submit">
+                <Button disabled={loading} className=" text-center bg-brand w-20 p-4" type="submit">
                   {loading ? (
                     <Image
                       src="/assets/icons/loader.svg"
                       alt="loader"
                       width={24}
                       height={24}
-                      className="ml-2 animate-spin"
+                      className="animate-spin"
                     />
                   ) : "Create"}
                 </Button>

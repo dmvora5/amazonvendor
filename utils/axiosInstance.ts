@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth';
 import { getSession, signOut } from 'next-auth/react';
 
 
-
 const axiosInstance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
     headers: {
@@ -14,14 +13,13 @@ const axiosInstance = axios.create({
 });
 
 
-
 axiosInstance.interceptors.request.use(
     async config => {
         const session: any = await getSession()
         const authorizationToken = session?.access_token || ''
 
         if (authorizationToken && !config?.headers?.Authorization) {
-            config.headers.Token = `Bearer ${authorizationToken}`
+            config.headers.Authorization = `Bearer ${authorizationToken}`
         }
 
         if (!authorizationToken && !config?.headers?.Authorization && typeof window === 'undefined') {
@@ -43,19 +41,19 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     response => response,
     async error => {
-      const { response } = error
-      const responseBody = response?.data
-      const responseBodyData = responseBody?.data
-  
-      if (response && response?.status === 401) {
-        console.log('manually logout user')
-  
-        // await signOut({ callbackUrl: process.env.NEXT_PUBLIC_APP_URL + '/' + locale })
-        await signOut({ callbackUrl: process.env.NEXT_PUBLIC_APP_URL })
-      }
-  
-      return Promise.reject(error)
+        const { response } = error
+        const responseBody = response?.data
+        const responseBodyData = responseBody?.data
+
+        if (response && response?.status === 401) {
+            console.log('manually logout user')
+
+            // await signOut({ callbackUrl: process.env.NEXT_PUBLIC_APP_URL + '/' + locale })
+            await signOut({ callbackUrl: process.env.NEXT_PUBLIC_APP_URL })
+        }
+
+        return Promise.reject(error)
     }
-  )
-  
-  export default axiosInstance
+)
+
+export default axiosInstance
