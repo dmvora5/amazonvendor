@@ -13,9 +13,8 @@ export const authOptions: AuthOptions = {
                 const { email, password } = credentials
 
                 try {
-                    console.log(`${process.env.NEXT_PUBLIC_API_BASE_URL}login`)
                     // ** Login API Call to match the user credentials and receive user data in response along with his role
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}login`, {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -25,10 +24,6 @@ export const authOptions: AuthOptions = {
 
                     const data = await res.json()
 
-                    console.log('res.status', ![200, 201].includes(res.status))
-
-                    console.log('data', data)
-
                     if (![200, 201].includes(res.status)) {
                         throw new Error(JSON.stringify(data))
                     }
@@ -37,8 +32,8 @@ export const authOptions: AuthOptions = {
                     //     throw new Error(JSON.stringify(data))
                     // }
 
-                    if (data?.user) {
-                        return { ...data?.user, access_token: data?.user?.access_token }
+                    if (data?.user && data?.tokens) {
+                        return { ...data?.user, access_token: data?.tokens?.access }
                     }
 
                     return null
@@ -65,11 +60,14 @@ export const authOptions: AuthOptions = {
     */
         async jwt({ token, user, trigger, session }: any) {
             if (user) {
+
                 /*
                  * For adding custom parameters to user in session, we first need to add those parameters
                  * in token which then will be available in the `session()` callback
                  */
                 token.name = user.name
+                token.is_superuser = user.is_superuser
+               
 
                 /**
                  * Custom data: added by Dev
@@ -79,30 +77,34 @@ export const authOptions: AuthOptions = {
                 token.user = user
             }
 
-            if (trigger === 'update' && session?.user) {
-                token.user = { ...token.user, ...session?.user }
-            }
 
-            if (trigger === 'update' && session?.userAccess) {
-                token.user = { ...session?.userAccess?.user }
-                token.access_token = session?.userAccess?.access_token
+            // if (trigger === 'update' && session?.user) {
+            //     token.user = { ...token.user, ...session?.user }
+            // }
 
-                // token.originalAuth = session?.userAccess?.originalAuth
+            // if (trigger === 'update' && session?.userAccess) {
+            //     token.user = { ...session?.userAccess?.user }
+            //     token.access_token = session?.userAccess?.access_token
 
-                if (!token.originalAuth && session?.userAccess?.originalAuth) {
-                    token.originalAuth = session?.userAccess?.originalAuth
-                } else if (
-                    token.originalAuth &&
-                    typeof session?.userAccess?.originalAuth !== 'undefined' &&
-                    !session?.userAccess?.originalAuth
-                ) {
-                    token.originalAuth = undefined
-                }
-            }
+            //     // token.originalAuth = session?.userAccess?.originalAuth
+
+            //     if (!token.originalAuth && session?.userAccess?.originalAuth) {
+            //         token.originalAuth = session?.userAccess?.originalAuth
+            //     } else if (
+            //         token.originalAuth &&
+            //         typeof session?.userAccess?.originalAuth !== 'undefined' &&
+            //         !session?.userAccess?.originalAuth
+            //     ) {
+            //         token.originalAuth = undefined
+            //     }
+            // }
 
             if (token?.user) {
                 const userKeysToKeep = [
-                    "email"
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "is_superuser"
                 ]
 
                 token.user = Object.fromEntries(Object.entries(token?.user)?.filter(([key]) => userKeysToKeep?.includes(key)))
@@ -113,14 +115,15 @@ export const authOptions: AuthOptions = {
         async session({ session, token }: any) {
             if (session.user) {
                 // ** Add custom params to user in session which are added in `jwt()` callback via `token` parameter
-                session.user.name = token.name
+                // session.user.name = token.name
 
                 /**
                  * Custom data: added by Dev
                  * Include access_token and user data in the session object
                  */
                 session.access_token = token.access_token
-                session.user = token.user
+                session.user = token.user;
+
 
                 if (token?.originalAuth) {
                     session.originalAuth = token?.originalAuth

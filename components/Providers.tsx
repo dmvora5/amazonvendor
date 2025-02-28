@@ -1,9 +1,16 @@
 'use client'
 
 import { SessionProvider } from 'next-auth/react'
+import { ToastContainer } from 'react-toastify';
+
 
 const Providers = ({ children, ...rest }: any) => {
-    return <SessionProvider {...rest}>{children}</SessionProvider>
+    return (
+        <>
+            <ToastContainer />
+            <SessionProvider {...rest}>{children}</SessionProvider>
+        </>
+    )
 
 }
 

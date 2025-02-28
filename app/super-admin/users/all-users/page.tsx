@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -26,102 +25,33 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
+import Link from "next/link"
+import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes"
+import { useEffect, useState } from "react"
+import axiosInstance from "@/utils/axiosInstance"
 
-const data: Payment[] = [
-    {
-        id: "m5gr84i9",
-        amount: 316,
-        status: "success",
-        email: "ken99@yahoo.com",
-    },
-    {
-        id: "3u1reuv4",
-        amount: 242,
-        status: "success",
-        email: "Abe45@gmail.com",
-    },
-    {
-        id: "derv1ws0",
-        amount: 837,
-        status: "processing",
-        email: "Monserrat44@gmail.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@gmail.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@hotmail.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@gmail.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@hotmail.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@gmail.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@hotmail.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@gmail.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@hotmail.com",
-    },
-    {
-        id: "5kma53ae",
-        amount: 874,
-        status: "success",
-        email: "Silas22@gmail.com",
-    },
-    {
-        id: "bhqecj4p",
-        amount: 721,
-        status: "failed",
-        email: "carmella@hotmail.com",
-    },
-]
 
-export type Payment = {
+export type User = {
     id: string
-    amount: number
-    status: "pending" | "processing" | "success" | "failed"
+    first_name: string
+    last_name: string
     email: string
 }
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<User>[] = [
 
     {
-        accessorKey: "status",
-        header: "Status",
+        accessorKey: "first_name",
+        header: "Frist Name",
         cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("status")}</div>
+            <div className="capitalize">{row.getValue("first_name")}</div>
+        ),
+    },
+    {
+        accessorKey: "last_name",
+        header: "Last Name",
+        cell: ({ row }) => (
+            <div className="capitalize">{row.getValue("last_name")}</div>
         ),
     },
     {
@@ -139,21 +69,21 @@ export const columns: ColumnDef<Payment>[] = [
         },
         cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
     },
-    {
-        accessorKey: "amount",
-        header: () => <div className="text-right">Amount</div>,
-        cell: ({ row }) => {
-            const amount = parseFloat(row.getValue("amount"))
+    // {
+    //     accessorKey: "amount",
+    //     header: () => <div className="text-right">Amount</div>,
+    //     cell: ({ row }) => {
+    //         const amount = parseFloat(row.getValue("amount"))
 
-            // Format the amount as a dollar amount
-            const formatted = new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-            }).format(amount)
+    //         // Format the amount as a dollar amount
+    //         const formatted = new Intl.NumberFormat("en-US", {
+    //             style: "currency",
+    //             currency: "USD",
+    //         }).format(amount)
 
-            return <div className="text-right font-medium">{formatted}</div>
-        },
-    },
+    //         return <div className="text-right font-medium">{formatted}</div>
+    //     },
+    // },
     {
         id: "actions",
         header: () => <div className="text-center">Actions</div>,
@@ -184,13 +114,32 @@ export const columns: ColumnDef<Payment>[] = [
 ]
 
 function DataTableDemo() {
-    const [sorting, setSorting] = React.useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [sorting, setSorting] = useState<SortingState>([])
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
     )
     const [columnVisibility, setColumnVisibility] =
-        React.useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = React.useState({})
+        useState<VisibilityState>({})
+    const [rowSelection, setRowSelection] = useState({});
+
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get(API_ROUTES.SUPERADMIN.GETALLUSERS);
+            console.log('response', response)
+        } catch (err) {
+            console.log('err', err)
+        } finally {
+            setLoading(false);
+        }
+    }
+
+
+    useEffect(() => {
+        fetchUsers();
+    },[])
 
     const table = useReactTable({
         data,
@@ -214,7 +163,11 @@ function DataTableDemo() {
     return (
         <div className="w-full rounded-2xl">
             <div className="flex items-center py-4 justify-between">
-                <h1 className="p-2">All Users</h1>
+                <Link  href={PAGE_ROUTES.SUPERADMIN.CREATEUSER} className="p-2">
+                <Button variant="link">
+                    Add User
+                </Button>
+                </Link>
                 <Input
                     placeholder="Filter emails..."
                     value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}

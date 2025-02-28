@@ -10,14 +10,18 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Link from "next/link";
+import axiosInstance from "@/utils/axiosInstance";
+import { API_ROUTES } from "@/constant/routes";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 
 const userFormSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
+  first_name: z.string().min(1, { message: "First Name is required" }),
   email: z.string().email({ message: "Invalid email" }),
-  phone: z.string().min(10, { message: "Phone number must be at least 10 characters" }),
-  address: z.string().min(1, { message: "Address is required" }),
+  last_name: z.string().min(2, { message: "Last Name must be at least 2 characters" }),
+  password: z.string({ message: "password must be a string" }).min(8, { message: "password must be at least 8 characters long" }),
   role: z.string().min(1, { message: "Role is required" }),
   permissions: z.array(
     z.object({
@@ -29,14 +33,15 @@ const userFormSchema = z.object({
 
 export default function CreateUserForm() {
   const [loading, setLoading] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
-      name: "",
+      first_name: "",
+      last_name: "",
       email: "",
-      phone: "",
-      address: "",
+      password: "",
       role: "",
       permissions: [],
     },
@@ -73,8 +78,24 @@ export default function CreateUserForm() {
     fetchPermissions();
   }, [setValue]);
 
-  function onSubmit(data: any) {
+  async function onSubmit(data: any) {
     console.log("Form Submitted:", data);
+    try {
+      setLoading(true);
+      const response = await axiosInstance.post(API_ROUTES.SUPERADMIN.CREATEUSER, {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        password: data.password
+      })
+
+      console.log('response', response)
+
+    } catch (err) {
+      console.log('err', err)
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -97,12 +118,12 @@ export default function CreateUserForm() {
               <div className="flex gap-4">
                 <FormField
                   control={control}
-                  name="name"
+                  name="first_name"
                   render={({ field }) => (
                     <FormItem className="w-1/2">
-                      <Label>Name</Label>
+                      <Label>First Name</Label>
                       <FormControl>
-                        <Input placeholder="Enter Name" {...field} />
+                        <Input placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -110,10 +131,65 @@ export default function CreateUserForm() {
                 />
                 <FormField
                   control={control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem className="w-1/2">
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+
+              </div>
+
+              <div className="flex gap-4">
+                <FormField
+                  control={control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="w-1/2">
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="relative w-1/2">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="">
+                        <FormLabel className="text-lg font-light">Password</FormLabel>
+                        <FormControl>
+                          <Input {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-3 top-8 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="w-6 h-6 text-gray-500" /> : <Eye className="w-6 h-6 text-gray-500" />}
+                  </button>
+                </div>
+              </div>
+              {/* <div className="flex">
+                <FormField
+                  control={control}
                   name="role"
                   render={({ field }) => (
                     <FormItem className="w-1/2">
-                      <Label>Role</Label>
+                      <FormLabel>Role</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Role" />
@@ -127,36 +203,7 @@ export default function CreateUserForm() {
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="flex gap-4">
-                <FormField
-                  control={control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem className="w-1/2">
-                      <Label>Email Address</Label>
-                      <FormControl>
-                        <Input placeholder="Enter Email Address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem className="w-1/2">
-                      <Label>Address</Label>
-                      <FormControl>
-                        <Input placeholder="Type Address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              </div> */}
 
               {/* Permissions Section */}
               <h5 className="font-semibold">Permissions</h5>
@@ -189,7 +236,15 @@ export default function CreateUserForm() {
                   Cancel
                 </Button>
                 <Button className="bg-brand" type="submit">
-                  Create
+                  {loading ? (
+                    <Image
+                      src="/assets/icons/loader.svg"
+                      alt="loader"
+                      width={24}
+                      height={24}
+                      className="ml-2 animate-spin"
+                    />
+                  ) : "Create"}
                 </Button>
               </div>
             </form>

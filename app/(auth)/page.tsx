@@ -9,11 +9,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import Image from "next/image";
+import { showErrorInToast } from "@/utils";
+import { useRouter } from "next/navigation";
+import { PAGE_ROUTES } from "@/constant/routes";
+import { toast } from "react-toastify";
 
 
 export default function LoginPage() {
+
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,13 +42,25 @@ export default function LoginPage() {
     console.log(values)
     setLoading(true)
     try {
-      console.log("call")
-      const res = await signIn('credentials', {
+      const res: any = await signIn('credentials', {
         email: values?.email,
         password: values?.password,
         redirect: false
       })
-      console.log("res", res)
+
+      if(!res?.ok) {
+        return showErrorInToast(res);
+      }
+
+      if(res && res.ok) {
+        const session: any = await getSession();
+        toast.success("Login sussfully!");
+        //change in future
+        if(session?.user?.is_superuser) {
+          router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS)
+        }
+      }
+
     } catch (err) {
       console.error(err)
     } finally {
