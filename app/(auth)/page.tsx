@@ -15,12 +15,15 @@ import { showErrorInToast } from "@/utils";
 import { useRouter } from "next/navigation";
 import { PAGE_ROUTES } from "@/constant/routes";
 import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { userApi } from "@/redux/apis/usersApis";
 
 
 export default function LoginPage() {
 
 
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -68,6 +71,7 @@ export default function LoginPage() {
         toast.success("Login sussfully!");
         //change in future
         if (session?.user?.is_superuser) {
+          dispatch(userApi.util.invalidateTags(["Auth"] as any));
           router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS)
         }
       }

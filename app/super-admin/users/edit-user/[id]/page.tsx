@@ -19,6 +19,8 @@ import Image from "next/image";
 import { AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { useEditUserQuery, useUpdateUserMutation } from "@/redux/apis/usersApis";
+import { parseAndShowErrorInToast } from "@/utils";
 
 const userFormSchema = z.object({
   first_name: z.string().min(1, { message: "First Name is required" }),
@@ -39,8 +41,24 @@ export default function EditUserForm() {
   const query = useParams();
   const router = useRouter();
 
-  const [loading, setLoading] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
+  // const [loading, setLoading] = useState(true);
+  // const [showPassword, setShowPassword] = useState(false);
+
+  const { data, isLoading, error } = useEditUserQuery(query?.id, {
+    skip: !query?.id
+  })
+
+  const [submit, updateUserOptions] = useUpdateUserMutation();
+
+  useEffect(() => {
+    if (!error) return;
+    parseAndShowErrorInToast(error);
+  },[error]);
+
+  useEffect(() => {
+    if (!updateUserOptions?.error) return;
+    parseAndShowErrorInToast(updateUserOptions?.error);
+  },[updateUserOptions?.error]);
 
   const form = useForm({
     resolver: zodResolver(userFormSchema),
@@ -53,9 +71,27 @@ export default function EditUserForm() {
       // permissions: [],
     },
   });
-
-
   const { control, handleSubmit, setValue } = form;
+
+  useEffect(() => {
+    if (!data) return;
+
+    setValue('first_name', (data as any)?.first_name);
+    setValue('last_name', (data as any)?.last_name)
+    setValue('id', String((data as any)?.id))
+
+  }, [data]);
+
+
+
+  useEffect(() => {
+    if(updateUserOptions.isSuccess) {
+      toast.success("User updated successfully");
+      router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
+    }
+  },[updateUserOptions.isSuccess])
+
+
   // const { fields, update, replace } = useFieldArray({
   //   control,
   //   name: "permissions",
@@ -63,68 +99,68 @@ export default function EditUserForm() {
 
 
 
-  // ✅ Fetch permissions from API
-  async function fetchUserDetails() {
+  // // ✅ Fetch permissions from API
+  // async function fetchUserDetails() {
+  //   // try {
+  //   //   setLoading(true);
+  //   //   const response = await fetch("/api/permissions"); // Replace with your actual API endpoint
+  //   //   const data = await response.json();
+
+  //   //   // Convert API response to correct format
+  //   //   const formattedPermissions = data.permissions.map((perm: string) => ({
+  //   //     name: perm,
+  //   //     value: false, // Default all permissions to false
+  //   //   }));
+
+  //   //   setValue("permissions", formattedPermissions);
+  //   // } catch (error) {
+  //   //   console.log("Error fetching permissions:", error);
+  //   // } finally {
+  //   //   setLoading(false);
+  //   // }
+
+  // try {
+  //   setLoading(true);
+  //   const response = await axiosInstance.get(`${API_ROUTES.SUPERADMIN.USERDETAILS}${query.id}/`);
+  //   console.log('response', response)
+  //   if (response.status === 200) {
+  //     form.setValue('first_name', response.data.first_name);
+  //     form.setValue('last_name', response.data.last_name)
+  //     form.setValue('id', String(response.data.id))
+
+  //   }
+  // } catch (err) {
+  //   if (err instanceof AxiosError) {
+  //     if (err.status === 404) {
+  //       toast.error(err.response?.data?.detail);
+  //       router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
+  //     }
+  //   }
+  // } finally {
+  //   setLoading(false);
+  // }
+
+
+
+  async function onSubmit(data: any) {
+
+    await submit(data)
+    
+    // console.log("Form Submitted:", data);
     // try {
     //   setLoading(true);
-    //   const response = await fetch("/api/permissions"); // Replace with your actual API endpoint
-    //   const data = await response.json();
+    //   const response = await axiosInstance.patch(API_ROUTES.SUPERADMIN.UPDATEUSER + data.id + "/", {
+    //     first_name: data.first_name,
+    //     last_name: data.last_name,
+    //   })
 
-    //   // Convert API response to correct format
-    //   const formattedPermissions = data.permissions.map((perm: string) => ({
-    //     name: perm,
-    //     value: false, // Default all permissions to false
-    //   }));
+    //   console.log('response', response)
 
-    //   setValue("permissions", formattedPermissions);
-    // } catch (error) {
-    //   console.log("Error fetching permissions:", error);
+    // } catch (err) {
+    //   console.log('err', err)
     // } finally {
     //   setLoading(false);
     // }
-
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get(`${API_ROUTES.SUPERADMIN.USERDETAILS}${query.id}/`);
-      console.log('response', response)
-      if (response.status === 200) {
-        form.setValue('first_name', response.data.first_name);
-        form.setValue('last_name', response.data.last_name)
-        form.setValue('id', String(response.data.id))
-
-      }
-    } catch (err) {
-      if (err instanceof AxiosError) {
-        if (err.status === 404) {
-          toast.error(err.response?.data?.detail);
-          router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-  useEffect(() => {
-    if (!query?.id) return;
-    fetchUserDetails();
-  }, [query]);
-
-  async function onSubmit(data: any) {
-    console.log("Form Submitted:", data);
-    try {
-      setLoading(true);
-      const response = await axiosInstance.patch(API_ROUTES.SUPERADMIN.UPDATEUSER + data.id + "/", {
-        first_name: data.first_name,
-        last_name: data.last_name,
-      })
-
-      console.log('response', response)
-
-    } catch (err) {
-      console.log('err', err)
-    } finally {
-      setLoading(false);
-    }
   }
 
   return (
@@ -164,7 +200,7 @@ export default function EditUserForm() {
                   <FormItem className="">
                     <FormLabel className="text-lg font-light">First Name</FormLabel>
                     <FormControl>
-                      <Input disabled={loading} placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                      <Input disabled={isLoading || updateUserOptions?.isLoading} placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -177,7 +213,7 @@ export default function EditUserForm() {
                   <FormItem className="">
                     <FormLabel className="text-lg font-light">Last Name</FormLabel>
                     <FormControl>
-                      <Input disabled={loading}  placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                      <Input disabled={isLoading || updateUserOptions?.isLoading} placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -273,11 +309,11 @@ export default function EditUserForm() {
 
               {/* Buttons */}
               <div className="flex justify-end mt-4">
-                <Button disabled={loading} variant="outline" className="mr-2 w-20 p-4">
+                {/* <Button disabled={isLoading || updateUserOptions?.isLoading} variant="outline" className="mr-2 w-20 p-4">
                   Cancel
-                </Button>
-                <Button disabled={loading} className=" text-center bg-brand w-20 p-4" type="submit">
-                  {loading ? (
+                </Button> */}
+                <Button disabled={isLoading || updateUserOptions?.isLoading} className=" text-center bg-brand w-20 p-4" type="submit">
+                  {isLoading || updateUserOptions?.isLoading ? (
                     <Image
                       src="/assets/icons/loader.svg"
                       alt="loader"

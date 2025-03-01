@@ -17,6 +17,8 @@ import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAddUserMutation } from "@/redux/apis/usersApis";
+import { parseAndShowErrorInToast } from "@/utils";
 
 const userFormSchema = z.object({
   first_name: z.string().min(1, { message: "First Name is required" }),
@@ -36,8 +38,21 @@ export default function CreateUserForm() {
 
   const router = useRouter();
 
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const [submit, { isLoading, error, isSuccess }] = useAddUserMutation();
+
+
+  useEffect(() => {
+    if (!error) return;
+    parseAndShowErrorInToast(error);
+  }, [error]);
+
+  useEffect(() => {
+    if (!isSuccess) return;
+    router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS)
+  }, [isSuccess]);
 
   const form = useForm({
     resolver: zodResolver(userFormSchema),
@@ -83,27 +98,33 @@ export default function CreateUserForm() {
   // }, [setValue]);
 
   async function onSubmit(data: any) {
-    console.log("Form Submitted:", data);
-    try {
-      setLoading(true);
-      const response = await axiosInstance.post(API_ROUTES.SUPERADMIN.CREATEUSER, {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        password: data.password
-      })
+    await submit({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      password: data.password
+    })
+    // console.log("Form Submitted:", data);
+    // try {
+    //   setLoading(true);
+    //   const response = await axiosInstance.post(API_ROUTES.SUPERADMIN.CREATEUSER, {
+    //     first_name: data.first_name,
+    //     last_name: data.last_name,
+    //     email: data.email,
+    //     password: data.password
+    //   })
 
-      if(response.status === 201) {
-        router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
-      }
+    //   if(response.status === 201) {
+    //     router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
+    //   }
 
-      console.log('response', response)
+    //   console.log('response', response)
 
-    } catch (err) {
-      console.log('err', err)
-    } finally {
-      setLoading(false);
-    }
+    // } catch (err) {
+    //   console.log('err', err)
+    // } finally {
+    //   setLoading(false);
+    // }
   }
 
   return (
@@ -131,7 +152,7 @@ export default function CreateUserForm() {
                     <FormItem className="w-1/2">
                       <Label className="text-lg font-light">First Name</Label>
                       <FormControl>
-                        <Input disabled={loading} placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                        <Input disabled={isLoading} placeholder="Enter First Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -144,7 +165,7 @@ export default function CreateUserForm() {
                     <FormItem className="w-1/2">
                       <FormLabel className="text-lg font-light">Last Name</FormLabel>
                       <FormControl>
-                        <Input disabled={loading} placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                        <Input disabled={isLoading} placeholder="Enter Last Name" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -162,7 +183,7 @@ export default function CreateUserForm() {
                     <FormItem className="w-1/2">
                       <FormLabel className="text-lg font-light">Email Address</FormLabel>
                       <FormControl>
-                        <Input disabled={loading} placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
+                        <Input disabled={isLoading} placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -176,7 +197,7 @@ export default function CreateUserForm() {
                       <FormItem className="">
                         <FormLabel className="text-lg font-light">Password</FormLabel>
                         <FormControl>
-                          <Input disabled={loading} {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
+                          <Input disabled={isLoading} {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -240,11 +261,11 @@ export default function CreateUserForm() {
 
               {/* Buttons */}
               <div className="flex justify-end mt-4">
-                <Button disabled={loading} variant="outline" className="mr-2 w-20 p-4">
+                {/* <Button disabled={isLoading} variant="outline" className="mr-2 w-20 p-4">
                   Cancel
-                </Button>
-                <Button disabled={loading} className=" text-center bg-brand w-20 p-4" type="submit">
-                  {loading ? (
+                </Button> */}
+                <Button disabled={isLoading} className=" text-center bg-brand w-20 p-4" type="submit">
+                  {isLoading ? (
                     <Image
                       src="/assets/icons/loader.svg"
                       alt="loader"

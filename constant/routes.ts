@@ -22,6 +22,7 @@ export const API_ROUTES = {
     },
     AUTH: {
         FORGETPASSWORD: '/users/send-password-reset-code-mail/',
-        RESETPASSWORD: "/users/reset-password/"
+        RESETPASSWORD: "/users/reset-password/",
+        LOGIN: "/users/login/"
     }
 }

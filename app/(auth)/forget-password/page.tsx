@@ -19,6 +19,9 @@ import axiosInstance from "@/utils/axiosInstance";
 import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useForgetPasswordMutation, useResetPasswordMutation } from "@/redux/apis/usersApis";
+import { useEffect } from "react";
+import { parseAndShowErrorInToast } from "@/utils";
 
 export default function ForgetPasswordForm() {
 
@@ -30,6 +33,37 @@ export default function ForgetPasswordForm() {
     const [loading, setLoading] = useState(false);
 
     const [responseOtp, setResponseOtp] = useState(false);
+
+
+    const [forgetPasswordSubmit, forgetPasswordOption] = useForgetPasswordMutation();
+    const [resetPasswordSubmit, resetPasswordOption] = useResetPasswordMutation();
+
+    useEffect(() => {
+        if (forgetPasswordOption.isSuccess) {
+            setResponseOtp(true);
+            toast.success("otp sent successfully");
+        }
+    }, [forgetPasswordOption.isSuccess])
+
+    useEffect(() => {
+        if (forgetPasswordOption.error) {
+            parseAndShowErrorInToast(forgetPasswordOption.error);
+        }
+    }, [forgetPasswordOption.error]);
+
+    useEffect(() => {
+        if (resetPasswordOption.isSuccess) {
+            toast.success("Password reset successfully");
+            router.push(PAGE_ROUTES.AUTH.LOGIN);
+        }
+    }, [resetPasswordOption.isSuccess])
+
+    useEffect(() => {
+        if (resetPasswordOption.error) {
+            parseAndShowErrorInToast(resetPasswordOption.error);
+        }
+    }, [resetPasswordOption.error]);
+
 
 
     const forgetPasswordFormSchema = z.object({
@@ -44,27 +78,28 @@ export default function ForgetPasswordForm() {
     })
 
     async function sendOtp(values: any) {
-        try {
-            setLoading(true);
-            console.log(forgetPasswordForm.getValues())
-            const response = await axiosInstance.post(API_ROUTES.AUTH.FORGETPASSWORD, {
-                email: values?.email,
-            })
+        await forgetPasswordSubmit(values)
+        // try {
+        //     setLoading(true);
+        //     console.log(forgetPasswordForm.getValues())
+        //     const response = await axiosInstance.post(API_ROUTES.AUTH.FORGETPASSWORD, {
+        //         email: values?.email,
+        //     })
 
-            if (response.status === 200) {
-                toast.success("otp sent successfully");
-                setResponseOtp(true);
-            }
+        //     if (response.status === 200) {
+        //         toast.success("otp sent successfully");
+        //         setResponseOtp(true);
+        //     }
 
-            console.log('response', response)
-        } catch (err) {
-            console.log('err', err)
-            if (err instanceof AxiosError) {
-                toast.error(err.response?.data?.detail?.at(0))
-            }
-        } finally {
-            setLoading(false);
-        }
+        //     console.log('response', response)
+        // } catch (err) {
+        //     console.log('err', err)
+        //     if (err instanceof AxiosError) {
+        //         toast.error(err.response?.data?.detail?.at(0))
+        //     }
+        // } finally {
+        //     setLoading(false);
+        // }
     }
 
     async function forgetPasswordOnSubmit(values: z.infer<typeof forgetPasswordFormSchema>) {
@@ -98,30 +133,36 @@ export default function ForgetPasswordForm() {
     })
 
     async function resetPasswordOnSubmit(values: z.infer<typeof resetPasswordFormSchema>) {
-        console.log(values)
-        try {
-            setLoading(true);
-            const response = await axiosInstance.post(API_ROUTES.AUTH.RESETPASSWORD, {
-                code: values.otp,
-                email: forgetPasswordForm.getValues()?.email,
-                password: values.password,
-                confirm_password: values.confirmPassword
-            });
+        await resetPasswordSubmit({
+            code: values.otp,
+            email: forgetPasswordForm.getValues()?.email,
+            password: values.password,
+            confirm_password: values.confirmPassword
+        });
+        // console.log(values)
+        // try {
+        //     setLoading(true);
+        //     const response = await axiosInstance.post(API_ROUTES.AUTH.RESETPASSWORD, {
+        //         code: values.otp,
+        //         email: forgetPasswordForm.getValues()?.email,
+        //         password: values.password,
+        //         confirm_password: values.confirmPassword
+        //     });
 
-            if (response.status === 201) {
-                toast.success("Password reset successfully");
-                router.push(PAGE_ROUTES.AUTH.LOGIN);
-            }
+        //     if (response.status === 201) {
+        //         toast.success("Password reset successfully");
+        //         router.push(PAGE_ROUTES.AUTH.LOGIN);
+        //     }
 
-        } catch (err) {
-            if (err instanceof AxiosError) {
-                console.log('err', err)
-                toast.error(err.response?.data?.details?.at(0))
-            }
+        // } catch (err) {
+        //     if (err instanceof AxiosError) {
+        //         console.log('err', err)
+        //         toast.error(err.response?.data?.details?.at(0))
+        //     }
 
-        } finally {
-            setLoading(false);
-        }
+        // } finally {
+        //     setLoading(false);
+        // }
     }
 
 
@@ -149,7 +190,7 @@ export default function ForgetPasswordForm() {
                                         <FormItem>
                                             <FormLabel className="text-lg font-light">Email Address</FormLabel>
                                             <FormControl>
-                                                <Input disabled={loading} {...field} id="email" type="email" placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" />
+                                                <Input disabled={forgetPasswordOption?.isLoading} {...field} id="email" type="email" placeholder="Enter Email Address" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -160,8 +201,8 @@ export default function ForgetPasswordForm() {
                             <div className="flex items-center justify-between text-base">
 
                             </div>
-                            <Button disabled={loading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
-                                {loading ? (
+                            <Button disabled={forgetPasswordOption?.isLoading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+                                {forgetPasswordOption?.isLoading ? (
                                     <Image
                                         src="/assets/icons/loader.svg"
                                         alt="loader"
@@ -172,7 +213,7 @@ export default function ForgetPasswordForm() {
                                 ) : "Send OTP"}
                             </Button>
                             <Link href="/">
-                                <Button disabled={loading} className="w-full hover:bg-brand-100 text-md font-semibold rounded-lg" variant="link">Login</Button>
+                                <Button disabled={forgetPasswordOption?.isLoading} className="w-full hover:bg-brand-100 text-md font-semibold rounded-lg" variant="link">Login</Button>
                             </Link>
 
                         </form>
@@ -208,7 +249,7 @@ export default function ForgetPasswordForm() {
 
                             <div className="mt-0 flex justify-between">
                                 <p></p>
-                                <Button onClick={resendOtp} disabled={loading} type="button" variant="link" className="text-green-600 hover:underline text-sm">Resend</Button>
+                                <Button onClick={resendOtp} disabled={resetPasswordOption.isLoading} type="button" variant="link" className="text-green-600 hover:underline text-sm">Resend</Button>
                             </div>
 
                             <div className="h-24">
@@ -220,14 +261,14 @@ export default function ForgetPasswordForm() {
                                             <FormItem>
                                                 <FormLabel className="text-lg font-light">Password</FormLabel>
                                                 <FormControl>
-                                                    <Input disabled={loading} {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
+                                                    <Input disabled={resetPasswordOption.isLoading} {...field} id="password" type={showPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                     <button
-                                        disabled={loading}
+                                        disabled={resetPasswordOption?.isLoading}
                                         type="button"
                                         className="absolute inset-y-0 right-3 top-8 flex items-center"
                                         onClick={() => setShowPassword(!showPassword)}
@@ -245,14 +286,14 @@ export default function ForgetPasswordForm() {
                                             <FormItem>
                                                 <FormLabel className="text-lg font-light">Confirm Password</FormLabel>
                                                 <FormControl>
-                                                    <Input disabled={loading} {...field} id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
+                                                    <Input disabled={resetPasswordOption?.isLoading} {...field} id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Enter Password" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm pr-10" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                     <button
-                                        disabled={loading}
+                                        disabled={resetPasswordOption?.isLoading}
                                         type="button"
                                         className="absolute inset-y-0 right-3 top-8 flex items-center"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -261,8 +302,8 @@ export default function ForgetPasswordForm() {
                                     </button>
                                 </div>
                             </div>
-                            <Button disabled={loading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
-                                {loading ? (
+                            <Button disabled={resetPasswordOption?.isLoading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+                                {resetPasswordOption?.isLoading ? (
                                     <Image
                                         src="/assets/icons/loader.svg"
                                         alt="loader"
