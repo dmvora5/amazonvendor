@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import axiosInstance from "@/utils/axiosInstance";
@@ -52,10 +52,13 @@ export default function ForgetPasswordForm() {
     }, [forgetPasswordOption.error]);
 
     useEffect(() => {
-        if (resetPasswordOption.isSuccess) {
-            toast.success("Password reset successfully");
-            router.push(PAGE_ROUTES.AUTH.LOGIN);
-        }
+        (async () => {
+            if (resetPasswordOption.isSuccess) {
+                toast.success("Password reset successfully");
+                await signOut({ callbackUrl: process.env.NEXT_PUBLIC_APP_URL });
+                // router.push(PAGE_ROUTES.AUTH.LOGIN);
+            }
+        })()
     }, [resetPasswordOption.isSuccess])
 
     useEffect(() => {
@@ -139,6 +142,7 @@ export default function ForgetPasswordForm() {
             password: values.password,
             confirm_password: values.confirmPassword
         });
+
         // console.log(values)
         // try {
         //     setLoading(true);

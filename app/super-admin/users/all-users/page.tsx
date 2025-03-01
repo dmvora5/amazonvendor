@@ -123,7 +123,10 @@ function DataTableDemo() {
                 /> */}
 
             </div>
-            <UsersTable isLoading={isLoading || deleteUserOption.isLoading} gotoDetailsPage={gotoDetailsPage} deleteUser={submit} data={data} />
+            {isSuccess ?
+                <UsersTable isLoading={isLoading || deleteUserOption.isLoading} gotoDetailsPage={gotoDetailsPage} deleteUser={submit} data={data} />
+                : <p className="w-full text-center"> Loading...</p>
+            }
         </div>
     )
 }
