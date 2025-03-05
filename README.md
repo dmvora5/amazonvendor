@@ -50,3 +50,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 "is_superuser": true
 }
 }
+
+"next/core-web-vitals", "next/typescript"
+
+"extends": ["next/core-web-vitals", "next/typescript"]

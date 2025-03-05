@@ -2,21 +2,13 @@
 
 
 
-import { ArrowUpDown, ChevronDown, Edit, MoreHorizontal, Trash } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 
 
-import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes"
-import { useEffect, useState } from "react"
-import axiosInstance from "@/utils/axiosInstance"
-import Image from "next/image"
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { PAGE_ROUTES } from "@/constant/routes"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation";
-import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useDeleteUserMutation, useGetAllUsersQuery } from "@/redux/apis/usersApis";
 import UsersTable from "@/components/super-admin/UsersTable"
@@ -124,7 +116,7 @@ function DataTableDemo() {
 
             </div>
             {isSuccess ?
-                <UsersTable isLoading={isLoading || deleteUserOption.isLoading} gotoDetailsPage={gotoDetailsPage} deleteUser={submit} data={data} />
+                <UsersTable isLoading={deleteUserOption.isLoading || isLoading} gotoDetailsPage={gotoDetailsPage} deleteUser={submit} data={data} />
                 : <p className="w-full text-center"> Loading...</p>
             }
         </div>

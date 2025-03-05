@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Link from "next/link";
-import axiosInstance from "@/utils/axiosInstance";
-import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes";
+import { PAGE_ROUTES } from "@/constant/routes";
 import Image from "next/image";
 
 import { AxiosError } from "axios";

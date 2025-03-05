@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -12,11 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
-import { signOut, useSession } from "next-auth/react";
-import { AxiosError } from "axios";
+import { signOut } from "next-auth/react";
 import { toast } from "react-toastify";
-import axiosInstance from "@/utils/axiosInstance";
-import { API_ROUTES, PAGE_ROUTES } from "@/constant/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForgetPasswordMutation, useResetPasswordMutation } from "@/redux/apis/usersApis";

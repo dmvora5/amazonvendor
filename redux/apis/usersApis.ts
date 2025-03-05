@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never],
+    tagTypes: ["Auth" as never, "UserProfile" as never],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -80,6 +80,29 @@ export const userApi = createApi({
                 body: payload,
             })
         }),
+        getAdminProfile: build.query({
+            query: () => ({
+                url: API_ROUTES.SUPERADMIN.GETADMIN,
+                method: "GET",
+            }),
+            providesTags: (result: any) => [
+                { type: 'UserProfile', id: result },
+            ]
+        }),
+        updateAdminProfile: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.UPDATEADMIN,
+                method: "PATCH",
+                body: {
+                    first_name: payload?.first_name,
+                    last_name: payload?.last_name,
+                },
+            }),
+            invalidatesTags: (result: any, error: any) => [
+                    // { type: 'Auth', id: 'LIST' },
+                    { type: 'UserProfile', id: result },
+            ]
+        }),
     })
 });
 
@@ -90,5 +113,7 @@ export const {
     useEditUserQuery,
     useUpdateUserMutation,
     useForgetPasswordMutation,
-    useResetPasswordMutation
+    useResetPasswordMutation,
+    useGetAdminProfileQuery,
+    useUpdateAdminProfileMutation
 } = userApi;
