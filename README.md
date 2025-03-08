@@ -34,23 +34,3 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-{
-"tokens": {
-"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTI2MDY0MSwiaWF0IjoxNzQwNjU1ODQxLCJqdGkiOiI3NDcxOTNlZWJkM2U0ZGQ2YjIyOWRmNTQ1MmQxMGM2YiIsInVzZXJfaWQiOjF9.f6VBzD8oiHFoE6YrFDtEDFCeaUVXyc9CGt-KGkjPpJE",
-"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwNzQyMjQxLCJpYXQiOjE3NDA2NTU4NDEsImp0aSI6IjVkMDI4Mjk3MTNlOTQ5NTQ4MTI1NWI3NzdkMjk3ZjMwIiwidXNlcl9pZCI6MX0.vO68U2k-0VknpdSxpYb7BdvycGXiSFFzpjXIPDN2Bsw"
-},
-"user": {
-"id": 1,
-"email": "aim@gmail.com",
-"first_name": null,
-"last_name": null,
-"profile_image": null,
-"is_superuser": true
-}
-}
-
-"next/core-web-vitals", "next/typescript"
-
-"extends": ["next/core-web-vitals", "next/typescript"]

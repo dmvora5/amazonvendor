@@ -129,11 +129,11 @@ export default function CreateUserForm() {
         <div className="p-10 m-16 bg-white rounded-2xl shadow-lg border w-4/5">
           <div className="flex p-2 justify-between">
             <h2 className="text-xl font-semibold mb-4">Create User</h2>
-            <Link href="/super-admin/users/all-users">
+            {/* <Link href="/super-admin/users/all-users">
               <Button variant="link" className="">
                 All Users
               </Button>
-            </Link>
+            </Link> */}
 
           </div>
 

@@ -9,8 +9,10 @@ const Providers = ({ children, ...rest }: any) => {
     return (
         <>
             <Provider store={store}>
-            <ToastContainer />
-                <SessionProvider {...rest}>{children}</SessionProvider>
+                <ToastContainer />
+                <SessionProvider {...rest}>
+                        {children}
+                </SessionProvider>
             </Provider>
         </>
     )

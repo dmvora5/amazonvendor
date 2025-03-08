@@ -18,6 +18,7 @@ import {
   useGetAdminProfileQuery,
   useUpdateAdminProfileMutation,
 } from "@/redux/apis/usersApis";
+import { SidebarTrigger } from "./ui/sidebar";
 
 const Header = () => {
   // State to store user data
@@ -40,13 +41,13 @@ const Header = () => {
     }
   }, [data, isSuccess]);
 
-  // Handle Input Change
+  // // Handle Input Change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setUserData((prev) => ({ ...prev, [id]: value }));
   };
 
-  // Handle Form Submission
+  // // Handle Form Submission
   const handleSaveChanges = async () => {
     try {
       await updateProfile({
@@ -61,19 +62,22 @@ const Header = () => {
     }
   };
 
-  // Handle Sign Out
+  // // Handle Sign Out
   const handleSignOut = async (e: any) => {
     e.preventDefault();
     await signOut({ callbackUrl: process.env.NEXT_PUBLIC_APP_URL });
   };
 
   return (
-    <header className="header">
-      <div className="header-wrapper ml-auto">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-white flex items-center px-2 pr-5 z-50">
+
+      <SidebarTrigger />
+      {/* <SidebarTrigger className="hidden max-md:block"/> */}
+      <div className="header-wrapper ml-auto text-end flex gap-2 p-4 max-w-screen-lg">
         {/* Dialog (Modal) */}
         <Dialog>
           <DialogTrigger asChild>
-            <Button type="button" className="sign-out-button">
+            <Button variant="outline" type="button" className="sign-out-button">
               <User width={24} height={24} />
             </Button>
           </DialogTrigger>
@@ -108,14 +112,18 @@ const Header = () => {
             </div>
             {/* Footer */}
             <DialogFooter>
-              <Button type="button" onClick={handleSaveChanges} disabled={isUpdating}>
+              <Button type="button"
+              onClick={handleSaveChanges} disabled={isUpdating}
+              >
                 {isUpdating ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
         {/* Logout Button */}
-        <Button type="button" className="sign-out-button" onClick={handleSignOut}>
+        <Button variant="outline" type="button" className="sign-out-button"
+        onClick={handleSignOut}
+        >
           <LogOut width={24} height={24} />
         </Button>
       </div>

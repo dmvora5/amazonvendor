@@ -11,7 +11,6 @@ import Link from "next/link";
 import { PAGE_ROUTES } from "@/constant/routes";
 import Image from "next/image";
 
-import { AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useEditUserQuery, useUpdateUserMutation } from "@/redux/apis/usersApis";
@@ -164,11 +163,11 @@ export default function EditUserForm() {
         <div className="p-10 m-16 bg-white rounded-2xl shadow-lg border w-3/5">
           <div className="flex p-2 justify-between">
             <h2 className="text-xl font-semibold mb-4">Update User</h2>
-            <Link href="/super-admin/users/all-users">
+            {/* <Link href="/super-admin/users/all-users">
               <Button variant="link" className="">
                 All Users
               </Button>
-            </Link>
+            </Link> */}
 
           </div>
 

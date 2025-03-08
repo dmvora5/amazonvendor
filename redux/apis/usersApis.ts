@@ -1,5 +1,5 @@
-import { API_ROUTES } from "@/constant/routes"
-import { baseQueryWithAuth } from "@/utils/RtkApiCall"
+import { API_ROUTES } from "@/constant/routes";
+import { baseQueryWithAuth } from "@/utils/RtkApiCall";
 import { createApi } from "@reduxjs/toolkit/query/react"
 
 export const userApi = createApi({

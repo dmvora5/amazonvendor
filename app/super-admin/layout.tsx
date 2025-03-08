@@ -1,34 +1,61 @@
-import AuthRedirect from '@/components/AuthRedirect';
-import Header from '@/components/Header'
-import Sidebar from '@/components/Sidebar'
+import AppSidebar from '@/components/AppSidebar';
+import Header from '@/components/Header';
+import { Button } from '@/components/ui/button'
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
+import React, { useState } from 'react'
 
-import React from 'react'
+
 
 const SuperAdminLayout = async ({ children }: { children: React.ReactNode }) => {
 
-  const session: any = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions);
 
-  console.log('session', session)
+    // const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar toggle state
+    // const [isSubmenuOpen, setIsSubmenuOpen] = useState(false); // Submenu toggle state
 
-  if (!session) {
-    return <AuthRedirect />
-  }
+    // const toggleSubmenu = () => setIsSubmenuOpen(!isSubmenuOpen);
+    // return (
+    //     <div className="h-screen flex flex-col">
+    //         {/* Navbar */}
+    //         <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
+    //             <h1 className="text-xl">Your Application</h1>
+    //             {/* Sidebar Toggle Button (Collapse/Expand) */}
+    //             <Button
+    //                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+    //                 className="bg-gray-600 hover:bg-gray-700"
+    //             >
+    //                 {isSidebarOpen ? 'Collapse Sidebar' : 'Expand Sidebar'}
+    //             </Button>
+    //         </header>
 
-  if(!session?.user?.is_superuser) {
-    return <AuthRedirect />
-  }
+    //         <div className="flex flex-1">
+    //             {/* Sidebar */}
+    //             <SidebarProvider>
+    //                 <AppSidebar />
+    //             </SidebarProvider>
 
-  return (
-    <section className='h-screen flex'>
-      <Sidebar />
-      <section className="flex h-full flex-1 flex-col">
-        <Header />
-        <div className="main-content">{children}</div>
-      </section>
-    </section>
-  )
+    //             {/* Main content area */}
+    //            {children}
+    //         </div>
+    //     </div>
+    // )
+    return (
+        <SidebarProvider>
+            <div className='w-full'>
+                <Header />
+                <div className='flex min-h-screen pt-[4rem]'>
+                    <AppSidebar session={session} />
+                    <main className="flex-1 overflow-y-auto bg-gray-200 p-5 relative">
+                        {children}
+                    </main>
+                </div>
+            </div>
+        </SidebarProvider>
+    )
+
+
 }
 
 export default SuperAdminLayout
