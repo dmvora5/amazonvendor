@@ -21,6 +21,10 @@ export const API_ROUTES = {
         DELETEUESR: "/users/user-detail/",
         GETADMIN: "/users/user-profile/",
         UPDATEADMIN: "/users/user-profile/",
+        FBAINVENTORY: "/report/fba-inventory/",
+        INVENTORY: "/report/",
+        FBAINVENTORYPIVOT: "/report/pivot/fba-inventory/",
+        INVENTORYPIVOT: "/report/pivot/",
     },
     AUTH: {
         FORGETPASSWORD: '/users/send-password-reset-code-mail/',

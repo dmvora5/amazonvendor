@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never, "UserProfile" as never],
+    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -103,6 +103,42 @@ export const userApi = createApi({
                     { type: 'UserProfile', id: result },
             ]
         }),
+        getFBAInventory: build.query({
+            query: (id: any) => ({
+                url: `${API_ROUTES.SUPERADMIN.FBAINVENTORY}`,
+                method: "GET",
+            }),
+            providesTags: (result: any) => [
+                { type: 'Inventory', id: +result?.id },
+            ]
+        }),
+        getInventory: build.query({
+            query: (period: any) => (console.log('period :>> ', period),{
+                url: `${API_ROUTES.SUPERADMIN.INVENTORY}${period}/`,
+                method: "GET",
+            }),
+            providesTags: (result: any) => [
+                { type: 'Inventory', id: +result?.id },
+            ]
+        }),
+        getFBAInventoryPivot: build.query({
+            query: (id: any) => ({
+                url: `${API_ROUTES.SUPERADMIN.FBAINVENTORYPIVOT}`,
+                method: "GET",
+            }),
+            providesTags: (result: any) => [
+                { type: 'Inventory', id: +result?.id },
+            ]
+        }),
+        getInventoryPivot: build.query({
+            query: (period: any) => ({
+                url: `${API_ROUTES.SUPERADMIN.INVENTORYPIVOT}${period}/`,
+                method: "GET",
+            }),
+            providesTags: (result: any) => [
+                { type: 'Inventory', id: +result?.id },
+            ]
+        }),
     })
 });
 
@@ -115,5 +151,9 @@ export const {
     useForgetPasswordMutation,
     useResetPasswordMutation,
     useGetAdminProfileQuery,
-    useUpdateAdminProfileMutation
+    useUpdateAdminProfileMutation,
+    useGetFBAInventoryQuery,
+    useGetInventoryQuery,
+    useGetFBAInventoryPivotQuery,
+    useGetInventoryPivotQuery
 } = userApi;
