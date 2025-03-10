@@ -94,7 +94,7 @@ export default function LoginPage() {
         />
       </div>
       <div className="flex flex-col justify-center w-full h-full md:col-span-2 max-w-lg mx-auto bg-white rounded-xl">
-        <h2 className="text-4xl font-extrabold text-center text-brand">Welcome</h2>
+        <h2 className="text-4xl font-extrabold text-center text-blue-500">Welcome</h2>
         <p className="text-center text-gray-600 mb-6 text-lg">Login to Your Account</p>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -141,9 +141,9 @@ export default function LoginPage() {
               <div className="flex items-center space-x-2">
 
               </div>
-              <Link href="/forget-password" className="text-green-600 hover:underline text-sm">Forgot Password?</Link>
+              <Link href="/forget-password" className="text-blue-500 hover:underline text-sm">Forgot Password?</Link>
             </div>
-            <Button disabled={loading} type="submit" className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+            <Button disabled={loading} type="submit" className="w-full h-14 bg-gradient-to-r from-blue-500 to-indigo-500 hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
               {loading ? (
                 <Image
                   src="/assets/icons/loader.svg"

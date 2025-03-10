@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useGetInventoryPivotQuery } from "@/redux/apis/usersApis";
 import { parseAndShowErrorInToast } from "@/utils";
+import Image from "next/image";
 
 function DataTableDemo() {
   const router = useRouter();
@@ -55,9 +56,8 @@ function DataTableDemo() {
                 {((data as any) || []).map((row: any, index: number) => (
                   <tr
                     key={row.id}
-                    className={`${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    } hover:bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-900 dark:border-gray-700 rounded-lg transition duration-200 ease-in-out`}
+                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-900 dark:border-gray-700 rounded-lg transition duration-200 ease-in-out`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap transform transition-all duration-300 ease-in-out hover:scale-105 hover:translate-x-2 hover:translate-y-2 hover:shadow-2xl rounded-md">
                       {row.asin}
@@ -72,7 +72,13 @@ function DataTableDemo() {
           </div>
         </div>
       ) : (
-        <p className="w-full text-center"> Loading...</p>
+        <Image
+          src="/assets/icons/loader.svg"
+          alt="loader"
+          width={24}
+          height={24}
+          className="animate-spin bg-brand mx-auto absolute top-[50%] left-[50%]"
+        />
       )}
     </div>
   );

@@ -113,7 +113,8 @@ const Header = () => {
             {/* Footer */}
             <DialogFooter>
               <Button type="button"
-              onClick={handleSaveChanges} disabled={isUpdating}
+                className="bg-blue-500"
+                onClick={handleSaveChanges} disabled={isUpdating}
               >
                 {isUpdating ? "Saving..." : "Save Changes"}
               </Button>
@@ -122,7 +123,7 @@ const Header = () => {
         </Dialog>
         {/* Logout Button */}
         <Button variant="outline" type="button" className="sign-out-button"
-        onClick={handleSignOut}
+          onClick={handleSignOut}
         >
           <LogOut width={24} height={24} />
         </Button>

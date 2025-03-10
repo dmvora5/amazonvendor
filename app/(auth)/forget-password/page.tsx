@@ -176,8 +176,8 @@ export default function ForgetPasswordForm() {
                 />
             </div>
             <div className="flex flex-col justify-center w-full h-full md:col-span-2 max-w-lg mx-auto bg-white rounded-xl">
-                <h2 className="text-4xl font-extrabold text-center text-brand">Forget Password</h2>
-                <p className="text-center text-gray-600 mb-6 text-lg">Reset Your Password</p>
+                <h2 className="text-4xl font-extrabold text-center text-blue-500">Forget Password</h2>
+                <p className="text-center text-blue-500 mb-6 text-lg">Reset Your Password</p>
                 {!responseOtp &&
                     <Form {...forgetPasswordForm}>
                         <form onSubmit={forgetPasswordForm.handleSubmit(forgetPasswordOnSubmit)} className="space-y-6">
@@ -200,7 +200,7 @@ export default function ForgetPasswordForm() {
                             <div className="flex items-center justify-between text-base">
 
                             </div>
-                            <Button disabled={forgetPasswordOption?.isLoading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+                            <Button disabled={forgetPasswordOption?.isLoading} className="w-full h-14 bg-gradient-to-r from-blue-500 to-indigo-500 hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
                                 {forgetPasswordOption?.isLoading ? (
                                     <Image
                                         src="/assets/icons/loader.svg"
@@ -248,7 +248,7 @@ export default function ForgetPasswordForm() {
 
                             <div className="mt-0 flex justify-between">
                                 <p></p>
-                                <Button onClick={resendOtp} disabled={resetPasswordOption.isLoading} type="button" variant="link" className="text-green-600 hover:underline text-sm">Resend</Button>
+                                <Button onClick={resendOtp} disabled={resetPasswordOption.isLoading} type="button" variant="link" className="text-blue-500 hover:underline text-sm">Resend</Button>
                             </div>
 
                             <div className="h-24">
@@ -301,7 +301,7 @@ export default function ForgetPasswordForm() {
                                     </button>
                                 </div>
                             </div>
-                            <Button disabled={resetPasswordOption?.isLoading} className="w-full h-14 bg-brand hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+                            <Button disabled={resetPasswordOption?.isLoading} className="w-full h-14 bg-gradient-to-r from-blue-500 to-indigo-500 hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
                                 {resetPasswordOption?.isLoading ? (
                                     <Image
                                         src="/assets/icons/loader.svg"

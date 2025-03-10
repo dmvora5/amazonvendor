@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger } from "@/components/ui/sidebar";
 import { ROLES } from "@/constant/roles";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Users } from "lucide-react";
+import { ALargeSmall, ChevronDown, Table, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -35,42 +35,53 @@ const menu = {
                 {
                     title: "FBA",
                     url: "/super-admin/inventory/fba/inventory",
-                    Icon: Users
+                    Icon: Table
                 },
                 {
                     title: "FBA Pivot",
                     url: "/super-admin/inventory/fba/pivot",
-                    Icon: Users
+                    Icon: Table
                 },
                 {
                     title: "7 Days",
                     url: "/super-admin/inventory/sevenDays/inventory",
-                    Icon: Users
+                    Icon: Table
                 },
                 {
                     title: "7 Days Pivot",
                     url: "/super-admin/inventory/sevenDays/pivot",
-                    Icon: Users
+                    Icon: Table
                 },
                 {
                     title: "14 Days",
                     url: "/super-admin/inventory/fourteenDays/inventory",
-                    Icon: Users
+                    Icon: Table
                 },
                 {
                     title: "14 Days Pivot",
                     url: "/super-admin/inventory/fourteenDays/pivot",
-                    Icon: Users
+                    Icon: Table
                 },
                 {
                     title: "30 Days",
                     url: "/super-admin/inventory/thirtyDays/inventory",
-                    Icon: Users
+                    Icon: Table
                 },
                 {
                     title: "30 Days Pivot",
                     url: "/super-admin/inventory/thirtyDays/pivot",
-                    Icon: Users
+                    Icon: Table
+                }
+            ]
+        },
+        {
+            title: "Category",
+            Icon: Users,
+            subMenus: [
+                {
+                    title: "All Category",
+                    url: "/super-admin/category",
+                    Icon: ALargeSmall
                 }
             ]
         }
@@ -111,7 +122,7 @@ const AppSidebar = ({ session }: any) => {
                                                 <SidebarMenuButton asChild className="pl-5">
                                                     <Link href={subItem.url} className={cn(
                                                         "sidebar-nav-item p-5",
-                                                        pathname == subItem.url && "bg-brand text-white"
+                                                        pathname == subItem.url && "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:text-white"
                                                     )}>
                                                         <subItem.Icon />
                                                         <span className="p-3">{subItem.title}</span>

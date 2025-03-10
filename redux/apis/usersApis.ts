@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never],
+    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -139,6 +139,63 @@ export const userApi = createApi({
                 { type: 'Inventory', id: +result?.id },
             ]
         }),
+
+        //category
+        addCategory: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.CREATECATEGORY,
+                method: "POST",
+                body: payload,
+            }),
+            invalidatesTags: [{ type: 'Category', id: 'LIST' }]
+        }),
+        getAllCategory: build.query({
+            query: () => ({
+                url: API_ROUTES.SUPERADMIN.GETALLCATEGORY,
+                method: "GET",
+            }),
+            providesTags: (result: any) => result ?
+                [
+                    { type: 'Category', id: 'LIST' }, // Tag the list of users
+                    ...result.map(({ id }: any) => ({ type: 'Category', id: +id })) // Tag each individual user by ID
+                ] : []
+        }),
+        editCategory: build.query({
+            query: (id: any) => ({
+                url: `${API_ROUTES.SUPERADMIN.CATEGORYDETAILS}${id}/`,
+                method: "GET",
+            }),
+            providesTags: (result: any) => [
+                { type: 'Category', id: +result?.id },
+            ]
+        }),
+        updateCategory: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.UPDATECATEGORY + payload.id + "/",
+                method: "PATCH",
+                body: {
+                    ...payload,
+                },
+            }),
+            invalidatesTags: (result: any, error: any, { id }: any) => {
+                console.log('id', id)
+                return [
+                    { type: 'Category', id: 'LIST' },
+                    { type: 'Category', id: +id },
+                ]
+            }
+        }),
+        deletecategory: build.mutation({
+            query: (id: any) => ({
+                url: API_ROUTES.SUPERADMIN.DELETECATEGORY + id + "/",
+                method: "DELETE",
+            }),
+            invalidatesTags: (result: any, error: any, { id }: any) => [
+                { type: 'Auth', id: 'LIST' },
+                { type: 'Auth', id: +id },
+            ]
+
+        }),
     })
 });
 
@@ -155,5 +212,12 @@ export const {
     useGetFBAInventoryQuery,
     useGetInventoryQuery,
     useGetFBAInventoryPivotQuery,
-    useGetInventoryPivotQuery
+    useGetInventoryPivotQuery,
+
+    //category
+    useAddCategoryMutation,
+    useGetAllCategoryQuery,
+    useEditCategoryQuery,
+    useUpdateCategoryMutation,
+    useDeletecategoryMutation
 } = userApi;

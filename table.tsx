@@ -35,7 +35,7 @@ const page = () => {
   };
 
   // Handle specific page number click
-  const handlePageClick = (page) => {
+  const handlePageClick = (page:any) => {
     setCurrentPage(page);
   };
 
@@ -88,7 +88,7 @@ const page = () => {
                 {Object.keys(row).map((key, colIndex) => (
                   key !== 'id' && key !== 'Actions' ? (
                     <td key={colIndex} className="px-6 py-4 whitespace-nowrap transform transition-all duration-300 ease-in-out hover:scale-105 hover:translate-x-2 hover:translate-y-2 hover:shadow-2xl rounded-md">
-                      {row[key]}
+                      {/* {row[key]} */}
                     </td>
                   ) : null
                 ))}
