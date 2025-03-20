@@ -25,11 +25,11 @@ function DataTableDemo() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  const { data, isLoading, isSuccess, isError, error } = useGetInventoryQuery({
+  const { data, isLoading, isSuccess, isError, error, refetch } = useGetInventoryQuery({
     time: "7d",
     page,
     limit,
-  });
+  } );
 
   useEffect(() => {
     if (!error) return;

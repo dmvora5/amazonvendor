@@ -56,7 +56,7 @@ function DataTableDemo() {
 
               {/* Table Body */}
               <tbody>
-                {((data as any) || []).map((row: any, index: number) => (
+                {((data as any)?.results || []).map((row: any, index: number) => (
                   <tr
                     key={row.id}
                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"

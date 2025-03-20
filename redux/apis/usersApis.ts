@@ -99,8 +99,8 @@ export const userApi = createApi({
                 },
             }),
             invalidatesTags: (result: any, error: any) => [
-                    // { type: 'Auth', id: 'LIST' },
-                    { type: 'UserProfile', id: result },
+                // { type: 'Auth', id: 'LIST' },
+                { type: 'UserProfile', id: result },
             ]
         }),
         getFBAInventory: build.query({
@@ -113,21 +113,26 @@ export const userApi = createApi({
             ]
         }),
         getInventory: build.query({
-            query: (period: any) => (console.log('period :>> ', period),{
+            query: (period: any) => (console.log('period :>> ', period), {
                 url: `${API_ROUTES.SUPERADMIN.INVENTORY}${period.time}/`,
                 method: "GET",
                 params: {
                     page: period.page,
                     page_size: period.limit
-                }
-            }),
+                },
 
-            // providesTags: (result: any) => result ? result.results.map(({ id }:any) => ({ type: 'Inventory', id })) : [],
-            forceRefetch: ({ currentArg, previousArg }: any) => {
-                console.log("🚀 ~ currentArg, previousArg:", currentArg, previousArg)
-                return true; // Refetch when page changes
-            },
-        }),
+            }),
+            // providesTags: (result: any) => result ? result.results.map(({ id }: any) => ({ type: 'Inventory', id })) : [],
+            // forceRefetch: ({ currentArg, previousArg }: any) => {
+            //     console.log("🚀 ~ currentArg, previousArg:", currentArg, previousArg)
+            //     return true // Refetch when page changes
+            // },
+            refetchOnMountOrArgChange: true
+
+        },
+
+
+        ),
         getFBAInventoryPivot: build.query({
             query: (id: any) => ({
                 url: `${API_ROUTES.SUPERADMIN.FBAINVENTORYPIVOT}`,
