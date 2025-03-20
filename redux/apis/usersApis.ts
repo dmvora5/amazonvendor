@@ -114,12 +114,19 @@ export const userApi = createApi({
         }),
         getInventory: build.query({
             query: (period: any) => (console.log('period :>> ', period),{
-                url: `${API_ROUTES.SUPERADMIN.INVENTORY}${period}/`,
+                url: `${API_ROUTES.SUPERADMIN.INVENTORY}${period.time}/`,
                 method: "GET",
+                params: {
+                    page: period.page,
+                    page_size: period.limit
+                }
             }),
-            providesTags: (result: any) => [
-                { type: 'Inventory', id: +result?.id },
-            ]
+
+            // providesTags: (result: any) => result ? result.results.map(({ id }:any) => ({ type: 'Inventory', id })) : [],
+            forceRefetch: ({ currentArg, previousArg }: any) => {
+                console.log("🚀 ~ currentArg, previousArg:", currentArg, previousArg)
+                return true; // Refetch when page changes
+            },
         }),
         getFBAInventoryPivot: build.query({
             query: (id: any) => ({
