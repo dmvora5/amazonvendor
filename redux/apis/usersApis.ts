@@ -182,13 +182,15 @@ export const userApi = createApi({
             ]
         }),
         updateCategory: build.mutation({
-            query: (payload: any) => ({
+            query: (payload: any) => (console.log('payload :>> ', payload),
+            {
                 url: API_ROUTES.SUPERADMIN.UPDATECATEGORY + payload.id + "/",
                 method: "PATCH",
                 body: {
                     ...payload,
                 },
-            }),
+            }
+        ),
             invalidatesTags: (result: any, error: any, { id }: any) => {
                 console.log('id', id)
                 return [
