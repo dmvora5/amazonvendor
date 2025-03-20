@@ -72,6 +72,7 @@ function CategoryTables() {
             <table className="min-w-full text-sm text-left text-gray-500 dark:text-gray-400 rounded-lg">
               <thead className="text-xs uppercase bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                 <tr>
+                  <th className="px-6 py-4 text-left font-semibold min-w-52">Category</th>
                   <th className="px-6 py-4 text-left font-semibold min-w-52">SR_0_to_2k</th>
                   <th className="px-6 py-4 text-left font-semibold min-w-52">SR_2k_to_5k</th>
                   <th className="px-6 py-4 text-left font-semibold min-w-52">SR_5k_to_10k</th>
@@ -93,6 +94,7 @@ function CategoryTables() {
                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
                       } hover:bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-900 dark:border-gray-700 rounded-lg transition duration-200 ease-in-out`}
                   >
+                    <td className="px-6 py-4">{row.category}</td>
                     <td className="px-6 py-4">{row.sr_0_to_2k}</td>
                     <td className="px-6 py-4">{row.sr_2k_to_5k}</td>
                     <td className="px-6 py-4">{row.sr_5k_to_10k}</td>
