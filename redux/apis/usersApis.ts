@@ -151,6 +151,19 @@ export const userApi = createApi({
                 { type: 'Inventory', id: +result?.id },
             ]
         }),
+        getAllInventoryList: build.query({
+            query: (period: any) => ({
+                url: `${API_ROUTES.SUPERADMIN.ALLINVENTORYLIST}`,
+                method: "GET",
+                params: {
+                    page: period.page,
+                    page_size: period.limit
+                },
+            }),
+            providesTags: (result: any) => [
+                { type: 'Inventory', id: +result?.id },
+            ]
+        }),
 
         //category
         addCategory: build.mutation({
@@ -227,6 +240,7 @@ export const {
     useGetInventoryQuery,
     useGetFBAInventoryPivotQuery,
     useGetInventoryPivotQuery,
+    useGetAllInventoryListQuery,
 
     //category
     useAddCategoryMutation,

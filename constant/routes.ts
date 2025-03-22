@@ -27,6 +27,7 @@ export const API_ROUTES = {
         INVENTORY: "/report/",
         FBAINVENTORYPIVOT: "/report/pivot/fba-inventory/",
         INVENTORYPIVOT: "/report/pivot/",
+        ALLINVENTORYLIST: "/report/all-inventory/",
 
         //category
         CREATECATEGORY: "/category/add-category-re-order/",

@@ -33,6 +33,11 @@ const menu = {
             Icon: Users,
             subMenus: [
                 {
+                    title: "All Inventory",
+                    url: "/super-admin/inventory/all-inventory",
+                    Icon: Table
+                },
+                {
                     title: "FBA",
                     url: "/super-admin/inventory/fba/inventory",
                     Icon: Table
