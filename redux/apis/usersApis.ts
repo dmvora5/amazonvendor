@@ -152,8 +152,12 @@ export const userApi = createApi({
         }),
         getInventoryPivot: build.query({
             query: (period: any) => ({
-                url: `${API_ROUTES.SUPERADMIN.INVENTORYPIVOT}${period}/`,
+                url: `${API_ROUTES.SUPERADMIN.INVENTORYPIVOT}${period.time}/`,
                 method: "GET",
+                params: {
+                    page: period.page,
+                    page_size: period.limit
+                },
             }),
             providesTags: (result: any) => [
                 { type: 'Inventory', id: +result?.id },
