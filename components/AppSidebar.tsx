@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger } from "@/components/ui/sidebar";
 import { ROLES } from "@/constant/roles";
 import { cn } from "@/lib/utils";
-import { ALargeSmall, ChevronDown, Table, Users } from "lucide-react";
+import { ALargeSmall, ChevronDown, PackageIcon, Table, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -87,6 +87,17 @@ const menu = {
                     title: "All Category",
                     url: "/super-admin/category",
                     Icon: ALargeSmall
+                }
+            ]
+        },
+        {
+            title: "ChannelMax ",
+            Icon: PackageIcon,
+            subMenus: [
+                {
+                    title: "Upload Report",
+                    url: "/super-admin/channelmax/upload-report",
+                    Icon: PackageIcon
                 }
             ]
         }
