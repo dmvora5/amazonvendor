@@ -107,13 +107,17 @@ export const userApi = createApi({
             query: (id: any) => ({
                 url: `${API_ROUTES.SUPERADMIN.FBAINVENTORY}`,
                 method: "GET",
+                params: {
+                    page: id.page,
+                    page_size: id.limit
+                },
             }),
             providesTags: (result: any) => [
                 { type: 'Inventory', id: +result?.id },
             ]
         }),
         getInventory: build.query({
-            query: (period: any) => (console.log('period :>> ', period), {
+            query: (period: any) => ({
                 url: `${API_ROUTES.SUPERADMIN.INVENTORY}${period.time}/`,
                 method: "GET",
                 params: {
@@ -137,6 +141,10 @@ export const userApi = createApi({
             query: (id: any) => ({
                 url: `${API_ROUTES.SUPERADMIN.FBAINVENTORYPIVOT}`,
                 method: "GET",
+                params: {
+                    page: id.page,
+                    page_size: id.limit
+                },
             }),
             providesTags: (result: any) => [
                 { type: 'Inventory', id: +result?.id },
