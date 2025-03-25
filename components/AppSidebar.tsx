@@ -42,41 +42,41 @@ const menu = {
                     url: "/super-admin/inventory/fba/inventory",
                     Icon: Table
                 },
+                // {
+                //     title: "FBA Pivot",
+                //     url: "/super-admin/inventory/fba/pivot",
+                //     Icon: Table
+                // },
+                // {
+                //     title: "7 Days",
+                //     url: "/super-admin/inventory/sevenDays/inventory",
+                //     Icon: Table
+                // },
+                // {
+                //     title: "7 Days Pivot",
+                //     url: "/super-admin/inventory/sevenDays/pivot",
+                //     Icon: Table
+                // },
+                // {
+                //     title: "14 Days",
+                //     url: "/super-admin/inventory/fourteenDays/inventory",
+                //     Icon: Table
+                // },
+                // {
+                //     title: "14 Days Pivot",
+                //     url: "/super-admin/inventory/fourteenDays/pivot",
+                //     Icon: Table
+                // },
                 {
-                    title: "FBA Pivot",
-                    url: "/super-admin/inventory/fba/pivot",
-                    Icon: Table
-                },
-                {
-                    title: "7 Days",
-                    url: "/super-admin/inventory/sevenDays/inventory",
-                    Icon: Table
-                },
-                {
-                    title: "7 Days Pivot",
-                    url: "/super-admin/inventory/sevenDays/pivot",
-                    Icon: Table
-                },
-                {
-                    title: "14 Days",
-                    url: "/super-admin/inventory/fourteenDays/inventory",
-                    Icon: Table
-                },
-                {
-                    title: "14 Days Pivot",
-                    url: "/super-admin/inventory/fourteenDays/pivot",
-                    Icon: Table
-                },
-                {
-                    title: "30 Days",
+                    title: "30 Days Sales",
                     url: "/super-admin/inventory/thirtyDays/inventory",
                     Icon: Table
                 },
-                {
-                    title: "30 Days Pivot",
-                    url: "/super-admin/inventory/thirtyDays/pivot",
-                    Icon: Table
-                }
+                // {
+                //     title: "30 Days Pivot",
+                //     url: "/super-admin/inventory/thirtyDays/pivot",
+                //     Icon: Table
+                // }
             ]
         },
         {
