@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import * as XLSX from "xlsx";
 import { FixedSizeList as List } from "react-window"; // Import react-window
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGetReportQuery, useUploadReportMutation } from "@/redux/apis/usersApis";
-import { debounce } from "lodash"; // For debouncing search input
 import Image from "next/image";
 
 const options = [
@@ -44,7 +43,8 @@ const InputComponent = memo(({ data, index, keyData, setData, setDirty, disabled
 });
 
 const ExcelEditor = () => {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>([]); // Holds filtered data
+  const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedValue, setSelectedValue] = useState<string>("fba_inventory");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -70,7 +70,8 @@ const ExcelEditor = () => {
       const wb = XLSX.read(csvText, { type: "string" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet);
-      setData(json);
+      setOriginalData(json); // Save original data
+      setData(json); // Also set filtered data initially to the original data
     } catch (error) {
       console.error("Error fetching CSV:", error);
     } finally {
@@ -86,7 +87,6 @@ const ExcelEditor = () => {
     if (!(queryData as any)?.file_url) return;
     fetchCSVFromBackend((queryData as any)?.file_url);
   }, [queryData, fetchCSVFromBackend]);
-
 
   useEffect(() => {
     if (!uploadOptions.isSuccess) return;
@@ -111,13 +111,6 @@ const ExcelEditor = () => {
     }));
   };
 
-  // const handleSaveFile = () => {
-  //   const ws = XLSX.utils.json_to_sheet(data);
-  //   const wb = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  //   XLSX.writeFile(wb, "updated_file.xlsx");
-  // };
-
   const handleUploadCSV = async () => {
     // Convert JSON data to CSV format
     const csvData = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(data));
@@ -134,6 +127,22 @@ const ExcelEditor = () => {
     await submit(formData);
   };
 
+  const handleSearch = (e: any) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+
+    if (term === "") {
+      setData(originalData); // Reset to original data when search term is cleared
+    } else {
+      // Filter data based on the search term
+      const filteredData = originalData.filter((row) =>
+        Object.values(row).some((value) =>
+          String(value).toLowerCase().includes(term)
+        )
+      );
+      setData(filteredData); // Update the data with filtered results
+    }
+  };
 
   const Row = ({ index, style }: any) => {
     const row = data[index];
@@ -172,25 +181,6 @@ const ExcelEditor = () => {
         </tr>
       </thead>
     );
-  };
-
-  const handleSearch = (e: any) => {
-    const term = e.target.value.toLowerCase();
-    setSearchTerm(term);
-
-    // Find the row that matches the search term
-    const index = data.findIndex((row) =>
-      Object.values(row).some((value) =>
-        String(value).toLowerCase().includes(term)
-      )
-    );
-
-    setFoundIndex(index);
-
-    // Scroll to the found index if there is one
-    if (index !== -1 && listRef.current) {
-      listRef.current.scrollToItem(index); // Scroll to the matched row
-    }
   };
 
   return (
@@ -265,18 +255,12 @@ const ExcelEditor = () => {
                   className="animate-spin mx-auto"
                 />
               ) : "Save Changes"}
-
             </Button>
           </div>
         )}
-        {/* <Button onClick={() => setData([])} color="secondary">
-          Clear Data
-        </Button> */}
       </div>
     </div>
   );
 };
-
-
 
 export default ExcelEditor;
