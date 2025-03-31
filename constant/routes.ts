@@ -29,6 +29,9 @@ export const API_ROUTES = {
         INVENTORYPIVOT: "/report/pivot/",
         ALLINVENTORYLIST: "/report/all-inventory/",
 
+        REPORT: "/report/",
+        UPLOADREPORT: "/report/upload/report/",
+
         //category
         CREATECATEGORY: "/category/add-category-re-order/",
         GETALLCATEGORY: "/category/category-re-order-list/",

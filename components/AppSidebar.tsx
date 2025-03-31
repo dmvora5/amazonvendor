@@ -32,14 +32,14 @@ const menu = {
             title: "Inventory Reports",
             Icon: Users,
             subMenus: [
+                // {
+                //     title: "All Inventory",
+                //     url: "/super-admin/inventory/all-inventory",
+                //     Icon: Table
+                // },
                 {
-                    title: "All Inventory",
-                    url: "/super-admin/inventory/all-inventory",
-                    Icon: Table
-                },
-                {
-                    title: "FBA",
-                    url: "/super-admin/inventory/fba/inventory",
+                    title: "Report",
+                    url: "/super-admin/reports",
                     Icon: Table
                 },
                 // {
@@ -67,11 +67,11 @@ const menu = {
                 //     url: "/super-admin/inventory/fourteenDays/pivot",
                 //     Icon: Table
                 // },
-                {
-                    title: "30 Days Sales",
-                    url: "/super-admin/inventory/thirtyDays/inventory",
-                    Icon: Table
-                },
+                // {
+                //     title: "30 Days Sales",
+                //     url: "/super-admin/inventory/thirtyDays/inventory",
+                //     Icon: Table
+                // },
                 // {
                 //     title: "30 Days Pivot",
                 //     url: "/super-admin/inventory/thirtyDays/pivot",

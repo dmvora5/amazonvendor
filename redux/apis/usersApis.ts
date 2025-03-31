@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never],
+    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report"],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -215,7 +215,7 @@ export const userApi = createApi({
                     ...payload,
                 },
             }
-        ),
+            ),
             invalidatesTags: (result: any, error: any, { id }: any) => {
                 console.log('id', id)
                 return [
@@ -235,6 +235,23 @@ export const userApi = createApi({
             ]
 
         }),
+
+        //keep only this report in future
+        getReport: build.query({
+            query: (type: any) => ({
+                url: `${API_ROUTES.SUPERADMIN.REPORT}${type}/`,
+                method: "GET",
+            }),
+            providesTags: ["Report"]
+        }),
+        uploadReport: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.UPLOADREPORT,
+                method: "POST",
+                body: payload
+            })
+        }),
+
     })
 });
 
@@ -253,6 +270,8 @@ export const {
     useGetFBAInventoryPivotQuery,
     useGetInventoryPivotQuery,
     useGetAllInventoryListQuery,
+    useGetReportQuery,
+    useUploadReportMutation,
 
     //category
     useAddCategoryMutation,
