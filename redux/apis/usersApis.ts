@@ -249,7 +249,8 @@ export const userApi = createApi({
                 url: API_ROUTES.SUPERADMIN.UPLOADREPORT,
                 method: "POST",
                 body: payload
-            })
+            }),
+            invalidatesTags: ["Report"]
         }),
 
     })

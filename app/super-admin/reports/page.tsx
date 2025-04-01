@@ -65,6 +65,7 @@ const ExcelEditor = () => {
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
       setLoading(true);
+    
       const response = await fetch(url);
       const csvText = await response.text();
       const wb = XLSX.read(csvText, { type: "string" });
@@ -79,9 +80,6 @@ const ExcelEditor = () => {
     }
   }, []);
 
-  useEffect(() => {
-    setDirty(false);
-  }, [selectedValue])
 
   useEffect(() => {
     if (!(queryData as any)?.file_url) return;
@@ -95,7 +93,7 @@ const ExcelEditor = () => {
 
   const handleAddColumn = () => {
     if (newColumnName.trim()) {
-      setData(prevData => prevData.map((row) => ({
+      setOriginalData(prevData => prevData.map((row) => ({
         ...row,
         [newColumnName]: "",
       })));
@@ -105,7 +103,7 @@ const ExcelEditor = () => {
   };
 
   const handleRemoveColumn = (columnName: string) => {
-    setData(prevData => prevData.map(row => {
+    setOriginalData(prevData => prevData.map(row => {
       const { [columnName]: _, ...rest } = row;
       return rest;
     }));
@@ -113,7 +111,7 @@ const ExcelEditor = () => {
 
   const handleUploadCSV = async () => {
     // Convert JSON data to CSV format
-    const csvData = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(data));
+    const csvData = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(originalData));
 
     // Create a FormData object
     const formData = new FormData();
@@ -150,7 +148,7 @@ const ExcelEditor = () => {
       <div style={style} className="flex border-b hover:bg-gray-50 overflow-x-hidden">
         {Object.keys(row).map((key) => (
           <div key={key} className="px-4 py-2 flex-shrink-0" style={{ width: columnWidth }}>
-            <InputComponent data={data} index={index} keyData={key} setData={setData} setDirty={setDirty} disabled={uploadOptions.isLoading} />
+            <InputComponent data={originalData} index={index} keyData={key} setData={setOriginalData} setDirty={setDirty} disabled={uploadOptions.isLoading} />
           </div>
         ))}
       </div>
