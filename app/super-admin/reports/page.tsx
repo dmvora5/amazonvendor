@@ -97,6 +97,10 @@ const ExcelEditor = () => {
         ...row,
         [newColumnName]: "",
       })));
+      setData(prevData => prevData.map((row) => ({
+        ...row,
+        [newColumnName]: "",
+      })));
       setNewColumnName("");
       setDirty(true);
     }
@@ -107,6 +111,12 @@ const ExcelEditor = () => {
       const { [columnName]: _, ...rest } = row;
       return rest;
     }));
+
+    setData(prevData => prevData.map(row => {
+      const { [columnName]: _, ...rest } = row;
+      return rest;
+    }));
+    setDirty(true);
   };
 
   const handleUploadCSV = async () => {
