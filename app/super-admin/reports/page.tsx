@@ -74,8 +74,8 @@ const ExcelEditor = () => {
       const wb = XLSX.read(text, { type: "string", raw: true });
   
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json: any = XLSX.utils.sheet_to_json(sheet);
-      
+      const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
+  
       setOriginalData(json); // Save original data
       setData(json); // Also set filtered data initially to the original data
     } catch (error) {
@@ -84,6 +84,7 @@ const ExcelEditor = () => {
       setLoading(false);
     }
   }, []);
+  
   
 
 
