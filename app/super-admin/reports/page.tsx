@@ -65,20 +65,26 @@ const ExcelEditor = () => {
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
       setLoading(true);
-    
+  
       const response = await fetch(url);
-      const csvText = await response.text();
-      const wb = XLSX.read(csvText, { type: "string" });
+      const text = await response.text();
+      
+      // Check if the data is CSV or TSV based on the first line
+      const delimiter = text.includes("\t") ? "\t" : ",";
+      const wb = XLSX.read(text, { type: "string", raw: true });
+  
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet);
+      
       setOriginalData(json); // Save original data
       setData(json); // Also set filtered data initially to the original data
     } catch (error) {
-      console.error("Error fetching CSV:", error);
+      console.error("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
   }, []);
+  
 
 
   useEffect(() => {
@@ -120,20 +126,28 @@ const ExcelEditor = () => {
   };
 
   const handleUploadCSV = async () => {
-    // Convert JSON data to CSV format
-    const csvData = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(originalData));
-
+    // Convert JSON data to CSV or TSV format
+    const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
+    const sheet = XLSX.utils.json_to_sheet(originalData);
+  
+    let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
+    if (delimiter === "\t") {
+      csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
+    }
+  
     // Create a FormData object
     const formData = new FormData();
-    // Create a Blob from CSV data
+    
+    // Create a Blob from CSV or TSV data
     const csvBlob = new Blob([csvData], { type: 'text/csv' });
-
-    // Append the CSV file to the FormData object
-    formData.append('file', csvBlob, 'data.csv');
+  
+    // Append the file to the FormData object
+    formData.append('file', csvBlob, 'data.csv'); // Use appropriate file extension based on format
     formData.append('report_type', selectedValue);
-
+  
     await submit(formData);
   };
+  
 
   const handleSearch = (e: any) => {
     const term = e.target.value.toLowerCase();
