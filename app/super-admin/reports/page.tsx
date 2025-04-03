@@ -14,6 +14,8 @@ const options = [
   { value: "all_inventory", label: "All Inventory" },
   { value: "channel_max", label: "Channel Max" },
   { value: "order_history", label: "Order History" },
+  { value: "current_inventory", label: "Current Inventory" },
+  { value: "project_database", label: "Project Database" },
 ];
 
 const InputComponent = memo(({ data, index, keyData, setData, setDirty, disabled }: any) => {
