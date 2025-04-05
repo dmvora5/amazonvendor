@@ -48,9 +48,9 @@ const ExcelEditor = () => {
   const [data, setData] = useState<any[]>([]); // Holds filtered data
   const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
+  const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
   const [selectedValue, setSelectedValue] = useState<string>("fba_inventory");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [foundIndex, setFoundIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
 
@@ -62,33 +62,34 @@ const ExcelEditor = () => {
 
   const { data: queryData, isLoading, error, isFetching } = useGetReportQuery(selectedValue);
 
-  const [submit, uploadOptions] = useUploadReportMutation()
+  const [submit, uploadOptions] = useUploadReportMutation();
 
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
       setLoading(true);
-  
+
       const response = await fetch(url);
       const text = await response.text();
-      
+
       // Check if the data is CSV or TSV based on the first line
       const delimiter = text.includes("\t") ? "\t" : ",";
       const wb = XLSX.read(text, { type: "string", raw: true });
-  
+
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
-  
+
       setOriginalData(json); // Save original data
       setData(json); // Also set filtered data initially to the original data
+      if(json.length) {
+        const key = Object.keys(json[0]);
+        setSelectedColumn(key[0]);
+      }
     } catch (error) {
       console.error("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
   }, []);
-  
-  
-
 
   useEffect(() => {
     if (!(queryData as any)?.file_url) return;
@@ -98,60 +99,55 @@ const ExcelEditor = () => {
   useEffect(() => {
     if (!uploadOptions.isSuccess) return;
     setDirty(false);
-  }, [uploadOptions.isSuccess])
+  }, [uploadOptions.isSuccess]);
 
+  // Function to handle adding a new column after the selected column
   const handleAddColumn = () => {
-    if (newColumnName.trim()) {
-      setOriginalData(prevData => prevData.map((row) => ({
-        ...row,
-        [newColumnName]: "",
-      })));
-      setData(prevData => prevData.map((row) => ({
-        ...row,
-        [newColumnName]: "",
-      })));
-      setNewColumnName("");
-      setDirty(true);
+    if (newColumnName.trim() && selectedColumn) {
+      const headerObject = { ...originalData[0] };  // Copy the header object
+      const headerKeys = Object.keys(headerObject); // Get all the column keys
+      const selectedIndex = headerKeys.indexOf(selectedColumn); // Find the index of the selected column
+  
+      if (selectedIndex === -1) return; // If selected column is not found, return
+  
+      // Step 1: Insert the new column key into the header keys array at the correct position
+      headerKeys.splice(selectedIndex + 1, 0, newColumnName); // Insert after selected column
+  
+      // Step 2: Rebuild the header object with the new column added
+      const newHeaderObject: any = {};
+      headerKeys.forEach((key) => {
+        newHeaderObject[key] = headerObject[key] || null; // Keep existing keys and add the new column with an empty value
+      });
+  
+      // Step 3: Update each row in originalData to reflect the new column (set the new column to null or empty string)
+      const updatedData = originalData.map((row, index) => {
+        if (index === 0) return newHeaderObject; // If it's the header row, update it
+  
+        const updatedRow = { ...row };
+  
+        // Add new column with null or empty string for all rows
+        updatedRow[newColumnName] = null; // New column with null value for existing rows
+  
+        // Ensure rows are updated correctly according to the new column order
+        const reorderedRow: any = {};
+        headerKeys.forEach((key) => {
+          reorderedRow[key] = updatedRow[key] || null; // Ensure each row has the same order as header
+        });
+  
+        return reorderedRow;
+      });
+  
+      // Step 4: Update both the header and the rows with the new column
+      setOriginalData([newHeaderObject, ...updatedData]); // Set the updated header and rows
+      setData([newHeaderObject, ...updatedData]); // Update filtered data (if used for searching)
+  
+      setNewColumnName(""); // Clear input after adding
+      setDirty(true); // Mark as dirty after making changes
     }
   };
-
-  const handleRemoveColumn = (columnName: string) => {
-    setOriginalData(prevData => prevData.map(row => {
-      const { [columnName]: _, ...rest } = row;
-      return rest;
-    }));
-
-    setData(prevData => prevData.map(row => {
-      const { [columnName]: _, ...rest } = row;
-      return rest;
-    }));
-    setDirty(true);
-  };
-
-  const handleUploadCSV = async () => {
-    // Convert JSON data to CSV or TSV format
-    const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
-    const sheet = XLSX.utils.json_to_sheet(originalData);
-  
-    let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
-    if (delimiter === "\t") {
-      csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
-    }
-  
-    // Create a FormData object
-    const formData = new FormData();
-    
-    // Create a Blob from CSV or TSV data
-    const csvBlob = new Blob([csvData], { type: 'text/csv' });
-  
-    // Append the file to the FormData object
-    formData.append('file', csvBlob, 'data.csv'); // Use appropriate file extension based on format
-    formData.append('report_type', selectedValue);
-  
-    await submit(formData);
-  };
   
 
+  // Handle search
   const handleSearch = (e: any) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
@@ -159,16 +155,16 @@ const ExcelEditor = () => {
     if (term === "") {
       setData(originalData); // Reset to original data when search term is cleared
     } else {
-      // Filter data based on the search term
       const filteredData = originalData.filter((row) =>
         Object.values(row).some((value) =>
           String(value).toLowerCase().includes(term)
         )
       );
-      setData(filteredData); // Update the data with filtered results
+      setData(filteredData);
     }
   };
 
+  // Table Row component
   const Row = ({ index, style }: any) => {
     const row = data[index];
     return (
@@ -182,6 +178,7 @@ const ExcelEditor = () => {
     );
   };
 
+  // Table Header component
   const Header = () => {
     if (!data || data.length === 0) return null;
     return (
@@ -195,7 +192,7 @@ const ExcelEditor = () => {
                   <button
                     disabled={uploadOptions.isLoading}
                     className="text-red-500 hover:text-red-700 cursor-pointer"
-                    onClick={() => handleRemoveColumn(key)}
+                    onClick={() => handleRemoveColumn(key)} // Handle column removal
                   >
                     <span className="text-lg">×</span>
                   </button>
@@ -206,6 +203,44 @@ const ExcelEditor = () => {
         </tr>
       </thead>
     );
+  };
+
+  // Handle column removal
+  const handleRemoveColumn = (columnName: string) => {
+    setOriginalData(prevData => prevData.map(row => {
+      const { [columnName]: _, ...rest } = row;
+      return rest;
+    }));
+
+    setData(prevData => prevData.map(row => {
+      const { [columnName]: _, ...rest } = row;
+      return rest;
+    }));
+    setDirty(true);
+  };
+
+  // Upload the CSV data
+  const handleUploadCSV = async () => {
+    // Convert JSON data to CSV or TSV format
+    const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
+    const sheet = XLSX.utils.json_to_sheet(originalData);
+
+    let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
+    if (delimiter === "\t") {
+      csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
+    }
+
+    // Create a FormData object
+    const formData = new FormData();
+
+    // Create a Blob from CSV or TSV data
+    const csvBlob = new Blob([csvData], { type: 'text/csv' });
+
+    // Append the file to the FormData object
+    formData.append('file', csvBlob, 'data.csv'); // Use appropriate file extension based on format
+    formData.append('report_type', selectedValue);
+
+    await submit(formData);
   };
 
   return (
@@ -225,6 +260,22 @@ const ExcelEditor = () => {
           placeholder="New Column Name"
           className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
         />
+        
+        {/* Dropdown to select the column after which to insert the new column */}
+        <Select onValueChange={setSelectedColumn} value={selectedColumn}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select Column to Insert After" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Select Column</SelectLabel>
+              {Object.keys(originalData[0] || {}).map((key) => (
+                <SelectItem key={key} value={key}>{key}</SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
         <Button onClick={handleAddColumn} color="primary">
           Add Column
         </Button>
