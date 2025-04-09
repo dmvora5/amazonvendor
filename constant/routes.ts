@@ -31,6 +31,7 @@ export const API_ROUTES = {
 
         REPORT: "/report/",
         UPLOADREPORT: "/report/upload/report/",
+        UPDATEREPORT: "/report/upload/update-report/",
 
         //category
         CREATECATEGORY: "/category/add-category-re-order/",

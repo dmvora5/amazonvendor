@@ -252,6 +252,14 @@ export const userApi = createApi({
             }),
             invalidatesTags: ["Report"]
         }),
+        updateReport: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.UPDATEREPORT,
+                method: "POST",
+                body: payload
+            }),
+            invalidatesTags: ["Report"]
+        }),
 
     })
 });
@@ -273,6 +281,7 @@ export const {
     useGetAllInventoryListQuery,
     useGetReportQuery,
     useUploadReportMutation,
+    useUpdateReportMutation,
 
     //category
     useAddCategoryMutation,

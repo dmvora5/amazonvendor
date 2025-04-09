@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import * as XLSX from "xlsx";
 import { FixedSizeList as List } from "react-window"; // Import react-window
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGetReportQuery, useUploadReportMutation } from "@/redux/apis/usersApis";
+import { useGetReportQuery, useUpdateReportMutation } from "@/redux/apis/usersApis";
 import Image from "next/image";
 
 const options = [
@@ -62,7 +62,7 @@ const ExcelEditor = () => {
 
   const { data: queryData, isLoading, error, isFetching } = useGetReportQuery(selectedValue);
 
-  const [submit, uploadOptions] = useUploadReportMutation();
+  const [submit, uploadOptions] = useUpdateReportMutation();
 
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
