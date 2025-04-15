@@ -23,15 +23,40 @@ const InputComponent = memo(({ data, index, keyData, setData, setDirty, disabled
   const [state, setState] = useState<string>(row[keyData]);
 
   const handleChange = (e: any) => {
-    setState(e.target.value);
+    const { name, value } = e.target;
+    setState(value);
+  
+    // Check if we're modifying one of the supplier order columns
+    if (name === "Supplier A Order" || name === "Supplier B Order") {
+      // Recalculate the "Order" column
+      const supplierAOrder = parseFloat(row["Supplier A Order"]) || 0;
+      const supplierBOrder = parseFloat(row["Supplier B Order"]) || 0;
+      const newOrder = supplierAOrder + supplierBOrder;
+  
+      // Update the "Order" column in the row
+      const updatedData = [...data];
+      updatedData[index]["Order"] = newOrder;
+  
+      setData(updatedData); // Update the filtered data
+    }
   };
+  
 
   const handleBlur = (e: any) => {
     const newData: any = [...data];
     newData[index][keyData] = e.target.value;
+  
+    // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
+    if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
+      const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
+      const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
+      newData[index]["Order"] = supplierAOrder + supplierBOrder;
+    }
+  
     setData(newData);
     setDirty(true); // Set dirty flag when data is changed
   };
+  
 
   return (
     <Input
