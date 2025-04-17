@@ -261,6 +261,25 @@ export const userApi = createApi({
             invalidatesTags: ["Report"]
         }),
 
+        //order
+        getOrder: build.query({
+            query: (type: any) => ({
+                url: `${API_ROUTES.SUPERADMIN.GETORDER}`,
+                method: "GET",
+            }),
+            providesTags: ["Report"]
+        }),
+        updateOrder: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.UPDATEORDER,
+                method: "PATCH",
+                body: {
+                    ...payload,
+                },
+            }),
+            invalidatesTags: ["Report"],
+        }),
+
     })
 });
 
@@ -282,6 +301,8 @@ export const {
     useGetReportQuery,
     useUploadReportMutation,
     useUpdateReportMutation,
+    useGetOrderQuery,
+    useUpdateOrderMutation,
 
     //category
     useAddCategoryMutation,

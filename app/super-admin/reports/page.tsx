@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import * as XLSX from "xlsx";
 import { FixedSizeList as List } from "react-window"; // Import react-window
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGetReportQuery, useUpdateReportMutation } from "@/redux/apis/usersApis";
+import { useGetReportQuery, useUpdateReportMutation, useGetOrderQuery, useUpdateOrderMutation } from "@/redux/apis/usersApis";
 import Image from "next/image";
 
 const options = [
@@ -135,8 +135,24 @@ const ExcelEditor = () => {
   const listRef = useRef<any>(null);
 
   const { data: queryData, isLoading, error, isFetching } = useGetReportQuery(selectedValue);
+  const { data: orderData, isLoading: isOrderDataLoading, error: isOrderDataError, isFetching: isOrderDataFetching } = useGetOrderQuery({});
+  console.log("🚀 ~ ExcelEditor ~ orderData:", orderData)
 
   const [submit, uploadOptions] = useUpdateReportMutation();
+  const [updateOrder, updateOrderOptions] = useUpdateOrderMutation();
+
+  const handleUpdateOrderType = async () => {
+    try {
+      const payload = {
+        order_type: "2W", // 2W,6W,2M,3M,4W_14D_SALE
+      };
+  
+      const res = await updateOrder(payload);
+      console.log("Order type updated successfully:", res);
+    } catch (error) {
+      console.error("Error updating order type:", error);
+    }
+  };
 
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
