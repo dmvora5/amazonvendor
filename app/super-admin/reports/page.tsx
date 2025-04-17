@@ -21,7 +21,7 @@ const options = [
 const InputComponent = memo(({originalData,data, index, keyData, setData, setDirty, disabled }: any) => {
   const row = data[index];
   const [state, setState] = useState<string>(row[keyData]);
-  const [initialOrder] = useState(originalData[index]["Order"])
+  const [initialOrder] = useState(originalData[index]?.Order || 0)
 
 
   const handleChange = (e: any) => {
@@ -242,7 +242,6 @@ const ExcelEditor = () => {
   const Row = ({ index, style }: any) => {
     const row = data[index];
     const oRow = originalData
-    console.log('oRow', oRow[index]["Order"])
     return (
       <div style={style} className="flex border-b hover:bg-gray-50 overflow-x-hidden">
         {Object.keys(row).map((key) => (
@@ -283,10 +282,11 @@ const ExcelEditor = () => {
 
   // Handle column removal
   const handleRemoveColumn = (columnName: string) => {
-    // setOriginalData(prevData => prevData.map(row => {
-    //   const { [columnName]: _, ...rest } = row;
-    //   return rest;
-    // }));
+    
+    setOriginalData(prevData => prevData.map(row => {
+      const { [columnName]: _, ...rest } = row;
+      return rest;
+    }));
 
     setData(prevData => prevData.map(row => {
       const { [columnName]: _, ...rest } = row;
