@@ -18,45 +18,92 @@ const options = [
   { value: "project_database", label: "Project Database" },
 ];
 
-const InputComponent = memo(({ data, index, keyData, setData, setDirty, disabled }: any) => {
+const InputComponent = memo(({originalData,data, index, keyData, setData, setDirty, disabled }: any) => {
   const row = data[index];
   const [state, setState] = useState<string>(row[keyData]);
+  const [initialOrder] = useState(originalData[index]["Order"])
+
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
     setState(value);
   
-    // Check if we're modifying one of the supplier order columns
-    if (name === "Supplier A Order" || name === "Supplier B Order") {
-      // Recalculate the "Order" column
-      const supplierAOrder = parseFloat(row["Supplier A Order"]) || 0;
-      const supplierBOrder = parseFloat(row["Supplier B Order"]) || 0;
-      const newOrder = supplierAOrder + supplierBOrder;
+    // Clone the data to avoid mutating originalData
+    const updatedData = [...data];
+    
+    if (keyData.includes("Supplier ")) {
+      const supplierColumns = Object.keys(updatedData[index]).filter(key => key.includes("Supplier "));
+      let totalSupplierValue = 0;
+      
+      supplierColumns.forEach(supplierColumn => {
+        totalSupplierValue += parseFloat(updatedData[index][supplierColumn]) || 0;
+      });
   
-      // Update the "Order" column in the row
-      const updatedData = [...data];
-      updatedData[index]["Order"] = newOrder;
+      updatedData[index]["Total New Inbound"] = totalSupplierValue;
+      let updatedOrder = initialOrder - totalSupplierValue;
   
-      setData(updatedData); // Update the filtered data
+      updatedData[index]["Order"] = updatedOrder;
     }
+    
+    // Now setData updates `data`, not `originalData`
+    // setData(updatedData);
   };
   
-
   const handleBlur = (e: any) => {
     const newData: any = [...data];
     newData[index][keyData] = e.target.value;
+    const oriNewData: any =[...originalData]
   
-    // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
-    if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
-      const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
-      const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
-      newData[index]["Order"] = supplierAOrder + supplierBOrder;
+    if (keyData.includes("Supplier ")) {
+      const supplierColumns = Object.keys(newData[index]).filter(key => key.includes("Supplier "));
+      let totalSupplierValue = 0;
+  
+      supplierColumns.forEach(supplierColumn => {
+        totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
+      });
+  
+      let updatedOrder = initialOrder - totalSupplierValue;
+
+      if(updatedOrder < 0) {
+        supplierColumns.forEach(supplierColumn => {
+          newData[index][supplierColumn] = oriNewData[index][supplierColumn]
+        });
+        newData[index]["Order"] =  oriNewData[index]["Order"];
+        newData[index]["Total New Inbound"] = oriNewData[index]["Total New Inbound"];
+      } else {
+        newData[index]["Order"] = updatedOrder;
+        newData[index]["Total New Inbound"] = totalSupplierValue;
+      }
+      setData(newData);
+      setDirty(true);
+
+    } else {
+      // Update `data`, not `originalData`
+      setData(newData);
+      setDirty(true);
     }
   
-    setData(newData);
-    setDirty(true); // Set dirty flag when data is changed
   };
   
+
+
+
+  // const handleBlur = (e: any) => {
+  //   const newData: any = [...data];
+  //   newData[index][keyData] = e.target.value;
+
+  //   // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
+  //   if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
+  //     const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
+  //     const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
+  //     newData[index]["Order"] = supplierAOrder + supplierBOrder;
+  //   }
+
+  //   setData(newData);
+  //   setDirty(true); // Set dirty flag when data is changed
+  // };
+
+
 
   return (
     <Input
@@ -78,6 +125,8 @@ const ExcelEditor = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
+
+  const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -103,9 +152,9 @@ const ExcelEditor = () => {
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
 
-      setOriginalData(json); // Save original data
+      setOriginalData(JSON.parse(JSON.stringify(json))); // Save original data
       setData(json); // Also set filtered data initially to the original data
-      if(json.length) {
+      if (json.length) {
         const key = Object.keys(json[0]);
         setSelectedColumn(key[0]);
       }
@@ -132,45 +181,45 @@ const ExcelEditor = () => {
       const headerObject = { ...originalData[0] };  // Copy the header object
       const headerKeys = Object.keys(headerObject); // Get all the column keys
       const selectedIndex = headerKeys.indexOf(selectedColumn); // Find the index of the selected column
-  
+
       if (selectedIndex === -1) return; // If selected column is not found, return
-  
+
       // Step 1: Insert the new column key into the header keys array at the correct position
       headerKeys.splice(selectedIndex + 1, 0, newColumnName); // Insert after selected column
-  
+
       // Step 2: Rebuild the header object with the new column added
       const newHeaderObject: any = {};
       headerKeys.forEach((key) => {
         newHeaderObject[key] = headerObject[key] || null; // Keep existing keys and add the new column with an empty value
       });
-  
+
       // Step 3: Update each row in originalData to reflect the new column (set the new column to null or empty string)
       const updatedData = originalData.map((row, index) => {
         if (index === 0) return newHeaderObject; // If it's the header row, update it
-  
+
         const updatedRow = { ...row };
-  
+
         // Add new column with null or empty string for all rows
         updatedRow[newColumnName] = null; // New column with null value for existing rows
-  
+
         // Ensure rows are updated correctly according to the new column order
         const reorderedRow: any = {};
         headerKeys.forEach((key) => {
           reorderedRow[key] = updatedRow[key] || null; // Ensure each row has the same order as header
         });
-  
+
         return reorderedRow;
       });
-  
+
       // Step 4: Update both the header and the rows with the new column
-      setOriginalData([newHeaderObject, ...updatedData]); // Set the updated header and rows
+      // setOriginalData([newHeaderObject, ...updatedData]); // Set the updated header and rows
       setData([newHeaderObject, ...updatedData]); // Update filtered data (if used for searching)
-  
+
       setNewColumnName(""); // Clear input after adding
       setDirty(true); // Mark as dirty after making changes
     }
   };
-  
+
 
   // Handle search
   const handleSearch = (e: any) => {
@@ -192,11 +241,13 @@ const ExcelEditor = () => {
   // Table Row component
   const Row = ({ index, style }: any) => {
     const row = data[index];
+    const oRow = originalData
+    console.log('oRow', oRow[index]["Order"])
     return (
       <div style={style} className="flex border-b hover:bg-gray-50 overflow-x-hidden">
         {Object.keys(row).map((key) => (
           <div key={key} className="px-4 py-2 flex-shrink-0" style={{ width: columnWidth }}>
-            <InputComponent data={originalData} index={index} keyData={key} setData={setOriginalData} setDirty={setDirty} disabled={uploadOptions.isLoading} />
+            <InputComponent originalData={originalData}  data={data} index={index} keyData={key} setData={setData} setDirty={setDirty} disabled={uploadOptions.isLoading} />
           </div>
         ))}
       </div>
@@ -232,10 +283,10 @@ const ExcelEditor = () => {
 
   // Handle column removal
   const handleRemoveColumn = (columnName: string) => {
-    setOriginalData(prevData => prevData.map(row => {
-      const { [columnName]: _, ...rest } = row;
-      return rest;
-    }));
+    // setOriginalData(prevData => prevData.map(row => {
+    //   const { [columnName]: _, ...rest } = row;
+    //   return rest;
+    // }));
 
     setData(prevData => prevData.map(row => {
       const { [columnName]: _, ...rest } = row;
@@ -248,7 +299,7 @@ const ExcelEditor = () => {
   const handleUploadCSV = async () => {
     // Convert JSON data to CSV or TSV format
     const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
-    const sheet = XLSX.utils.json_to_sheet(originalData);
+    const sheet = XLSX.utils.json_to_sheet(data);
 
     let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
     if (delimiter === "\t") {
@@ -285,7 +336,7 @@ const ExcelEditor = () => {
           placeholder="New Column Name"
           className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
         />
-        
+
         {/* Dropdown to select the column after which to insert the new column */}
         <Select onValueChange={setSelectedColumn} value={selectedColumn}>
           <SelectTrigger className="w-[180px]">
