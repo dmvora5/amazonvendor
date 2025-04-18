@@ -1,12 +1,25 @@
-'use client'
+"use client";
 
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import * as XLSX from "xlsx";
 import { FixedSizeList as List } from "react-window"; // Import react-window
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGetReportQuery, useUpdateReportMutation, useGetOrderQuery, useUpdateOrderMutation } from "@/redux/apis/usersApis";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useGetReportQuery,
+  useUpdateReportMutation,
+  useGetOrderQuery,
+  useUpdateOrderMutation,
+} from "@/redux/apis/usersApis";
 import Image from "next/image";
 
 const options = [
@@ -18,103 +31,111 @@ const options = [
   { value: "project_database", label: "Project Database" },
 ];
 
-const InputComponent = memo(({originalData,data, index, keyData, setData, setDirty, disabled }: any) => {
-  const row = data[index];
-  const [state, setState] = useState<string>(row[keyData]);
-  const [initialOrder] = useState(originalData[index]?.Order || 0)
+const InputComponent = memo(
+  ({
+    originalData,
+    data,
+    index,
+    keyData,
+    setData,
+    setDirty,
+    disabled,
+  }: any) => {
+    const row = data[index];
+    const [state, setState] = useState<string>(row[keyData]);
+    const [initialOrder] = useState(originalData[index]?.Order || 0);
 
+    const handleChange = (e: any) => {
+      const { name, value } = e.target;
+      setState(value);
 
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
-    setState(value);
-  
-    // Clone the data to avoid mutating originalData
-    const updatedData = [...data];
-    
-    if (keyData.includes("Supplier ")) {
-      const supplierColumns = Object.keys(updatedData[index]).filter(key => key.includes("Supplier "));
-      let totalSupplierValue = 0;
-      
-      supplierColumns.forEach(supplierColumn => {
-        totalSupplierValue += parseFloat(updatedData[index][supplierColumn]) || 0;
-      });
-  
-      updatedData[index]["Total New Inbound"] = totalSupplierValue;
-      let updatedOrder = initialOrder - totalSupplierValue;
-  
-      updatedData[index]["Order"] = updatedOrder;
-    }
-    
-    // Now setData updates `data`, not `originalData`
-    // setData(updatedData);
-  };
-  
-  const handleBlur = (e: any) => {
-    const newData: any = [...data];
-    newData[index][keyData] = e.target.value;
-    const oriNewData: any =[...originalData]
-  
-    if (keyData.includes("Supplier ")) {
-      const supplierColumns = Object.keys(newData[index]).filter(key => key.includes("Supplier "));
-      let totalSupplierValue = 0;
-  
-      supplierColumns.forEach(supplierColumn => {
-        totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
-      });
-  
-      let updatedOrder = initialOrder - totalSupplierValue;
+      // Clone the data to avoid mutating originalData
+      const updatedData = [...data];
 
-      if(updatedOrder < 0) {
-        supplierColumns.forEach(supplierColumn => {
-          newData[index][supplierColumn] = oriNewData[index][supplierColumn]
+      if (keyData.includes("Supplier ")) {
+        const supplierColumns = Object.keys(updatedData[index]).filter((key) =>
+          key.includes("Supplier ")
+        );
+        let totalSupplierValue = 0;
+
+        supplierColumns.forEach((supplierColumn) => {
+          totalSupplierValue +=
+            parseFloat(updatedData[index][supplierColumn]) || 0;
         });
-        newData[index]["Order"] =  oriNewData[index]["Order"];
-        newData[index]["Total New Inbound"] = oriNewData[index]["Total New Inbound"];
-      } else {
-        newData[index]["Order"] = updatedOrder;
-        newData[index]["Total New Inbound"] = totalSupplierValue;
+
+        updatedData[index]["Total New Inbound"] = totalSupplierValue;
+        let updatedOrder = initialOrder - totalSupplierValue;
+
+        updatedData[index]["Order"] = updatedOrder;
       }
-      setData(newData);
-      setDirty(true);
 
-    } else {
-      // Update `data`, not `originalData`
-      setData(newData);
-      setDirty(true);
-    }
-  
-  };
-  
+      // Now setData updates `data`, not `originalData`
+      // setData(updatedData);
+    };
 
+    const handleBlur = (e: any) => {
+      const newData: any = [...data];
+      newData[index][keyData] = e.target.value;
+      const oriNewData: any = [...originalData];
 
+      if (keyData.includes("Supplier ")) {
+        const supplierColumns = Object.keys(newData[index]).filter((key) =>
+          key.includes("Supplier ")
+        );
+        let totalSupplierValue = 0;
 
-  // const handleBlur = (e: any) => {
-  //   const newData: any = [...data];
-  //   newData[index][keyData] = e.target.value;
+        supplierColumns.forEach((supplierColumn) => {
+          totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
+        });
 
-  //   // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
-  //   if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
-  //     const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
-  //     const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
-  //     newData[index]["Order"] = supplierAOrder + supplierBOrder;
-  //   }
+        let updatedOrder = initialOrder - totalSupplierValue;
 
-  //   setData(newData);
-  //   setDirty(true); // Set dirty flag when data is changed
-  // };
+        if (updatedOrder < 0) {
+          supplierColumns.forEach((supplierColumn) => {
+            newData[index][supplierColumn] = oriNewData[index][supplierColumn];
+          });
+          newData[index]["Order"] = oriNewData[index]["Order"];
+          newData[index]["Total New Inbound"] =
+            oriNewData[index]["Total New Inbound"];
+        } else {
+          newData[index]["Order"] = updatedOrder;
+          newData[index]["Total New Inbound"] = totalSupplierValue;
+        }
+        setData(newData);
+        setDirty(true);
+      } else {
+        // Update `data`, not `originalData`
+        setData(newData);
+        setDirty(true);
+      }
+    };
 
+    // const handleBlur = (e: any) => {
+    //   const newData: any = [...data];
+    //   newData[index][keyData] = e.target.value;
 
+    //   // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
+    //   if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
+    //     const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
+    //     const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
+    //     newData[index]["Order"] = supplierAOrder + supplierBOrder;
+    //   }
 
-  return (
-    <Input
-      value={state}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      disabled={disabled}
-      className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  );
-});
+    //   setData(newData);
+    //   setDirty(true); // Set dirty flag when data is changed
+    // };
+
+    return (
+      <Input
+        value={state}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        disabled={disabled}
+        className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    );
+  }
+);
 
 const ExcelEditor = () => {
   const [data, setData] = useState<any[]>([]); // Holds filtered data
@@ -125,6 +146,7 @@ const ExcelEditor = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
+  const [selectedOrderValue, setSelectedOrderValue] = useState("");
 
   const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
 
@@ -134,19 +156,38 @@ const ExcelEditor = () => {
 
   const listRef = useRef<any>(null);
 
-  const { data: queryData, isLoading, error, isFetching } = useGetReportQuery(selectedValue);
-  const { data: orderData, isLoading: isOrderDataLoading, error: isOrderDataError, isFetching: isOrderDataFetching } = useGetOrderQuery({});
-  console.log("🚀 ~ ExcelEditor ~ orderData:", orderData)
+  const {
+    data: queryData,
+    isLoading,
+    error,
+    isFetching,
+  } = useGetReportQuery(selectedValue);
+  const {
+    data: orderData,
+    isLoading: isOrderDataLoading,
+    error: isOrderDataError,
+    isFetching: isOrderDataFetching,
+  } = useGetOrderQuery({});
 
   const [submit, uploadOptions] = useUpdateReportMutation();
   const [updateOrder, updateOrderOptions] = useUpdateOrderMutation();
 
-  const handleUpdateOrderType = async () => {
+  // Options for the dropdown
+  const optionsForOrder = [
+    { label: "2 Weeks", value: "2W" },
+    { label: "6 Weeks", value: "6W" },
+    { label: "2 Months", value: "2M" },
+    { label: "3 Months", value: "3M" },
+    { label: "4W 14D Sale", value: "4W_14D_SALE" },
+  ];
+
+  const handleChange = async (value: string) => {
+    setSelectedOrderValue(value);
     try {
       const payload = {
-        order_type: "2W", // 2W,6W,2M,3M,4W_14D_SALE
+        order_type: value,
       };
-  
+
       const res = await updateOrder(payload);
       console.log("Order type updated successfully:", res);
     } catch (error) {
@@ -191,10 +232,17 @@ const ExcelEditor = () => {
     setDirty(false);
   }, [uploadOptions.isSuccess]);
 
+  // Set default value once data is fetched
+  useEffect(() => {
+    if ((orderData as any)?.order_type) {
+      setSelectedOrderValue((orderData as any)?.order_type);
+    }
+  }, [orderData]);
+
   // Function to handle adding a new column after the selected column
   const handleAddColumn = () => {
     if (newColumnName.trim() && selectedColumn) {
-      const headerObject = { ...originalData[0] };  // Copy the header object
+      const headerObject = { ...originalData[0] }; // Copy the header object
       const headerKeys = Object.keys(headerObject); // Get all the column keys
       const selectedIndex = headerKeys.indexOf(selectedColumn); // Find the index of the selected column
 
@@ -236,7 +284,6 @@ const ExcelEditor = () => {
     }
   };
 
-
   // Handle search
   const handleSearch = (e: any) => {
     const term = e.target.value.toLowerCase();
@@ -257,12 +304,27 @@ const ExcelEditor = () => {
   // Table Row component
   const Row = ({ index, style }: any) => {
     const row = data[index];
-    const oRow = originalData
+    const oRow = originalData;
     return (
-      <div style={style} className="flex border-b hover:bg-gray-50 overflow-x-hidden">
+      <div
+        style={style}
+        className="flex border-b hover:bg-gray-50 overflow-x-hidden"
+      >
         {Object.keys(row).map((key) => (
-          <div key={key} className="px-4 py-2 flex-shrink-0" style={{ width: columnWidth }}>
-            <InputComponent originalData={originalData}  data={data} index={index} keyData={key} setData={setData} setDirty={setDirty} disabled={uploadOptions.isLoading} />
+          <div
+            key={key}
+            className="px-4 py-2 flex-shrink-0"
+            style={{ width: columnWidth }}
+          >
+            <InputComponent
+              originalData={originalData}
+              data={data}
+              index={index}
+              keyData={key}
+              setData={setData}
+              setDirty={setDirty}
+              disabled={uploadOptions.isLoading}
+            />
           </div>
         ))}
       </div>
@@ -276,7 +338,11 @@ const ExcelEditor = () => {
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
           {Object.keys(data[0]).map((key) => (
-            <th key={key} className="relative px-4 py-3 text-left" style={{ width: columnWidth }}>
+            <th
+              key={key}
+              className="relative px-4 py-3 text-left"
+              style={{ width: columnWidth }}
+            >
               <div className="flex justify-between items-center">
                 <span>{key}</span>
                 {key !== "Action" && (
@@ -298,16 +364,19 @@ const ExcelEditor = () => {
 
   // Handle column removal
   const handleRemoveColumn = (columnName: string) => {
-    
-    setOriginalData(prevData => prevData.map(row => {
-      const { [columnName]: _, ...rest } = row;
-      return rest;
-    }));
+    setOriginalData((prevData) =>
+      prevData.map((row) => {
+        const { [columnName]: _, ...rest } = row;
+        return rest;
+      })
+    );
 
-    setData(prevData => prevData.map(row => {
-      const { [columnName]: _, ...rest } = row;
-      return rest;
-    }));
+    setData((prevData) =>
+      prevData.map((row) => {
+        const { [columnName]: _, ...rest } = row;
+        return rest;
+      })
+    );
     setDirty(true);
   };
 
@@ -326,17 +395,34 @@ const ExcelEditor = () => {
     const formData = new FormData();
 
     // Create a Blob from CSV or TSV data
-    const csvBlob = new Blob([csvData], { type: 'text/csv' });
+    const csvBlob = new Blob([csvData], { type: "text/csv" });
 
     // Append the file to the FormData object
-    formData.append('file', csvBlob, 'data.csv'); // Use appropriate file extension based on format
-    formData.append('report_type', selectedValue);
+    formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
+    formData.append("report_type", selectedValue);
 
     await submit(formData);
   };
 
   return (
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <div className="p-2 ml-auto">
+        <Select onValueChange={handleChange} value={selectedOrderValue}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select an order" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Select Order</SelectLabel>
+              {optionsForOrder.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="mb-4 flex items-center">
         <Input
           type="text"
@@ -362,7 +448,9 @@ const ExcelEditor = () => {
             <SelectGroup>
               <SelectLabel>Select Column</SelectLabel>
               {Object.keys(originalData[0] || {}).map((key) => (
-                <SelectItem key={key} value={key}>{key}</SelectItem>
+                <SelectItem key={key} value={key}>
+                  {key}
+                </SelectItem>
               ))}
             </SelectGroup>
           </SelectContent>
@@ -381,7 +469,9 @@ const ExcelEditor = () => {
               <SelectGroup>
                 <SelectLabel>Select Report Type</SelectLabel>
                 {options.map((option: any) => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
@@ -390,7 +480,9 @@ const ExcelEditor = () => {
       </div>
 
       {isLoading || loading || isFetching ? (
-        <div className="h-[600px] w-full flex items-center justify-center"><h2>Loading...</h2></div>
+        <div className="h-[600px] w-full flex items-center justify-center">
+          <h2>Loading...</h2>
+        </div>
       ) : (
         <div className="overflow-x-auto max-h-[620px]">
           <div className="relative">
@@ -401,7 +493,9 @@ const ExcelEditor = () => {
               height={containerHeight}
               itemCount={data.length}
               itemSize={rowHeight}
-              width={data.length > 0 ? columnWidth * Object.keys(data[0]).length : 0}
+              width={
+                data.length > 0 ? columnWidth * Object.keys(data[0]).length : 0
+              }
               ref={listRef}
             >
               {Row}
@@ -413,7 +507,12 @@ const ExcelEditor = () => {
       <div className="mt-6 flex justify-between">
         {dirty && (
           <div className="mt-6 flex justify-center">
-            <Button className="w-[120px]" disabled={uploadOptions.isLoading} onClick={handleUploadCSV} color="primary">
+            <Button
+              className="w-[120px]"
+              disabled={uploadOptions.isLoading}
+              onClick={handleUploadCSV}
+              color="primary"
+            >
               {uploadOptions.isLoading ? (
                 <Image
                   src="/assets/icons/loader.svg"
@@ -422,7 +521,9 @@ const ExcelEditor = () => {
                   height={24}
                   className="animate-spin mx-auto"
                 />
-              ) : "Save Changes"}
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </div>
         )}
