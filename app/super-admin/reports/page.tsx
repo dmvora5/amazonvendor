@@ -82,57 +82,57 @@ const InputComponent = memo(
       // setData(updatedData);
     };
 
-    // const handleBlur = (e: any) => {
-    //   const newData: any = [...data];
-    //   newData[index][keyData] = e.target.value;
-    //   const oriNewData: any = [...originalData];
-
-    //   if (keyData.includes("Supplier ")) {
-    //     const supplierColumns = Object.keys(newData[index]).filter((key) =>
-    //       key.includes("Supplier ")
-    //     );
-    //     let totalSupplierValue = 0;
-
-    //     supplierColumns.forEach((supplierColumn) => {
-    //       totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
-    //     });
-
-    //     let updatedOrder = initialOrder - totalSupplierValue;
-
-    //     if (updatedOrder < 0) {
-    //       supplierColumns.forEach((supplierColumn) => {
-    //         newData[index][supplierColumn] = oriNewData[index][supplierColumn];
-    //       });
-    //       newData[index]["Order"] = oriNewData[index]["Order"];
-    //       newData[index]["Total New Inbound"] =
-    //         oriNewData[index]["Total New Inbound"];
-    //     } else {
-    //       newData[index]["Order"] = updatedOrder;
-    //       newData[index]["Total New Inbound"] = totalSupplierValue;
-    //     }
-    //     setData(newData);
-    //     setDirty(true);
-    //   } else {
-    //     // Update `data`, not `originalData`
-    //     setData(newData);
-    //     setDirty(true);
-    //   }
-    // };
-
     const handleBlur = (e: any) => {
       const newData: any = [...data];
       newData[index][keyData] = e.target.value;
+      const oriNewData: any = [...originalData];
 
-      // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
-      // if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
-      //   const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
-      //   const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
-      //   newData[index]["Order"] = supplierAOrder + supplierBOrder;
-      // }
+      if (keyData.includes("Supplier ")) {
+        const supplierColumns = Object.keys(newData[index]).filter((key) =>
+          key.includes("Supplier ")
+        );
+        let totalSupplierValue = 0;
 
-      setData(newData);
-      setDirty(true); // Set dirty flag when data is changed
+        supplierColumns.forEach((supplierColumn) => {
+          totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
+        });
+
+        let updatedOrder = initialOrder - totalSupplierValue;
+
+        if (updatedOrder < 0) {
+          supplierColumns.forEach((supplierColumn) => {
+            newData[index][supplierColumn] = oriNewData[index][supplierColumn];
+          });
+          // newData[index]["Order"] = oriNewData[index]["Order"];
+          newData[index]["Total New Inbound"] =
+            oriNewData[index]["Total New Inbound"];
+        } else {
+          // newData[index]["Order"] = updatedOrder;
+          newData[index]["Total New Inbound"] = totalSupplierValue;
+        }
+        setData(newData);
+        setDirty(true);
+      } else {
+        // Update `data`, not `originalData`
+        setData(newData);
+        setDirty(true);
+      }
     };
+
+    // const handleBlur = (e: any) => {
+    //   const newData: any = [...data];
+    //   newData[index][keyData] = e.target.value;
+
+    //   // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
+    //   // if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
+    //   //   const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
+    //   //   const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
+    //   //   newData[index]["Order"] = supplierAOrder + supplierBOrder;
+    //   // }
+
+    //   setData(newData);
+    //   setDirty(true); // Set dirty flag when data is changed
+    // };
 
     return (
       <Input
@@ -159,6 +159,8 @@ const ExcelEditor = () => {
   const [openSumModel, setOpenSumModel] = useState(false);
   const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
   const [newSumColumnName, setSumNewColumnName] = useState("");
+  const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
+  console.log("🚀 ~ ExcelEditor ~ selectedDateColumns:", selectedDateColumns)
 
   const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
 
@@ -351,6 +353,10 @@ const ExcelEditor = () => {
   // Table Header component
   const Header = () => {
     if (!data || data.length === 0) return null;
+  
+    // Match keys that are dates in format: DD.MM.YY
+    const isDateKey = (key: string) => /^\d{2}\.\d{2}\.\d{2}$/.test(key);
+  
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
@@ -360,13 +366,24 @@ const ExcelEditor = () => {
               className="relative px-4 py-3 text-left"
               style={{ width: columnWidth }}
             >
-              <div className="flex justify-between items-center">
-                <span>{key}</span>
+              <div className="flex justify-between items-center gap-2">
+                <div className="flex items-center gap-1">
+                  {isDateKey(key) && (
+                   <input
+                   type="checkbox"
+                   value={key}
+                   checked={selectedDateColumns.includes(key)}
+                   onChange={(e) => handleDateCheckboxChange(e, key)}
+                 />
+                  )}
+                  <span>{key}</span>
+                </div>
+  
                 {key !== "Action" && (
                   <button
                     disabled={uploadOptions.isLoading}
                     className="text-red-500 hover:text-red-700 cursor-pointer"
-                    onClick={() => handleRemoveColumn(key)} // Handle column removal
+                    onClick={() => handleRemoveColumn(key)}
                   >
                     <span className="text-lg">×</span>
                   </button>
@@ -377,6 +394,16 @@ const ExcelEditor = () => {
         </tr>
       </thead>
     );
+  };
+
+  const handleDateCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+    const checked = e.target.checked;
+    if (checked) {
+      setSelectedDateColumns((prev) => [...prev, key]);
+    } else {
+      setSelectedDateColumns((prev) => prev.filter((col) => col !== key));
+    }
+    setDirty(true)
   };
 
   // Handle column removal
@@ -417,6 +444,7 @@ const ExcelEditor = () => {
     // Append the file to the FormData object
     formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
     formData.append("report_type", selectedValue);
+    formData.append("selected_date", selectedDateColumns.join(","));
 
     await submit(formData);
   };
