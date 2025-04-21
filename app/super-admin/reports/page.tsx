@@ -642,8 +642,8 @@ const ExcelEditor = () => {
                   value: col,
                   label: col,
                 }))}
-                onChange={(selected) => {
-                  const cols = selected.map((item) => item.value);
+                onChange={(selected: any) => {
+                  const cols = selected.map((item: any) => item.value);
                   setSelectedSumColumns(cols);
                 }}
                 className="react-select-container"
