@@ -21,6 +21,15 @@ import {
   useUpdateOrderMutation,
 } from "@/redux/apis/usersApis";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import ReactSelect from "react-select";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -52,78 +61,78 @@ const InputComponent = memo(
       // Clone the data to avoid mutating originalData
       const updatedData = [...data];
 
-      if (keyData.includes("Supplier ")) {
-        const supplierColumns = Object.keys(updatedData[index]).filter((key) =>
-          key.includes("Supplier ")
-        );
-        let totalSupplierValue = 0;
+      // if (keyData.includes("Supplier ")) {
+      //   const supplierColumns = Object.keys(updatedData[index]).filter((key) =>
+      //     key.includes("Supplier ")
+      //   );
+      //   let totalSupplierValue = 0;
 
-        supplierColumns.forEach((supplierColumn) => {
-          totalSupplierValue +=
-            parseFloat(updatedData[index][supplierColumn]) || 0;
-        });
+      //   supplierColumns.forEach((supplierColumn) => {
+      //     totalSupplierValue +=
+      //       parseFloat(updatedData[index][supplierColumn]) || 0;
+      //   });
 
-        updatedData[index]["Total New Inbound"] = totalSupplierValue;
-        let updatedOrder = initialOrder - totalSupplierValue;
+      //   updatedData[index]["Total New Inbound"] = totalSupplierValue;
+      //   let updatedOrder = initialOrder - totalSupplierValue;
 
-        updatedData[index]["Order"] = updatedOrder;
-      }
+      //   updatedData[index]["Order"] = updatedOrder;
+      // }
 
       // Now setData updates `data`, not `originalData`
       // setData(updatedData);
     };
 
-    const handleBlur = (e: any) => {
-      const newData: any = [...data];
-      newData[index][keyData] = e.target.value;
-      const oriNewData: any = [...originalData];
-
-      if (keyData.includes("Supplier ")) {
-        const supplierColumns = Object.keys(newData[index]).filter((key) =>
-          key.includes("Supplier ")
-        );
-        let totalSupplierValue = 0;
-
-        supplierColumns.forEach((supplierColumn) => {
-          totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
-        });
-
-        let updatedOrder = initialOrder - totalSupplierValue;
-
-        if (updatedOrder < 0) {
-          supplierColumns.forEach((supplierColumn) => {
-            newData[index][supplierColumn] = oriNewData[index][supplierColumn];
-          });
-          newData[index]["Order"] = oriNewData[index]["Order"];
-          newData[index]["Total New Inbound"] =
-            oriNewData[index]["Total New Inbound"];
-        } else {
-          newData[index]["Order"] = updatedOrder;
-          newData[index]["Total New Inbound"] = totalSupplierValue;
-        }
-        setData(newData);
-        setDirty(true);
-      } else {
-        // Update `data`, not `originalData`
-        setData(newData);
-        setDirty(true);
-      }
-    };
-
     // const handleBlur = (e: any) => {
     //   const newData: any = [...data];
     //   newData[index][keyData] = e.target.value;
+    //   const oriNewData: any = [...originalData];
 
-    //   // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
-    //   if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
-    //     const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
-    //     const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
-    //     newData[index]["Order"] = supplierAOrder + supplierBOrder;
+    //   if (keyData.includes("Supplier ")) {
+    //     const supplierColumns = Object.keys(newData[index]).filter((key) =>
+    //       key.includes("Supplier ")
+    //     );
+    //     let totalSupplierValue = 0;
+
+    //     supplierColumns.forEach((supplierColumn) => {
+    //       totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
+    //     });
+
+    //     let updatedOrder = initialOrder - totalSupplierValue;
+
+    //     if (updatedOrder < 0) {
+    //       supplierColumns.forEach((supplierColumn) => {
+    //         newData[index][supplierColumn] = oriNewData[index][supplierColumn];
+    //       });
+    //       newData[index]["Order"] = oriNewData[index]["Order"];
+    //       newData[index]["Total New Inbound"] =
+    //         oriNewData[index]["Total New Inbound"];
+    //     } else {
+    //       newData[index]["Order"] = updatedOrder;
+    //       newData[index]["Total New Inbound"] = totalSupplierValue;
+    //     }
+    //     setData(newData);
+    //     setDirty(true);
+    //   } else {
+    //     // Update `data`, not `originalData`
+    //     setData(newData);
+    //     setDirty(true);
     //   }
-
-    //   setData(newData);
-    //   setDirty(true); // Set dirty flag when data is changed
     // };
+
+    const handleBlur = (e: any) => {
+      const newData: any = [...data];
+      newData[index][keyData] = e.target.value;
+
+      // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
+      // if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
+      //   const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
+      //   const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
+      //   newData[index]["Order"] = supplierAOrder + supplierBOrder;
+      // }
+
+      setData(newData);
+      setDirty(true); // Set dirty flag when data is changed
+    };
 
     return (
       <Input
@@ -147,6 +156,9 @@ const ExcelEditor = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
   const [selectedOrderValue, setSelectedOrderValue] = useState("");
+  const [openSumModel, setOpenSumModel] = useState(false);
+  const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
+  const [newSumColumnName, setSumNewColumnName] = useState("");
 
   const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
 
@@ -155,6 +167,11 @@ const ExcelEditor = () => {
   const columnWidth = 250;
 
   const listRef = useRef<any>(null);
+
+  const columnOptions = Object.keys(originalData[0] || {}).map((key) => ({
+    value: key,
+    label: key,
+  }));
 
   const {
     data: queryData,
@@ -404,6 +421,54 @@ const ExcelEditor = () => {
     await submit(formData);
   };
 
+  const handleSumColumnModel = () => {
+    setOpenSumModel(true); // open the modal
+  };
+
+  const handleCloseSumColumnModel = () => {
+    setOpenSumModel(false); // open the modal
+    setSelectedSumColumns([]); // Clear selected columns
+    setSumNewColumnName(""); // Clear the sum column name input
+  };
+
+  const handleCreateSumColumn = () => {
+    if (!newSumColumnName || selectedSumColumns.length === 0) {
+      alert("Please select columns and enter a column name.");
+      return;
+    }
+  
+    // Check if the new sum column name already exists
+    if (Object.keys(originalData[0]).includes(newSumColumnName)) {
+      alert("Column name already exists. Please choose a different name.");
+      return;
+    }
+  
+    // Calculate the sum for the selected columns
+    const updatedData = originalData.map((row) => {
+      const sum = selectedSumColumns.reduce((acc, col) => {
+        const val = parseFloat(row[col]) || 0; // Handle non-numeric values by defaulting to 0
+        return acc + val;
+      }, 0);
+  
+      // Create a new row with the sum and without the selected sum columns
+      const newRow = { ...row, [newSumColumnName]: sum };
+  
+      // Remove the selected sum columns from the new row
+      selectedSumColumns.forEach((col) => {
+        delete newRow[col];
+      });
+  
+      return newRow;
+    });
+  
+    // Update the data with the new sum column
+    setData(updatedData);
+    setOpenSumModel(false); // Close the modal
+    setSelectedSumColumns([]); // Clear selected columns
+    setSumNewColumnName(""); // Clear the sum column name input
+    setDirty(true);
+  };
+
   return (
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="p-2 ml-auto">
@@ -423,7 +488,7 @@ const ExcelEditor = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="mb-4 flex items-center">
+      <div className="mb-4 space-x-2 flex items-center">
         <Input
           type="text"
           value={searchTerm}
@@ -431,6 +496,9 @@ const ExcelEditor = () => {
           placeholder="Search"
           className="mr-4 p-3 border border-gray-300 rounded-md"
         />
+        <Button onClick={handleSumColumnModel} color="primary">
+          SUM
+        </Button>
         <Input
           type="text"
           value={newColumnName}
@@ -528,6 +596,53 @@ const ExcelEditor = () => {
           </div>
         )}
       </div>
+      <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sum Columns</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Multi-select dropdown */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Select Columns to Sum:
+              </label>
+              <ReactSelect
+                options={columnOptions}
+                isMulti
+                value={selectedSumColumns.map((col) => ({
+                  value: col,
+                  label: col,
+                }))}
+                onChange={(selected) => {
+                  const cols = selected.map((item) => item.value);
+                  setSelectedSumColumns(cols);
+                }}
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                New Column Name:
+              </label>
+              <input
+                type="text"
+                value={newSumColumnName}
+                onChange={(e) => setSumNewColumnName(e.target.value)}
+                className="w-full border px-2 py-1 rounded-md"
+                placeholder="Enter new column name"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseSumColumnModel}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateSumColumn}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
