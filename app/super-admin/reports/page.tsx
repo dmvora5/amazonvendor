@@ -17,8 +17,6 @@ import {
 import {
   useGetReportQuery,
   useUpdateReportMutation,
-  useGetOrderQuery,
-  useUpdateOrderMutation,
 } from "@/redux/apis/usersApis";
 import Image from "next/image";
 import {
@@ -148,6 +146,7 @@ const InputComponent = memo(
 
 const ExcelEditor = () => {
   const [data, setData] = useState<any[]>([]); // Holds filtered data
+  console.log("🚀 ~ ExcelEditor ~ data:", data)
   const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
@@ -155,12 +154,10 @@ const ExcelEditor = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
-  const [selectedOrderValue, setSelectedOrderValue] = useState("");
   const [openSumModel, setOpenSumModel] = useState(false);
   const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
   const [newSumColumnName, setSumNewColumnName] = useState("");
   const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
-  console.log("🚀 ~ ExcelEditor ~ selectedDateColumns:", selectedDateColumns)
 
   const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
 
@@ -170,10 +167,12 @@ const ExcelEditor = () => {
 
   const listRef = useRef<any>(null);
 
-  const columnOptions = Object.keys(originalData[0] || {}).map((key) => ({
-    value: key,
-    label: key,
-  }));
+  const columnOptions = Object.keys(originalData[0] || {})
+    .filter((key) => key.startsWith("Supplier"))
+    .map((key) => ({
+      value: key,
+      label: key,
+    }));
 
   const {
     data: queryData,
@@ -181,38 +180,8 @@ const ExcelEditor = () => {
     error,
     isFetching,
   } = useGetReportQuery(selectedValue);
-  const {
-    data: orderData,
-    isLoading: isOrderDataLoading,
-    error: isOrderDataError,
-    isFetching: isOrderDataFetching,
-  } = useGetOrderQuery({});
 
   const [submit, uploadOptions] = useUpdateReportMutation();
-  const [updateOrder, updateOrderOptions] = useUpdateOrderMutation();
-
-  // Options for the dropdown
-  const optionsForOrder = [
-    { label: "2 Weeks", value: "2W" },
-    { label: "6 Weeks", value: "6W" },
-    { label: "2 Months", value: "2M" },
-    { label: "3 Months", value: "3M" },
-    { label: "4W 14D Sale", value: "4W_14D_SALE" },
-  ];
-
-  const handleChange = async (value: string) => {
-    setSelectedOrderValue(value);
-    try {
-      const payload = {
-        order_type: value,
-      };
-
-      const res = await updateOrder(payload);
-      console.log("Order type updated successfully:", res);
-    } catch (error) {
-      console.error("Error updating order type:", error);
-    }
-  };
 
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
@@ -251,55 +220,78 @@ const ExcelEditor = () => {
     setDirty(false);
   }, [uploadOptions.isSuccess]);
 
-  // Set default value once data is fetched
-  useEffect(() => {
-    if ((orderData as any)?.order_type) {
-      setSelectedOrderValue((orderData as any)?.order_type);
-    }
-  }, [orderData]);
+  // // Function to handle adding a new column after the selected column
+  // const handleAddColumn = () => {
+  //   if (newColumnName.trim() && selectedColumn) {
+  //     const headerObject = { ...originalData[0] }; // Copy the header object
+  //     const headerKeys = Object.keys(headerObject); // Get all the column keys
+  //     const selectedIndex = headerKeys.indexOf(selectedColumn); // Find the index of the selected column
 
-  // Function to handle adding a new column after the selected column
+  //     if (selectedIndex === -1) return; // If selected column is not found, return
+
+  //     // Step 1: Insert the new column key into the header keys array at the correct position
+  //     headerKeys.splice(selectedIndex + 1, 0, newColumnName); // Insert after selected column
+
+  //     // Step 2: Rebuild the header object with the new column added
+  //     const newHeaderObject: any = {};
+  //     headerKeys.forEach((key) => {
+  //       newHeaderObject[key] = headerObject[key] || null; // Keep existing keys and add the new column with an empty value
+  //     });
+
+  //     // Step 3: Update each row in originalData to reflect the new column (set the new column to null or empty string)
+  //     const updatedData = originalData.map((row, index) => {
+  //       if (index === 0) return newHeaderObject; // If it's the header row, update it
+
+  //       const updatedRow = { ...row };
+
+  //       // Add new column with null or empty string for all rows
+  //       updatedRow[newColumnName] = null; // New column with null value for existing rows
+
+  //       // Ensure rows are updated correctly according to the new column order
+  //       const reorderedRow: any = {};
+  //       headerKeys.forEach((key) => {
+  //         reorderedRow[key] = updatedRow[key] || null; // Ensure each row has the same order as header
+  //       });
+
+  //       return reorderedRow;
+  //     });
+
+  //     // Step 4: Update both the header and the rows with the new column
+  //     // setOriginalData([newHeaderObject, ...updatedData]); // Set the updated header and rows
+  //     setData([newHeaderObject, ...updatedData]); // Update filtered data (if used for searching)
+
+  //     setNewColumnName(""); // Clear input after adding
+  //     setDirty(true); // Mark as dirty after making changes
+  //   }
+  // };
+
   const handleAddColumn = () => {
     if (newColumnName.trim() && selectedColumn) {
-      const headerObject = { ...originalData[0] }; // Copy the header object
-      const headerKeys = Object.keys(headerObject); // Get all the column keys
-      const selectedIndex = headerKeys.indexOf(selectedColumn); // Find the index of the selected column
+      const headerKeys = Object.keys(originalData[0] || {});
+      const selectedIndex = headerKeys.indexOf(selectedColumn);
 
-      if (selectedIndex === -1) return; // If selected column is not found, return
+      if (selectedIndex === -1) return;
 
-      // Step 1: Insert the new column key into the header keys array at the correct position
-      headerKeys.splice(selectedIndex + 1, 0, newColumnName); // Insert after selected column
+      // Insert new column key after the selected column
+      headerKeys.splice(selectedIndex + 1, 0, newColumnName);
 
-      // Step 2: Rebuild the header object with the new column added
-      const newHeaderObject: any = {};
-      headerKeys.forEach((key) => {
-        newHeaderObject[key] = headerObject[key] || null; // Keep existing keys and add the new column with an empty value
-      });
+      // Update each row with the new column at the correct position
+      const updatedData = originalData.map((row) => {
+        const updatedRow = { ...row, [newColumnName]: "" };
 
-      // Step 3: Update each row in originalData to reflect the new column (set the new column to null or empty string)
-      const updatedData = originalData.map((row, index) => {
-        if (index === 0) return newHeaderObject; // If it's the header row, update it
-
-        const updatedRow = { ...row };
-
-        // Add new column with null or empty string for all rows
-        updatedRow[newColumnName] = null; // New column with null value for existing rows
-
-        // Ensure rows are updated correctly according to the new column order
         const reorderedRow: any = {};
         headerKeys.forEach((key) => {
-          reorderedRow[key] = updatedRow[key] || null; // Ensure each row has the same order as header
+          reorderedRow[key] = updatedRow[key] || "";
         });
 
         return reorderedRow;
       });
 
-      // Step 4: Update both the header and the rows with the new column
-      // setOriginalData([newHeaderObject, ...updatedData]); // Set the updated header and rows
-      setData([newHeaderObject, ...updatedData]); // Update filtered data (if used for searching)
-
-      setNewColumnName(""); // Clear input after adding
-      setDirty(true); // Mark as dirty after making changes
+      // Update the data (only once, no duplication of first row)
+      setOriginalData(updatedData); // update your full source data
+      setData(updatedData); // update visible data (filtered, if applicable)
+      setNewColumnName("");
+      setDirty(true);
     }
   };
 
@@ -353,10 +345,10 @@ const ExcelEditor = () => {
   // Table Header component
   const Header = () => {
     if (!data || data.length === 0) return null;
-  
+
     // Match keys that are dates in format: DD.MM.YY
     const isDateKey = (key: string) => /^\d{2}\.\d{2}\.\d{2}$/.test(key);
-  
+
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
@@ -369,16 +361,16 @@ const ExcelEditor = () => {
               <div className="flex justify-between items-center gap-2">
                 <div className="flex items-center gap-1">
                   {isDateKey(key) && (
-                   <input
-                   type="checkbox"
-                   value={key}
-                   checked={selectedDateColumns.includes(key)}
-                   onChange={(e) => handleDateCheckboxChange(e, key)}
-                 />
+                    <input
+                      type="checkbox"
+                      value={key}
+                      checked={selectedDateColumns.includes(key)}
+                      onChange={(e) => handleDateCheckboxChange(e, key)}
+                    />
                   )}
                   <span>{key}</span>
                 </div>
-  
+
                 {key !== "Action" && (
                   <button
                     disabled={uploadOptions.isLoading}
@@ -396,14 +388,17 @@ const ExcelEditor = () => {
     );
   };
 
-  const handleDateCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+  const handleDateCheckboxChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    key: string
+  ) => {
     const checked = e.target.checked;
     if (checked) {
       setSelectedDateColumns((prev) => [...prev, key]);
     } else {
       setSelectedDateColumns((prev) => prev.filter((col) => col !== key));
     }
-    setDirty(true)
+    setDirty(true);
   };
 
   // Handle column removal
@@ -464,31 +459,31 @@ const ExcelEditor = () => {
       alert("Please select columns and enter a column name.");
       return;
     }
-  
+
     // Check if the new sum column name already exists
     if (Object.keys(originalData[0]).includes(newSumColumnName)) {
       alert("Column name already exists. Please choose a different name.");
       return;
     }
-  
+
     // Calculate the sum for the selected columns
     const updatedData = originalData.map((row) => {
       const sum = selectedSumColumns.reduce((acc, col) => {
         const val = parseFloat(row[col]) || 0; // Handle non-numeric values by defaulting to 0
         return acc + val;
       }, 0);
-  
+
       // Create a new row with the sum and without the selected sum columns
       const newRow = { ...row, [newSumColumnName]: sum };
-  
+
       // Remove the selected sum columns from the new row
       selectedSumColumns.forEach((col) => {
         delete newRow[col];
       });
-  
+
       return newRow;
     });
-  
+
     // Update the data with the new sum column
     setData(updatedData);
     setOpenSumModel(false); // Close the modal
@@ -499,23 +494,6 @@ const ExcelEditor = () => {
 
   return (
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="p-2 ml-auto">
-        <Select onValueChange={handleChange} value={selectedOrderValue}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select an order" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Select Order</SelectLabel>
-              {optionsForOrder.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
       <div className="mb-4 space-x-2 flex items-center">
         <Input
           type="text"
@@ -573,6 +551,27 @@ const ExcelEditor = () => {
             </SelectContent>
           </Select>
         </div>
+
+        {dirty && (
+          <Button
+            className="w-[120px]"
+            disabled={uploadOptions.isLoading}
+            onClick={handleUploadCSV}
+            color="primary"
+          >
+            {uploadOptions.isLoading ? (
+              <Image
+                src="/assets/icons/loader.svg"
+                alt="loader"
+                width={24}
+                height={24}
+                className="animate-spin mx-auto"
+              />
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        )}
       </div>
 
       {isLoading || loading || isFetching ? (
@@ -600,7 +599,7 @@ const ExcelEditor = () => {
         </div>
       )}
 
-      <div className="mt-6 flex justify-between">
+      {/* <div className="mt-6 flex justify-between">
         {dirty && (
           <div className="mt-6 flex justify-center">
             <Button
@@ -623,7 +622,7 @@ const ExcelEditor = () => {
             </Button>
           </div>
         )}
-      </div>
+      </div> */}
       <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
         <DialogContent>
           <DialogHeader>
@@ -652,14 +651,22 @@ const ExcelEditor = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">
-                New Column Name:
+                New Column Name (DD.MM.YY):
               </label>
               <input
                 type="text"
                 value={newSumColumnName}
-                onChange={(e) => setSumNewColumnName(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Allow only numbers and dots, and limit to format like 02.01.25
+                  if (/^[\d.]{0,8}$/.test(val)) {
+                    setSumNewColumnName(val);
+                  }
+                }}
                 className="w-full border px-2 py-1 rounded-md"
-                placeholder="Enter new column name"
+                placeholder="e.g., 19.12.24"
+                pattern="\d{2}\.\d{2}\.\d{2}"
+                title="Format should be DD.MM.YY"
               />
             </div>
           </div>

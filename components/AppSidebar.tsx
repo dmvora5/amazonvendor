@@ -100,6 +100,17 @@ const menu = {
                     Icon: PackageIcon
                 }
             ]
+        },
+        {
+            title: "Order",
+            Icon: PackageIcon,
+            subMenus: [
+                {
+                    title: "Order Type",
+                    url: "/super-admin/Order",
+                    Icon: PackageIcon
+                }
+            ]
         }
     ]
 }
