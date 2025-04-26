@@ -85,9 +85,9 @@ const InputComponent = memo(
       newData[index][keyData] = e.target.value;
       const oriNewData: any = [...originalData];
 
-      if (keyData.includes("Supplier ")) {
+      if (keyData.includes("Supplier")) {
         const supplierColumns = Object.keys(newData[index]).filter((key) =>
-          key.includes("Supplier ")
+          key.includes("Supplier")
         );
         let totalSupplierValue = 0;
 
@@ -146,7 +146,6 @@ const InputComponent = memo(
 
 const ExcelEditor = () => {
   const [data, setData] = useState<any[]>([]); // Holds filtered data
-  console.log("🚀 ~ ExcelEditor ~ data:", data)
   const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
@@ -393,11 +392,49 @@ const ExcelEditor = () => {
     key: string
   ) => {
     const checked = e.target.checked;
+
+    let updatedData = [...data];
+
+    updatedData = updatedData.map((row, idx) => {
+      const oriRow = originalData[idx];
+      const value = parseFloat(row[key]) || 0;
+      let currentInbound = parseFloat(row["Total New Inbound"]) || 0;
+
+      if (checked) {
+        // Checkbox Checked => Subtract
+        currentInbound -= value;
+      } else {
+        // Checkbox Unchecked => Add back
+        currentInbound += value;
+      }
+
+      if (currentInbound < 0) {
+        // If goes negative, revert the row
+        const supplierColumns = Object.keys(row).filter((key) =>
+          key.includes("Supplier")
+        );
+        const newRow = { ...row };
+        supplierColumns.forEach((col) => {
+          newRow[col] = oriRow[col];
+        });
+        newRow[key] = oriRow[key];
+        newRow["Total New Inbound"] = oriRow["Total New Inbound"];
+        return newRow;
+      } else {
+        return {
+          ...row,
+          "Total New Inbound": currentInbound,
+        };
+      }
+    });
+
     if (checked) {
       setSelectedDateColumns((prev) => [...prev, key]);
     } else {
       setSelectedDateColumns((prev) => prev.filter((col) => col !== key));
     }
+
+    setData(updatedData);
     setDirty(true);
   };
 
