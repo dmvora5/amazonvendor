@@ -28,6 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import ReactSelect from "react-select";
+import ProcessLoader from "@/components/ProcessLoader";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -531,6 +532,7 @@ const ExcelEditor = () => {
 
   return (
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
+      
       <div className="mb-4 space-x-2 flex items-center">
         <Input
           type="text"
@@ -613,7 +615,7 @@ const ExcelEditor = () => {
 
       {isLoading || loading || isFetching ? (
         <div className="h-[600px] w-full flex items-center justify-center">
-          <h2>Loading...</h2>
+          <ProcessLoader />
         </div>
       ) : (
         <div className="overflow-x-auto max-h-[620px]">

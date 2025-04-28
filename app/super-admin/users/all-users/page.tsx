@@ -24,6 +24,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import ProcessLoader from "@/components/ProcessLoader";
 
 function UserTables() {
   const router = useRouter();
@@ -56,13 +57,7 @@ function UserTables() {
   return (
     <div className="w-full rounded-2xl">
       {isLoading && (
-        <Image
-          src="/assets/icons/loader.svg"
-          alt="loader"
-          width={24}
-          height={24}
-          className="animate-spin bg-brand mx-auto absolute top-[50%] left-[50%]"
-        />
+        <ProcessLoader className="mx-auto absolute top-[50%] left-[50%]" />
       )}
       {isSuccess && (
         <div className="flex-1 p-6 overflow-hidden">

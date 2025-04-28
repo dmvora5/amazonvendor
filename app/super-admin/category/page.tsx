@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ProcessLoader from "@/components/ProcessLoader";
 
 function CategoryTables() {
   const { data, isLoading, isSuccess, error } = useGetAllCategoryQuery({});
@@ -97,13 +98,7 @@ function CategoryTables() {
     <div className="w-full rounded-2xl">
       {/* Loader */}
       {isLoading && (
-        <Image
-          src="/assets/icons/loader.svg"
-          alt="loader"
-          width={24}
-          height={24}
-          className="animate-spin bg-brand mx-auto absolute top-[50%] left-[50%]"
-        />
+        <ProcessLoader className="mx-auto absolute top-[50%] left-[50%]" />
       )}
 
       {/* Add Category Button (Left-Aligned) */}
