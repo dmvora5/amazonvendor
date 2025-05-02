@@ -37,6 +37,7 @@ const options = [
   { value: "order_history", label: "Order History" },
   { value: "current_inventory", label: "Current Inventory" },
   { value: "project_database", label: "Project Database" },
+  { value: "shipped_history", label: "Shipped History" },
 ];
 
 const InputComponent = memo(
