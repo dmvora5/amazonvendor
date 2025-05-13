@@ -111,7 +111,19 @@ const menu = {
                     Icon: PackageIcon
                 }
             ]
+        },
+        {
+            title: "Product Database",
+            Icon: PackageIcon,
+            subMenus: [
+                {
+                    title: "Product DataBase",
+                    url: "/super-admin/product-database",
+                    Icon: PackageIcon
+                }
+            ]
         }
+        
     ]
 }
 

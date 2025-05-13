@@ -36,7 +36,7 @@ const options = [
   { value: "channel_max", label: "Channel Max" },
   { value: "order_history", label: "Order History" },
   { value: "current_inventory", label: "Current Inventory" },
-  { value: "project_database", label: "Project Database" },
+  // { value: "project_database", label: "Project Database" },
   { value: "shipped_history", label: "Shipped History" },
 ];
 
@@ -189,12 +189,10 @@ const ExcelEditor = () => {
       setLoading(true);
 
       const response = await fetch(url);
-      const text = await response.text();
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
 
-      // Check if the data is CSV or TSV based on the first line
-      const delimiter = text.includes("\t") ? "\t" : ",";
-      const wb = XLSX.read(text, { type: "string", raw: true });
-
+      const wb = XLSX.read(arrayBuffer, { type: "array" });  // Using array instead of string type
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
 
@@ -205,7 +203,7 @@ const ExcelEditor = () => {
         setSelectedColumn(key[0]);
       }
     } catch (error) {
-      console.error("Error fetching CSV/TSV:", error);
+      console.log("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
@@ -533,7 +531,7 @@ const ExcelEditor = () => {
 
   return (
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
-      
+
       <div className="mb-4 space-x-2 flex items-center">
         <Input
           type="text"
