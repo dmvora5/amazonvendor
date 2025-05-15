@@ -151,7 +151,7 @@ const ExcelEditor = () => {
   const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
-  const [selectedValue, setSelectedValue] = useState<string>("fba_inventory");
+  const [selectedValue, setSelectedValue] = useState<string>("current_inventory");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
@@ -195,6 +195,7 @@ const ExcelEditor = () => {
       const wb = XLSX.read(arrayBuffer, { type: "array" });  // Using array instead of string type
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
+      console.log('json', json)
 
       setOriginalData(JSON.parse(JSON.stringify(json))); // Save original data
       setData(json); // Also set filtered data initially to the original data
