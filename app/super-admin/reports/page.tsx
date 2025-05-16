@@ -29,6 +29,9 @@ import {
 } from "@/components/ui/dialog";
 import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
+import axios, { AxiosError } from "axios"
+import { API_ROUTES } from "@/constant/routes";
+import { parseAndShowErrorInToast } from "@/utils";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -161,6 +164,7 @@ const ExcelEditor = () => {
   const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
 
   const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
+
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -459,27 +463,50 @@ const ExcelEditor = () => {
 
   // Upload the CSV data
   const handleUploadCSV = async () => {
-    // Convert JSON data to CSV or TSV format
-    const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
-    const sheet = XLSX.utils.json_to_sheet(data);
+    try {
+      setLoading(true)
+      // Convert JSON data to CSV or TSV format
+      const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
+      const sheet = XLSX.utils.json_to_sheet(data);
 
-    let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
-    if (delimiter === "\t") {
-      csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
+      let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
+      if (delimiter === "\t") {
+        csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
+      }
+
+      // Create a FormData object
+      const formData = new FormData();
+
+      // Create a Blob from CSV or TSV data
+      const csvBlob = new Blob([csvData], { type: "text/csv" });
+
+      // Append the file to the FormData object
+      formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
+      formData.append("report_type", selectedValue);
+      formData.append("selected_date", selectedDateColumns.join(","));
+
+      const { data: response } = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/update-report/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })
+
+      setDirty(false);
+      if (response?.file_url) {
+        fetchCSVFromBackend(response?.file_url)
+      }
+
+    } catch (err: any) {
+      if (err instanceof AxiosError) {
+        parseAndShowErrorInToast(err?.response);
+      } else {
+        parseAndShowErrorInToast(err)
+      }
+    } finally {
+      setLoading(false);
     }
 
-    // Create a FormData object
-    const formData = new FormData();
 
-    // Create a Blob from CSV or TSV data
-    const csvBlob = new Blob([csvData], { type: "text/csv" });
-
-    // Append the file to the FormData object
-    formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
-    formData.append("report_type", selectedValue);
-    formData.append("selected_date", selectedDateColumns.join(","));
-
-    await submit(formData);
+    // await submit(formData);
+    // await fetchCSVFromBackend()
   };
 
   const handleSumColumnModel = () => {
@@ -525,7 +552,7 @@ const ExcelEditor = () => {
     // Update the data with the new sum column
     setData(updatedData);
     setOpenSumModel(false); // Close the modal
-    setSelectedSumColumns([]); // Clear selected columns
+    setSelectedSumColumns(selectedSumColumns || []); // Clear selected columns
     setSumNewColumnName(""); // Clear the sum column name input
     setDirty(true);
   };
@@ -594,7 +621,7 @@ const ExcelEditor = () => {
         {dirty && (
           <Button
             className="w-[120px]"
-            disabled={uploadOptions.isLoading}
+            disabled={uploadOptions.isLoading || loading}
             onClick={handleUploadCSV}
             color="primary"
           >
