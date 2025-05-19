@@ -32,6 +32,7 @@ import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios"
 import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
+import { getSession } from "next-auth/react";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -485,8 +486,13 @@ const ExcelEditor = () => {
       formData.append("report_type", selectedValue);
       formData.append("selected_date", selectedDateColumns.join(","));
 
+      const session: any = await getSession();
+
       const { data: response } = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/update-report/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${session?.access_token}`
+        }
       })
 
       setDirty(false);
