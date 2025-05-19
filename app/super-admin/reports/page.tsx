@@ -607,7 +607,10 @@ const ExcelEditor = () => {
         </Button>
 
         <div className="p-2 ml-auto">
-          <Select onValueChange={setSelectedValue} value={selectedValue}>
+          <Select onValueChange={(e: any) => {
+            setSelectedValue(e)
+            setDirty(false)
+          }} value={selectedValue}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select a report" />
             </SelectTrigger>
@@ -624,7 +627,7 @@ const ExcelEditor = () => {
           </Select>
         </div>
 
-        {dirty && (
+        {(dirty && selectedValue === "current_inventory") && (
           <Button
             className="w-[120px]"
             disabled={uploadOptions.isLoading || loading}
