@@ -92,6 +92,7 @@ const InputComponent = memo(
       const oriNewData: any = [...originalData];
 
       if (keyData.includes("Supplier")) {
+        console.log("Hear")
         const supplierColumns = Object.keys(newData[index]).filter((key) =>
           key.includes("Supplier")
         );
@@ -101,7 +102,10 @@ const InputComponent = memo(
           totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
         });
 
-        let updatedOrder = initialOrder - totalSupplierValue;
+        // let updatedOrder = initialOrder - totalSupplierValue;
+        let updatedOrder = oriNewData[index]["Total New Inbound"] + totalSupplierValue
+
+        console.log('updatedOrder', updatedOrder)
 
         if (updatedOrder < 0) {
           supplierColumns.forEach((supplierColumn) => {
@@ -112,7 +116,7 @@ const InputComponent = memo(
             oriNewData[index]["Total New Inbound"];
         } else {
           // newData[index]["Order"] = updatedOrder;
-          newData[index]["Total New Inbound"] = totalSupplierValue;
+          newData[index]["Total New Inbound"] = oriNewData[index]["Total New Inbound"] + totalSupplierValue;
         }
         setData(newData);
         setDirty(true);
@@ -532,13 +536,13 @@ const ExcelEditor = () => {
     }
 
     // Check if the new sum column name already exists
-    if (Object.keys(originalData[0]).includes(newSumColumnName)) {
+    if (Object.keys(data[0]).includes(newSumColumnName)) {
       alert("Column name already exists. Please choose a different name.");
       return;
     }
 
     // Calculate the sum for the selected columns
-    const updatedData = originalData.map((row) => {
+    const updatedData = data.map((row) => {
       const sum = selectedSumColumns.reduce((acc, col) => {
         const val = parseFloat(row[col]) || 0; // Handle non-numeric values by defaulting to 0
         return acc + val;
