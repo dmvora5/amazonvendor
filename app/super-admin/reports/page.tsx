@@ -168,7 +168,8 @@ const ExcelEditor = () => {
   const [newSumColumnName, setSumNewColumnName] = useState("");
   const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
 
-  const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
+  const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>([]);
+  const [searchModel, setSearchModel] = useState(false);
 
 
   const rowHeight = 50;
@@ -179,6 +180,12 @@ const ExcelEditor = () => {
 
   const columnOptions = Object.keys(originalData[0] || {})
     .filter((key) => key.startsWith("Supplier"))
+    .map((key) => ({
+      value: key,
+      label: key,
+    }));
+
+  const searchcolumnOptions = Object.keys(originalData[0] || {})
     .map((key) => ({
       value: key,
       label: key,
@@ -312,10 +319,18 @@ const ExcelEditor = () => {
     if (term === "") {
       setData(originalData); // Reset to original data when search term is cleared
     } else {
-      const filteredData = originalData.filter((row) =>
-        Object.values(row).some((value) =>
-          String(value).toLowerCase().includes(term)
-        )
+      const filteredData = originalData.filter((row) => {
+        if (!selectedSearchColumns.length) {
+          return Object.values(row).some((value) =>
+            String(value).toLowerCase().includes(term)
+          )
+        } else {
+          const slectedKeysRow = selectedSearchColumns.map((ele: any) => row[ele])
+          return Object.values(slectedKeysRow).some((value) =>
+            String(value).toLowerCase().includes(term)
+          )
+        }
+      }
       );
       setData(filteredData);
     }
@@ -519,8 +534,19 @@ const ExcelEditor = () => {
     // await fetchCSVFromBackend()
   };
 
+
+
   const handleSumColumnModel = () => {
     setOpenSumModel(true); // open the modal
+  };
+
+  const handleSearchModel = () => {
+    setSearchModel(true);
+  }
+
+  const handleCloseSearchColumnModel = () => {
+    setSearchModel(false); // open the modal
+    setSelectedSearchColumns([]); // Clear selected columns
   };
 
   const handleCloseSumColumnModel = () => {
@@ -571,6 +597,9 @@ const ExcelEditor = () => {
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
 
       <div className="mb-4 space-x-2 flex items-center">
+        <Button onClick={handleSearchModel}>
+          Filter
+        </Button>
         <Input
           type="text"
           value={searchTerm}
@@ -754,6 +783,42 @@ const ExcelEditor = () => {
               Cancel
             </Button>
             <Button onClick={handleCreateSumColumn}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={searchModel} onOpenChange={setSearchModel}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sum Columns</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Multi-select dropdown */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Select Columns to Sum:
+              </label>
+              <ReactSelect
+                options={searchcolumnOptions}
+                isMulti
+                value={selectedSearchColumns.map((col) => ({
+                  value: col,
+                  label: col,
+                }))}
+                onChange={(selected: any) => {
+                  const cols = selected.map((item: any) => item.value);
+                  setSelectedSearchColumns(cols);
+                }}
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseSearchColumnModel}>
+              Cancel
+            </Button>
+            <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
