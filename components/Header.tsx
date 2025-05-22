@@ -76,11 +76,11 @@ const Header = () => {
       <div className="header-wrapper ml-auto text-end flex gap-2 p-4 max-w-screen-lg">
         {/* Dialog (Modal) */}
         <Dialog>
-          <DialogTrigger asChild>
+          {/* <DialogTrigger asChild>
             <Button variant="outline" type="button" className="sign-out-button">
               <User width={24} height={24} />
             </Button>
-          </DialogTrigger>
+          </DialogTrigger> */}
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Edit Profile</DialogTitle>
