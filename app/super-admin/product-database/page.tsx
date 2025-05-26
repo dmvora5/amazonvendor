@@ -159,6 +159,7 @@ const ExcelEditor = () => {
     const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
     const [newSumColumnName, setSumNewColumnName] = useState("");
     const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
+    const [headers, setHeaders] = useState<string[]>([]);
 
     const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
 
@@ -174,6 +175,12 @@ const ExcelEditor = () => {
             value: key,
             label: key,
         }));
+
+        useEffect(() => {
+          if (originalData.length > 0) {
+            setHeaders(Object.keys(originalData[0]));
+          }
+        }, [originalData]);          
 
     const {
         data: queryData,
@@ -345,37 +352,48 @@ const ExcelEditor = () => {
     // Table Header component
     const Header = () => {
         if (!data || data.length === 0) return null;
-
-        // Match keys that are dates in format: DD.MM.YY
-        // const isDateKey = (key: string) => /^\d{2}\.\d{2}\.\d{2}$/.test(key);
-
+    
         return (
             <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
                 <tr>
-                    {Object.keys(data[0]).map((key) => (
+                    {headers.map((header, colIndex) => (
                         <th
-                            key={key}
+                            key={colIndex}
                             className="relative px-4 py-3 text-left"
                             style={{ width: columnWidth }}
                         >
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-1">
-                                    {/* {isDateKey(key) && (
-                    <input
-                      type="checkbox"
-                      value={key}
-                      checked={selectedDateColumns.includes(key)}
-                      onChange={(e) => handleDateCheckboxChange(e, key)}
-                    />
-                  )} */}
-                                    <span>{key}</span>
+                                    <input
+                                        type="text"
+                                        value={header}
+                                        onChange={(e) => {
+                                            const newHeaders = [...headers];
+                                            newHeaders[colIndex] = e.target.value;
+                                            setHeaders(newHeaders);
+                                            setDirty(true);
+    
+                                            const updatedData = data.map((row) => {
+                                                const newRow: any = {};
+                                                headers.forEach((oldHeader, i) => {
+                                                    const newHeader = newHeaders[i];
+                                                    newRow[newHeader] = row[oldHeader];
+                                                });
+                                                return newRow;
+                                            });
+    
+                                            setData(updatedData);
+                                            setOriginalData(updatedData);
+                                        }}
+                                        className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
                                 </div>
-
-                                {key !== "Action" && (
+    
+                                {header !== "Action" && (
                                     <button
                                         disabled={uploadOptions.isLoading}
                                         className="text-red-500 hover:text-red-700 cursor-pointer"
-                                        onClick={() => handleRemoveColumn(key)}
+                                        onClick={() => handleRemoveColumn(header)}
                                     >
                                         <span className="text-lg">×</span>
                                     </button>
@@ -386,7 +404,7 @@ const ExcelEditor = () => {
                 </tr>
             </thead>
         );
-    };
+    };    
 
     //   const handleDateCheckboxChange = (
     //     e: React.ChangeEvent<HTMLInputElement>,
