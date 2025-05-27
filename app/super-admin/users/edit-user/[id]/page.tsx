@@ -15,6 +15,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useEditUserQuery, useUpdateUserMutation } from "@/redux/apis/usersApis";
 import { parseAndShowErrorInToast } from "@/utils";
+import ApiState from "@/components/ApiState";
 
 const userFormSchema = z.object({
   first_name: z.string().min(1, { message: "First Name is required" }),
@@ -38,7 +39,7 @@ export default function EditUserForm() {
   // const [loading, setLoading] = useState(true);
   // const [showPassword, setShowPassword] = useState(false);
 
-  const { data, isLoading, error } = useEditUserQuery(query?.id, {
+  const { data, isLoading, error, isSuccess } = useEditUserQuery(query?.id, {
     skip: !query?.id
   })
 
@@ -47,12 +48,12 @@ export default function EditUserForm() {
   useEffect(() => {
     if (!error) return;
     parseAndShowErrorInToast(error);
-  },[error]);
+  }, [error]);
 
   useEffect(() => {
     if (!updateUserOptions?.error) return;
     parseAndShowErrorInToast(updateUserOptions?.error);
-  },[updateUserOptions?.error]);
+  }, [updateUserOptions?.error]);
 
   const form = useForm({
     resolver: zodResolver(userFormSchema),
@@ -79,11 +80,11 @@ export default function EditUserForm() {
 
 
   useEffect(() => {
-    if(updateUserOptions.isSuccess) {
+    if (updateUserOptions.isSuccess) {
       toast.success("User updated successfully");
       router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
     }
-  },[updateUserOptions.isSuccess])
+  }, [updateUserOptions.isSuccess])
 
 
   // const { fields, update, replace } = useFieldArray({
@@ -139,7 +140,7 @@ export default function EditUserForm() {
   async function onSubmit(data: any) {
 
     await submit(data)
-    
+
     // console.log("Form Submitted:", data);
     // try {
     //   setLoading(true);
@@ -170,6 +171,13 @@ export default function EditUserForm() {
             </Link> */}
 
           </div>
+          <ApiState error={error} isSuccess={isSuccess}>
+            <ApiState.ArthorizeCheck />
+          </ApiState>
+
+          <ApiState error={updateUserOptions.error} isSuccess={updateUserOptions.isSuccess}>
+            <ApiState.ArthorizeCheck />
+          </ApiState>
 
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-6">

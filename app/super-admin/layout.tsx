@@ -4,13 +4,19 @@ import { Button } from '@/components/ui/button'
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
 import React, { useState } from 'react'
 
 
 
 const SuperAdminLayout = async ({ children }: { children: React.ReactNode }) => {
 
-    const session = await getServerSession(authOptions);
+    const session: any = await getServerSession(authOptions);
+
+
+    if (!session?.user?.is_superuser) {
+        redirect(`${process.env.NEXT_PUBLIC_APP_URL}`)
+    }
 
     // const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar toggle state
     // const [isSubmenuOpen, setIsSubmenuOpen] = useState(false); // Submenu toggle state

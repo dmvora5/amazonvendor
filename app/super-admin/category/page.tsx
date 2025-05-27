@@ -21,12 +21,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ProcessLoader from "@/components/ProcessLoader";
+import ApiState from "@/components/ApiState";
 
 function CategoryTables() {
   const { data, isLoading, isSuccess, error } = useGetAllCategoryQuery({});
   const [updateCategory, { isLoading: isUpdating }] =
     useUpdateCategoryMutation();
-  const [addCategory, { isLoading: isAdding }] = useAddCategoryMutation();
+  const [addCategory, { isLoading: isAdding, error: isE , isSuccess: isS}] = useAddCategoryMutation();
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   console.log("🚀 ~ CategoryTables ~ selectedCategory:", selectedCategory);
 
@@ -46,8 +47,8 @@ function CategoryTables() {
         id === "category"
           ? value
           : value === ""
-          ? ""
-          : parseInt(value, 10) || 0,
+            ? ""
+            : parseInt(value, 10) || 0,
     }));
   };
 
@@ -115,6 +116,14 @@ function CategoryTables() {
           Add Category
         </Button>
       </div>
+      <ApiState error={error} isSuccess={isSuccess}>
+        <ApiState.ArthorizeCheck />
+      </ApiState>
+
+      <ApiState error={isE} isSuccess={isS}>
+        <ApiState.ArthorizeCheck />
+      </ApiState>
+
 
       {isSuccess && (
         <div className="flex-1 p-6 overflow-hidden">
@@ -142,9 +151,8 @@ function CategoryTables() {
                 {((data as any) || []).map((row: any, index: number) => (
                   <tr
                     key={row.id}
-                    className={`${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    } hover:bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-900 dark:border-gray-700 rounded-lg transition duration-200`}
+                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-900 dark:border-gray-700 rounded-lg transition duration-200`}
                   >
                     <td className="px-6 py-4">{row.category}</td>
                     <td className="px-6 py-4">

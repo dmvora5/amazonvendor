@@ -15,6 +15,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAddUserMutation } from "@/redux/apis/usersApis";
 import { parseAndShowErrorInToast } from "@/utils";
+import ApiState from "@/components/ApiState";
 
 const userFormSchema = z.object({
   first_name: z.string().min(1, { message: "First Name is required" }),
@@ -136,6 +137,9 @@ export default function CreateUserForm() {
             </Link> */}
 
           </div>
+          <ApiState error={error} isSuccess={isSuccess}>
+            <ApiState.ArthorizeCheck />
+          </ApiState>
 
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-6">

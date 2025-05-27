@@ -22,6 +22,7 @@ import { PAGE_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
 import { useAddCategoryMutation } from "@/redux/apis/usersApis";
 import Image from "next/image";
+import ApiState from "@/components/ApiState";
 // import Image from "next/image"; // Only needed if you plan to show a spinner/loader graphic
 
 // ----- Zod Schema -----
@@ -92,6 +93,9 @@ export default function CreateCategoryForm() {
             <Button variant="link">All Categories</Button>
           </Link> */}
                 </div>
+                <ApiState error={error} isSuccess={isSuccess}>
+                    <ApiState.ArthorizeCheck />
+                </ApiState>
 
                 <Form {...form}>
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-6">

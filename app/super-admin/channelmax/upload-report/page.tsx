@@ -1,5 +1,6 @@
 "use client";
 
+import ApiState from "@/components/ApiState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUploadReportMutation } from "@/redux/apis/usersApis";
@@ -9,7 +10,7 @@ import { toast } from "react-toastify";
 const UploadPage = () => {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null); // Reference for file input
-  const [uploadReport, { isLoading }] = useUploadReportMutation();
+  const [uploadReport, { isLoading, error, isSuccess }] = useUploadReportMutation();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -46,6 +47,10 @@ const UploadPage = () => {
   return (
     <div className="w-full flex justify-center items-center min-h-[90%]">
       <div className="flex flex-col space-y-6">
+        <ApiState error={error} isSuccess={isSuccess}>
+          <ApiState.ArthorizeCheck />
+        </ApiState>
+
         {/* File Input */}
         <Input
           type="file"

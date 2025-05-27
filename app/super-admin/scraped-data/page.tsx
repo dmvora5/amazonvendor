@@ -29,9 +29,6 @@ import {
 } from "@/components/ui/dialog";
 import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
-import axios, { AxiosError } from "axios";
-import { getSession, signOut } from "next-auth/react";
-import { parseAndShowErrorInToast } from "@/utils";
 
 const options = [
     { value: "fba_inventory", label: "FBA Inventory" },
@@ -142,8 +139,8 @@ const InputComponent = memo(
                 value={state}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                disabled={disabled}
-                className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={true}
+                className="w-full p-2 text-sm border rounded-md disabled:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
         );
     }
@@ -154,7 +151,7 @@ const ExcelEditor = () => {
     const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
     const [newColumnName, setNewColumnName] = useState<string>("");
     const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
-    const [selectedValue, setSelectedValue] = useState<string>("product_database");
+    const [selectedValue, setSelectedValue] = useState<string>("scrapped_data");
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
     const [dirty, setDirty] = useState<boolean>(false);
@@ -162,10 +159,8 @@ const ExcelEditor = () => {
     const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
     const [newSumColumnName, setSumNewColumnName] = useState("");
     const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
-    const [headers, setHeaders] = useState<string[]>([]);
 
     const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
-
     const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>([]);
     const [searchModel, setSearchModel] = useState(false);
 
@@ -182,24 +177,18 @@ const ExcelEditor = () => {
             label: key,
         }));
 
-    const searchcolumnOptions = Object.keys(originalData[0] || {})
-        .map((key) => ({
-            value: key,
-            label: key,
-        }));
-
-    useEffect(() => {
-        if (originalData.length > 0) {
-            setHeaders(Object.keys(originalData[0]));
-        }
-    }, [originalData]);
-
     const {
         data: queryData,
         isLoading,
         error,
         isFetching,
     } = useGetReportQuery(selectedValue);
+
+    const searchcolumnOptions = Object.keys(originalData[0] || {})
+        .map((key) => ({
+            value: key,
+            label: key,
+        }));
 
     const [submit, uploadOptions] = useUpdateReportMutation();
 
@@ -238,6 +227,14 @@ const ExcelEditor = () => {
         if (!uploadOptions.isSuccess) return;
         setDirty(false);
     }, [uploadOptions.isSuccess]);
+
+    const handleCloseSearchColumnModel = () => {
+        setSearchModel(false); // open the modal
+        setSelectedSearchColumns([]); // Clear selected columns
+    };
+
+
+
 
     // // Function to handle adding a new column after the selected column
     // const handleAddColumn = () => {
@@ -339,16 +336,6 @@ const ExcelEditor = () => {
         }
     };
 
-    const handleSearchModel = () => {
-        setSearchModel(true);
-    }
-
-    const handleCloseSearchColumnModel = () => {
-        setSearchModel(false); // open the modal
-        setSelectedSearchColumns([]); // Clear selected columns
-    };
-
-
     // Table Row component
     const Row = ({ index, style }: any) => {
         const row = data[index];
@@ -383,51 +370,40 @@ const ExcelEditor = () => {
     const Header = () => {
         if (!data || data.length === 0) return null;
 
+        // Match keys that are dates in format: DD.MM.YY
+        // const isDateKey = (key: string) => /^\d{2}\.\d{2}\.\d{2}$/.test(key);
+
         return (
             <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
                 <tr>
-                    {headers.map((header, colIndex) => (
+                    {Object.keys(data[0]).map((key) => (
                         <th
-                            key={colIndex}
+                            key={key}
                             className="relative px-4 py-3 text-left"
                             style={{ width: columnWidth }}
                         >
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-1">
-                                    <input
-                                        type="text"
-                                        value={header}
-                                        onChange={(e) => {
-                                            const newHeaders = [...headers];
-                                            newHeaders[colIndex] = e.target.value;
-                                            setHeaders(newHeaders);
-                                            setDirty(true);
-
-                                            const updatedData = data.map((row) => {
-                                                const newRow: any = {};
-                                                headers.forEach((oldHeader, i) => {
-                                                    const newHeader = newHeaders[i];
-                                                    newRow[newHeader] = row[oldHeader];
-                                                });
-                                                return newRow;
-                                            });
-
-                                            setData(updatedData);
-                                            setOriginalData(updatedData);
-                                        }}
-                                        className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
+                                    {/* {isDateKey(key) && (
+                    <input
+                      type="checkbox"
+                      value={key}
+                      checked={selectedDateColumns.includes(key)}
+                      onChange={(e) => handleDateCheckboxChange(e, key)}
+                    />
+                  )} */}
+                                    <span>{key}</span>
                                 </div>
 
-                                {header !== "Action" && (
+                                {/* {key !== "Action" && (
                                     <button
                                         disabled={uploadOptions.isLoading}
                                         className="text-red-500 hover:text-red-700 cursor-pointer"
-                                        onClick={() => handleRemoveColumn(header)}
+                                        onClick={() => handleRemoveColumn(key)}
                                     >
                                         <span className="text-lg">×</span>
                                     </button>
-                                )}
+                                )} */}
                             </div>
                         </th>
                     ))}
@@ -530,57 +506,27 @@ const ExcelEditor = () => {
 
     // Upload the CSV data
     const handleUploadCSV = async () => {
-        try {
-            // Convert JSON data to CSV or TSV format
-            const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
-            const sheet = XLSX.utils.json_to_sheet(data);
+        // Convert JSON data to CSV or TSV format
+        const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
+        const sheet = XLSX.utils.json_to_sheet(data);
 
-            let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
-            if (delimiter === "\t") {
-                csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
-            }
-
-            // Create a FormData object
-            const formData = new FormData();
-
-            // Create a Blob from CSV or TSV data
-            const csvBlob = new Blob([csvData], { type: "text/csv" });
-
-            // Append the file to the FormData object
-            formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
-            formData.append("report_type", selectedValue);
-            formData.append("selected_date", selectedDateColumns.join(","));
-
-            const session: any = await getSession();
-
-            const { data: response } = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/update-report/`, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                    "Authorization": `Bearer ${session?.access_token}`
-                }
-            })
-
-            setDirty(false);
-            if (response?.file_url) {
-                fetchCSVFromBackend(response?.file_url)
-            }
-
-        } catch (err: any) {
-            if (err instanceof AxiosError) {
-                if (err.status === 401) {
-                    signOut({
-                        callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
-                    })
-                    return
-                }
-                parseAndShowErrorInToast(err?.response);
-            } else {
-                parseAndShowErrorInToast(err)
-            }
-        } finally {
-            setLoading(false);
+        let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
+        if (delimiter === "\t") {
+            csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
         }
 
+        // Create a FormData object
+        const formData = new FormData();
+
+        // Create a Blob from CSV or TSV data
+        const csvBlob = new Blob([csvData], { type: "text/csv" });
+
+        // Append the file to the FormData object
+        formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
+        formData.append("report_type", selectedValue);
+        formData.append("selected_date", selectedDateColumns.join(","));
+
+        await submit(formData);
     };
 
     const handleSumColumnModel = () => {
@@ -643,6 +589,9 @@ const ExcelEditor = () => {
 
         setDirty(true); // Mark as dirty since the data has changed
     };
+    const handleSearchModel = () => {
+        setSearchModel(true);
+    }
 
 
     return (
@@ -660,22 +609,22 @@ const ExcelEditor = () => {
                         placeholder="Search"
                         className="mr-4 p-3 border border-gray-300 rounded-md"
                     />
-                    <Button onClick={handleAddRow}>
+                    {/* <Button onClick={handleAddRow}>
                         Add Row
-                    </Button>
+                    </Button> */}
                     {/* <Button onClick={handleSumColumnModel} color="primary">
           SUM
         </Button> */}
-                    <Input
+                    {/* <Input
                         type="text"
                         value={newColumnName}
                         onChange={(e) => setNewColumnName(e.target.value)}
                         placeholder="New Column Name"
                         className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
-                    />
+                    /> */}
 
                     {/* Dropdown to select the column after which to insert the new column */}
-                    <Select onValueChange={setSelectedColumn} value={selectedColumn}>
+                    {/* <Select onValueChange={setSelectedColumn} value={selectedColumn}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Column to Insert After" />
                         </SelectTrigger>
@@ -693,7 +642,7 @@ const ExcelEditor = () => {
 
                     <Button onClick={handleAddColumn} color="primary">
                         Add Column
-                    </Button>
+                    </Button> */}
 
 
                     {/* <div className="p-2 ml-auto">
@@ -713,8 +662,43 @@ const ExcelEditor = () => {
             </SelectContent>
           </Select>
         </div> */}
+                    <Dialog open={searchModel} onOpenChange={setSearchModel}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Sum Columns</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                                {/* Multi-select dropdown */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">
+                                        Select Columns to Sum:
+                                    </label>
+                                    <ReactSelect
+                                        options={searchcolumnOptions}
+                                        isMulti
+                                        value={selectedSearchColumns.map((col) => ({
+                                            value: col,
+                                            label: col,
+                                        }))}
+                                        onChange={(selected: any) => {
+                                            const cols = selected.map((item: any) => item.value);
+                                            setSelectedSearchColumns(cols);
+                                        }}
+                                        className="react-select-container"
+                                        classNamePrefix="react-select"
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={handleCloseSearchColumnModel}>
+                                    Cancel
+                                </Button>
+                                <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
 
-                    {dirty && (
+                    {/* {dirty && (
                         <Button
                             className="w-[120px]"
                             disabled={uploadOptions.isLoading}
@@ -733,7 +717,7 @@ const ExcelEditor = () => {
                                 "Save Changes"
                             )}
                         </Button>
-                    )}
+                    )} */}
                 </div>
 
                 {isLoading || loading || isFetching ? (
@@ -785,105 +769,11 @@ const ExcelEditor = () => {
           </div>
         )}
       </div> */}
-                <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Sum Columns</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                            {/* Multi-select dropdown */}
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Select Columns to Sum:
-                                </label>
-                                <ReactSelect
-                                    options={columnOptions}
-                                    isMulti
-                                    value={selectedSumColumns.map((col) => ({
-                                        value: col,
-                                        label: col,
-                                    }))}
-                                    onChange={(selected: any) => {
-                                        const cols = selected.map((item: any) => item.value);
-                                        setSelectedSumColumns(cols);
-                                    }}
-                                    className="react-select-container"
-                                    classNamePrefix="react-select"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    New Column Name (DD.MM.YY):
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newSumColumnName}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        // Allow only numbers and dots, and limit to format like 02.01.25
-                                        if (/^[\d.]{0,8}$/.test(val)) {
-                                            setSumNewColumnName(val);
-                                        }
-                                    }}
-                                    className="w-full border px-2 py-1 rounded-md"
-                                    placeholder="e.g., 19.12.24"
-                                    pattern="\d{2}\.\d{2}\.\d{2}"
-                                    title="Format should be DD.MM.YY"
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={handleCloseSumColumnModel}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleCreateSumColumn}>Done</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+
             </div>
-            <div className="p-6 flex justify-start">
-                <Input
-                    type="file"
-                    onChange={selectCsv}
-                    placeholder="New Column Name"
-                    className="mr-2 w-1/5 p-3 border border-gray-300 rounded-md"
-                />
-            </div>
-            <Dialog open={searchModel} onOpenChange={setSearchModel}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Sum Columns</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        {/* Multi-select dropdown */}
-                        <div>
-                            <label className="block text-sm font-medium mb-1">
-                                Select Columns to Sum:
-                            </label>
-                            <ReactSelect
-                                options={searchcolumnOptions}
-                                isMulti
-                                value={selectedSearchColumns.map((col) => ({
-                                    value: col,
-                                    label: col,
-                                }))}
-                                onChange={(selected: any) => {
-                                    const cols = selected.map((item: any) => item.value);
-                                    setSelectedSearchColumns(cols);
-                                }}
-                                className="react-select-container"
-                                classNamePrefix="react-select"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={handleCloseSearchColumnModel}>
-                            Cancel
-                        </Button>
-                        <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+
+
+
         </>
     );
 };

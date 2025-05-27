@@ -25,6 +25,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import ProcessLoader from "@/components/ProcessLoader";
+import ApiState from "@/components/ApiState";
 
 function UserTables() {
   const router = useRouter();
@@ -56,6 +57,13 @@ function UserTables() {
 
   return (
     <div className="w-full rounded-2xl">
+      <ApiState error={error} isSuccess={isSuccess}>
+        <ApiState.ArthorizeCheck />
+      </ApiState>
+
+      <ApiState error={deleteUserOption.error} isSuccess={deleteUserOption.isSuccess}>
+        <ApiState.ArthorizeCheck />
+      </ApiState>
       {isLoading && (
         <ProcessLoader className="mx-auto absolute top-[50%] left-[50%]" />
       )}
@@ -81,9 +89,8 @@ function UserTables() {
                 {((data as any) || []).map((row: any, index: number) => (
                   <tr
                     key={row.id}
-                    className={`${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    } hover:bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-900 dark:border-gray-700 rounded-lg transition duration-200 ease-in-out`}
+                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-900 dark:border-gray-700 rounded-lg transition duration-200 ease-in-out`}
                   >
                     <td className="px-6 py-4">{row.first_name}</td>
                     <td className="px-6 py-4">{row.last_name}</td>

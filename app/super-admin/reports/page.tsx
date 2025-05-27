@@ -32,7 +32,7 @@ import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios"
 import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
-import { getSession } from "next-auth/react";
+import { getSession, signOut } from "next-auth/react";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -521,6 +521,12 @@ const ExcelEditor = () => {
 
     } catch (err: any) {
       if (err instanceof AxiosError) {
+        if (err.status === 401) {
+          signOut({
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
+          })
+          return
+        }
         parseAndShowErrorInToast(err?.response);
       } else {
         parseAndShowErrorInToast(err)

@@ -122,8 +122,19 @@ const menu = {
                     Icon: PackageIcon
                 }
             ]
+        },
+        {
+            title: "Scraped data",
+            Icon: PackageIcon,
+            subMenus: [
+                {
+                    title: "Scraped data",
+                    url: "/super-admin/scraped-data",
+                    Icon: PackageIcon
+                }
+            ]
         }
-        
+
     ]
 }
 

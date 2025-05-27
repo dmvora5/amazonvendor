@@ -14,15 +14,17 @@ import {
   useGetOrderQuery,
   useUpdateOrderMutation,
 } from "@/redux/apis/usersApis";
+import ApiState from "@/components/ApiState";
 
 const OrderType = () => {
   const [selectedOrderValue, setSelectedOrderValue] = useState("");
 
   const {
     data: orderData,
-    isLoading: isOrderDataLoading,
-    error: isOrderDataError,
-    isFetching: isOrderDataFetching,
+    isLoading,
+    error,
+    isFetching,
+    isSuccess
   } = useGetOrderQuery({});
 
   const [updateOrder, updateOrderOptions] = useUpdateOrderMutation();
@@ -63,6 +65,13 @@ const OrderType = () => {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Select your order type:
         </label>
+        <ApiState error={error} isSuccess={isSuccess}>
+          <ApiState.ArthorizeCheck />
+        </ApiState>
+
+        <ApiState error={updateOrderOptions.error} isSuccess={updateOrderOptions.isSuccess}>
+          <ApiState.ArthorizeCheck />
+        </ApiState>
         <Select onValueChange={handleChange} value={selectedOrderValue}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select an order" />
