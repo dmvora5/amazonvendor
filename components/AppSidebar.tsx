@@ -117,7 +117,7 @@ const menu = {
             Icon: PackageIcon,
             subMenus: [
                 {
-                    title: "Product DataBase",
+                    title: "Product Database",
                     url: "/super-admin/product-database",
                     Icon: PackageIcon
                 }
