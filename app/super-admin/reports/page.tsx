@@ -167,6 +167,10 @@ const ExcelEditor = () => {
   const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
   const [newSumColumnName, setSumNewColumnName] = useState("");
   const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [hiddenHeaders, setHiddenHeaders] = useState<string[]>([]);
+  const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
+  const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
 
   const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>([]);
   const [searchModel, setSearchModel] = useState(false);
@@ -225,6 +229,20 @@ const ExcelEditor = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (originalData.length > 0) {
+      const keys = Object.keys(originalData[0]);
+      setHeaders(keys);
+      setHiddenHeaders([]); // Reset hidden
+    }
+  }, [originalData]);
+
+  useEffect(() => {
+    if (hiddenHeaders.length === 0) {
+      setShowHiddenColumnModal(false);
+    }
+  }, [hiddenHeaders]);  
 
   useEffect(() => {
     if (!(queryData as any)?.file_url) return;
@@ -345,7 +363,8 @@ const ExcelEditor = () => {
         style={style}
         className="flex border-b hover:bg-gray-50 overflow-x-hidden"
       >
-        {Object.keys(row).map((key) => (
+        {/* {Object.keys(row).map((key) => ( */}
+        {visibleHeaders.map((key) => (
           <div
             key={key}
             className="px-4 py-2 flex-shrink-0"
@@ -366,6 +385,15 @@ const ExcelEditor = () => {
     );
   };
 
+  const handleToggleColumnVisibility = (header: string) => {
+    setHiddenHeaders(
+      (prev) =>
+        prev.includes(header)
+          ? prev.filter((h) => h !== header) // hide
+          : [...prev, header] // show again
+    );
+  };
+
   // Table Header component
   const Header = () => {
     if (!data || data.length === 0) return null;
@@ -376,7 +404,8 @@ const ExcelEditor = () => {
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
-          {Object.keys(data[0]).map((key) => (
+          {/* {Object.keys(data[0]).map((key) => ( */}
+            {visibleHeaders.map((key) => (
             <th
               key={key}
               className="relative px-4 py-3 text-left"
@@ -396,6 +425,7 @@ const ExcelEditor = () => {
                 </div>
 
                 {key !== "Action" && (
+                   <div className="flex gap-1">
                   <button
                     disabled={uploadOptions.isLoading}
                     className="text-red-500 hover:text-red-700 cursor-pointer"
@@ -403,6 +433,16 @@ const ExcelEditor = () => {
                   >
                     <span className="text-lg">×</span>
                   </button>
+
+                  {/* Toggle Hide/Show column */}
+                  <button
+                      className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                      onClick={() => handleToggleColumnVisibility(key)}
+                      title="Hide column"
+                    >
+                      👁️
+                    </button>
+                  </div>
                 )}
               </div>
             </th>
@@ -616,6 +656,11 @@ const ExcelEditor = () => {
         <Button onClick={handleSumColumnModel} color="primary">
           SUM
         </Button>
+        {hiddenHeaders.length > 0 && (
+            <Button onClick={() => setShowHiddenColumnModal(true)}>
+              Manage Hidden Columns
+            </Button>
+        )}
         <Input
           type="text"
           value={newColumnName}
@@ -828,6 +873,41 @@ const ExcelEditor = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {showHiddenColumnModal && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+          <div className="bg-white p-4 rounded-lg shadow-md w-80">
+            <h2 className="text-md font-semibold mb-3">Hidden Columns</h2>
+            {hiddenHeaders.length === 0 ? (
+              <p className="text-sm text-gray-500">No hidden columns</p>
+            ) : (
+              <ul className="space-y-2">
+                {hiddenHeaders.map((header) => (
+                  <li
+                    key={header}
+                    className="flex justify-between items-center bg-gray-100 px-2 py-1 rounded"
+                  >
+                    <span className="text-sm">{header}</span>
+                    <button
+                      onClick={() => handleToggleColumnVisibility(header)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowHiddenColumnModal(false)}
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
