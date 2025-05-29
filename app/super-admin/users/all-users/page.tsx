@@ -30,7 +30,7 @@ import SuperAdminCheck from "@/components/SuperAdminCheck";
 
 function UserTables() {
   const router = useRouter();
-  const { data, isLoading, isSuccess, isError, error } = useGetAllUsersQuery(
+  const { data, isLoading, isSuccess, isError, error, isFetching } = useGetAllUsersQuery(
     {}
   );
   const [deleteUser, deleteUserOption] = useDeleteUserMutation();
@@ -66,10 +66,9 @@ function UserTables() {
       <ApiState error={deleteUserOption.error} isSuccess={deleteUserOption.isSuccess}>
         <ApiState.ArthorizeCheck />
       </ApiState>
-      {isLoading && (
+      {(isLoading || isFetching || deleteUserOption.isLoading) ? (
         <ProcessLoader className="mx-auto absolute top-[50%] left-[50%]" />
-      )}
-      {isSuccess && (
+      ) : (
         <div className="flex-1 p-6 overflow-hidden">
           <div className="relative overflow-x-auto overflow-y-hidden shadow-md sm:rounded-lg h-full">
             <table className="min-w-full text-sm text-left text-gray-500 dark:text-gray-400 rounded-lg">
