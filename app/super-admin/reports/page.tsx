@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import * as XLSX from "xlsx";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
-import axios, { AxiosError } from "axios"
+import axios, { AxiosError } from "axios";
 import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
 import { getSession, signOut } from "next-auth/react";
@@ -54,6 +54,7 @@ const InputComponent = memo(
     setData,
     setDirty,
     disabled,
+    isDuplicate
   }: any) => {
     const row = data[index];
     const [state, setState] = useState<string>(row[keyData]);
@@ -93,7 +94,7 @@ const InputComponent = memo(
       const oriNewData: any = [...originalData];
 
       if (keyData.includes("Supplier")) {
-        console.log("Hear")
+        console.log("Hear");
         const supplierColumns = Object.keys(newData[index]).filter((key) =>
           key.includes("Supplier")
         );
@@ -104,9 +105,10 @@ const InputComponent = memo(
         });
 
         // let updatedOrder = initialOrder - totalSupplierValue;
-        let updatedOrder = oriNewData[index]["Total New Inbound"] + totalSupplierValue
+        let updatedOrder =
+          oriNewData[index]["Total New Inbound"] + totalSupplierValue;
 
-        console.log('updatedOrder', updatedOrder)
+        console.log("updatedOrder", updatedOrder);
 
         if (updatedOrder < 0) {
           supplierColumns.forEach((supplierColumn) => {
@@ -117,7 +119,8 @@ const InputComponent = memo(
             oriNewData[index]["Total New Inbound"];
         } else {
           // newData[index]["Order"] = updatedOrder;
-          newData[index]["Total New Inbound"] = oriNewData[index]["Total New Inbound"] + totalSupplierValue;
+          newData[index]["Total New Inbound"] =
+            oriNewData[index]["Total New Inbound"] + totalSupplierValue;
         }
         setData(newData);
         setDirty(true);
@@ -149,7 +152,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -160,7 +167,8 @@ const ExcelEditor = () => {
   const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
-  const [selectedValue, setSelectedValue] = useState<string>("current_inventory");
+  const [selectedValue, setSelectedValue] =
+    useState<string>("current_inventory");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
@@ -173,9 +181,10 @@ const ExcelEditor = () => {
   const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
   const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
 
-  const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>([]);
+  const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>(
+    []
+  );
   const [searchModel, setSearchModel] = useState(false);
-
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -190,11 +199,10 @@ const ExcelEditor = () => {
       label: key,
     }));
 
-  const searchcolumnOptions = Object.keys(originalData[0] || {})
-    .map((key) => ({
-      value: key,
-      label: key,
-    }));
+  const searchcolumnOptions = Object.keys(originalData[0] || {}).map((key) => ({
+    value: key,
+    label: key,
+  }));
 
   const {
     data: queryData,
@@ -213,10 +221,10 @@ const ExcelEditor = () => {
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
 
-      const wb = XLSX.read(arrayBuffer, { type: "array" });  // Using array instead of string type
+      const wb = XLSX.read(arrayBuffer, { type: "array" }); // Using array instead of string type
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
-      console.log('json', json)
+      console.log("json", json);
 
       setOriginalData(JSON.parse(JSON.stringify(json))); // Save original data
       setData(json); // Also set filtered data initially to the original data
@@ -342,15 +350,16 @@ const ExcelEditor = () => {
         if (!selectedSearchColumns.length) {
           return Object.values(row).some((value) =>
             String(value).toLowerCase().includes(term)
-          )
+          );
         } else {
-          const slectedKeysRow = selectedSearchColumns.map((ele: any) => row[ele])
+          const slectedKeysRow = selectedSearchColumns.map(
+            (ele: any) => row[ele]
+          );
           return Object.values(slectedKeysRow).some((value) =>
             String(value).toLowerCase().includes(term)
-          )
+          );
         }
-      }
-      );
+      });
       setData(filteredData);
     }
   };
@@ -358,30 +367,41 @@ const ExcelEditor = () => {
   // Table Row component
   const Row = ({ index, style }: any) => {
     const row = data[index];
-    const oRow = originalData;
+
     return (
       <div
         style={style}
         className="flex border-b hover:bg-gray-50 overflow-x-hidden"
       >
-        {/* {Object.keys(row).map((key) => ( */}
-        {visibleHeaders.map((key) => (
-          <div
-            key={key}
-            className="px-4 py-2 flex-shrink-0"
-            style={{ width: columnWidth }}
-          >
-            <InputComponent
-              originalData={originalData}
-              data={data}
-              index={index}
-              keyData={key}
-              setData={setData}
-              setDirty={setDirty}
-              disabled={uploadOptions.isLoading}
-            />
-          </div>
-        ))}
+        {visibleHeaders.map((key) => {
+          const value = row[key];
+          const isDuplicate =
+            selectedValue === "current_inventory" &&
+            ["Product Code", "FBA SKU", "ASIN"].includes(key) &&
+            duplicateValues.has(`${key}::${value}`);
+
+          return (
+            <div
+              key={key}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
+              style={{ width: columnWidth }}
+              title={isDuplicate ? "Duplicate value" : ""}
+            >
+              <InputComponent
+                originalData={originalData}
+                data={data}
+                index={index}
+                keyData={key}
+                setData={setData}
+                setDirty={setDirty}
+                disabled={uploadOptions.isLoading}
+                isDuplicate={isDuplicate} // pass flag
+              />
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -525,7 +545,7 @@ const ExcelEditor = () => {
   // Upload the CSV data
   const handleUploadCSV = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       // Convert JSON data to CSV or TSV format
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
       const sheet = XLSX.utils.json_to_sheet(data);
@@ -548,40 +568,40 @@ const ExcelEditor = () => {
 
       const session: any = await getSession();
 
-      const { data: response } = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/update-report/`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "Authorization": `Bearer ${session?.access_token}`
+      const { data: response } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/update-report/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
         }
-      })
+      );
 
       setDirty(false);
       if (response?.file_url) {
-        fetchCSVFromBackend(response?.file_url)
+        fetchCSVFromBackend(response?.file_url);
       }
-
     } catch (err: any) {
       if (err instanceof AxiosError) {
         if (err.status === 401) {
           signOut({
             callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
-          })
-          return
+          });
+          return;
         }
         parseAndShowErrorInToast(err?.response);
       } else {
-        parseAndShowErrorInToast(err)
+        parseAndShowErrorInToast(err);
       }
     } finally {
       setLoading(false);
     }
 
-
     // await submit(formData);
     // await fetchCSVFromBackend()
   };
-
-
 
   const handleSumColumnModel = () => {
     setOpenSumModel(true); // open the modal
@@ -589,7 +609,7 @@ const ExcelEditor = () => {
 
   const handleSearchModel = () => {
     setSearchModel(true);
-  }
+  };
 
   const handleCloseSearchColumnModel = () => {
     setSearchModel(false); // open the modal
@@ -640,15 +660,80 @@ const ExcelEditor = () => {
     setDirty(true);
   };
 
+  const duplicateValues = useMemo(() => {
+    if (selectedValue !== "current_inventory") return new Set<string>();
+
+    const checkColumns = ["Product Code", "FBA SKU", "ASIN"];
+    const valueMap: Record<string, Set<string>> = {};
+    const duplicateSet = new Set<string>();
+
+    checkColumns.forEach((col) => {
+      const seen = new Set<string>();
+      const duplicates = new Set<string>();
+
+      data.forEach((row) => {
+        const value = row[col];
+        if (value && seen.has(value)) {
+          duplicates.add(`${col}::${value}`);
+        }
+        seen.add(value);
+      });
+
+      valueMap[col] = duplicates;
+    });
+
+    // Flatten all duplicates into one set
+    Object.entries(valueMap).forEach(([col, duplicates]) => {
+      duplicates.forEach((val) => duplicateSet.add(val));
+    });
+
+    return duplicateSet;
+  }, [data, selectedValue]);
+
+  const handleDownloadExcel = () => {
+    if (!data || data.length === 0) return;
+
+    // Filter only visible columns
+    const filteredData = data.map((row) => {
+      const filteredRow: { [key: string]: any } = {};
+      visibleHeaders.forEach((key) => {
+        filteredRow[key] = row[key];
+      });
+      return filteredRow;
+    });
+
+    // Convert to worksheet
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+    // Format: "Product Database 2025-05-29_14-30.xlsx"
+    const now = new Date();
+    const formattedDate = now
+      .toLocaleString("sv-SE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      .replace(" ", "_")
+      .replace(":", "-");
+
+    const fileName = `${selectedValue} ${formattedDate}.xlsx`;
+
+    // Trigger download
+    XLSX.writeFile(workbook, fileName);
+  };
+
   return (
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
-
       <div className="mb-4 space-x-2 flex items-center">
         <RolesChecks access="has_reports_access" />
 
-        <Button onClick={handleSearchModel}>
-          Filter
-        </Button>
+        <Button onClick={handleSearchModel}>Filter</Button>
         <Input
           type="text"
           value={searchTerm}
@@ -694,10 +779,13 @@ const ExcelEditor = () => {
         </Button>
 
         <div className="p-2 ml-auto">
-          <Select onValueChange={(e: any) => {
-            setSelectedValue(e)
-            setDirty(false)
-          }} value={selectedValue}>
+          <Select
+            onValueChange={(e: any) => {
+              setSelectedValue(e);
+              setDirty(false);
+            }}
+            value={selectedValue}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select a report" />
             </SelectTrigger>
@@ -714,7 +802,7 @@ const ExcelEditor = () => {
           </Select>
         </div>
 
-        {(dirty && selectedValue === "current_inventory") && (
+        {dirty && selectedValue === "current_inventory" && (
           <Button
             className="w-[120px]"
             disabled={uploadOptions.isLoading || loading}
@@ -734,6 +822,32 @@ const ExcelEditor = () => {
             )}
           </Button>
         )}
+        <div className="relative group">
+          <button
+            onClick={handleDownloadExcel}
+            className="p-2 rounded-full bg-green-600 hover:bg-green-700 text-white focus:outline-none"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+              />
+            </svg>
+          </button>
+
+          {/* Tooltip */}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+            Download Excel
+          </div>
+        </div>
       </div>
 
       {isLoading || loading || isFetching ? (

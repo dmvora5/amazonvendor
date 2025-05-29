@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import * as XLSX from "xlsx";
@@ -53,6 +53,7 @@ const InputComponent = memo(
     setData,
     setDirty,
     disabled,
+    isDuplicate
   }: any) => {
     const row = data[index];
     const [state, setState] = useState<string>(row[keyData]);
@@ -144,7 +145,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -251,6 +256,34 @@ const ExcelEditor = () => {
     if (!uploadOptions.isSuccess) return;
     setDirty(false);
   }, [uploadOptions.isSuccess]);
+
+  const duplicateValues = useMemo(() => {
+    const checkColumns = ["Product Code", "FBA SKU", "ASIN"];
+    const valueMap: Record<string, Set<string>> = {};
+    const duplicateSet = new Set<string>();
+
+    checkColumns.forEach((col) => {
+      const seen = new Set<string>();
+      const duplicates = new Set<string>();
+
+      data.forEach((row) => {
+        const value = row[col];
+        if (value && seen.has(value)) {
+          duplicates.add(`${col}::${value}`);
+        }
+        seen.add(value);
+      });
+
+      valueMap[col] = duplicates;
+    });
+
+    // Flatten all duplicates into one set
+    Object.entries(valueMap).forEach(([col, duplicates]) => {
+      duplicates.forEach((val) => duplicateSet.add(val));
+    });
+
+    return duplicateSet;
+  }, [data]);
 
   // // Function to handle adding a new column after the selected column
   // const handleAddColumn = () => {
@@ -371,23 +404,34 @@ const ExcelEditor = () => {
         style={style}
         className="flex border-b hover:bg-gray-50 overflow-x-hidden"
       >
-        {visibleHeaders.map((key) => (
-          <div
-            key={key}
-            className="px-4 py-2 flex-shrink-0"
-            style={{ width: columnWidth }}
-          >
-            <InputComponent
-              originalData={originalData}
-              data={data}
-              index={index}
-              keyData={key}
-              setData={setData}
-              setDirty={setDirty}
-              disabled={uploadOptions.isLoading}
-            />
-          </div>
-        ))}
+        {visibleHeaders.map((key) => {
+          const value = row[key];
+          const isDuplicate =
+            ["Product Code", "FBA SKU", "ASIN"].includes(key) &&
+            duplicateValues.has(`${key}::${value}`);
+
+          return (
+            <div
+              key={key}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
+              style={{ width: columnWidth }}
+              title={isDuplicate ? "Duplicate value" : ""}
+            >
+              <InputComponent
+                originalData={originalData}
+                data={data}
+                index={index}
+                keyData={key}
+                setData={setData}
+                setDirty={setDirty}
+                disabled={uploadOptions.isLoading}
+                isDuplicate={isDuplicate}
+              />
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -689,8 +733,59 @@ const ExcelEditor = () => {
     setDirty(true); // Mark as dirty since the data has changed
   };
 
+  const handleDownloadExcel = () => {
+    if (!data || data.length === 0) return;
+
+    // Filter only visible columns
+    const filteredData = data.map((row) => {
+      const filteredRow: { [key: string]: any } = {};
+      visibleHeaders.forEach((key) => {
+        filteredRow[key] = row[key];
+      });
+      return filteredRow;
+    });
+
+    // Convert to worksheet
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+    // Format: "Product Database 2025-05-29_14-30.xlsx"
+    const now = new Date();
+    const formattedDate = now
+      .toLocaleString("sv-SE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      .replace(" ", "_")
+      .replace(":", "-");
+
+    const fileName = `Product Database ${formattedDate}.xlsx`;
+
+    // Trigger download
+    XLSX.writeFile(workbook, fileName);
+  };
+
   return (
     <>
+      <div className="p-6 flex items-center space-x-4">
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">
+            Upload Excel File
+          </span>
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={selectCsv}
+            className="mt-1 block w-64 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+          />
+        </label>
+      </div>
       <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
         <RolesChecks access="has_product_db_access" />
 
@@ -779,6 +874,32 @@ const ExcelEditor = () => {
               )}
             </Button>
           )}
+          <div className="relative group">
+            <button
+              onClick={handleDownloadExcel}
+              className="p-2 rounded-full bg-green-600 hover:bg-green-700 text-white focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                />
+              </svg>
+            </button>
+
+            {/* Tooltip */}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+              Download Excel
+            </div>
+          </div>
         </div>
 
         {isLoading || loading || isFetching ? (
@@ -887,14 +1008,6 @@ const ExcelEditor = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-      <div className="p-6 flex justify-start">
-        <Input
-          type="file"
-          onChange={selectCsv}
-          placeholder="New Column Name"
-          className="mr-2 w-1/5 p-3 border border-gray-300 rounded-md"
-        />
       </div>
       <Dialog open={searchModel} onOpenChange={setSearchModel}>
         <DialogContent>
