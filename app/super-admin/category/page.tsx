@@ -22,12 +22,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ProcessLoader from "@/components/ProcessLoader";
 import ApiState from "@/components/ApiState";
+import RolesChecks from "@/components/RolesChecks";
 
 function CategoryTables() {
   const { data, isLoading, isSuccess, error } = useGetAllCategoryQuery({});
   const [updateCategory, { isLoading: isUpdating }] =
     useUpdateCategoryMutation();
-  const [addCategory, { isLoading: isAdding, error: isE , isSuccess: isS}] = useAddCategoryMutation();
+  const [addCategory, { isLoading: isAdding, error: isE, isSuccess: isS }] = useAddCategoryMutation();
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   console.log("🚀 ~ CategoryTables ~ selectedCategory:", selectedCategory);
 
@@ -97,6 +98,8 @@ function CategoryTables() {
 
   return (
     <div className="w-full rounded-2xl">
+      <RolesChecks access="has_category_access" />
+
       {/* Loader */}
       {isLoading && (
         <ProcessLoader className="mx-auto absolute top-[50%] left-[50%]" />

@@ -23,6 +23,7 @@ import { parseAndShowErrorInToast } from "@/utils";
 import { useAddCategoryMutation } from "@/redux/apis/usersApis";
 import Image from "next/image";
 import ApiState from "@/components/ApiState";
+import RolesChecks from "@/components/RolesChecks";
 // import Image from "next/image"; // Only needed if you plan to show a spinner/loader graphic
 
 // ----- Zod Schema -----
@@ -86,6 +87,9 @@ export default function CreateCategoryForm() {
 
     return (
         <div className="flex flex-col justify-center items-center space-y-6">
+
+            <RolesChecks access="has_category_access" />
+
             <div className="p-10 m-16 bg-white rounded-2xl shadow-lg border w-4/5">
                 <div className="flex p-2 justify-between">
                     <h2 className="text-xl font-semibold mb-4">Create Category</h2>

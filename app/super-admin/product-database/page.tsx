@@ -32,6 +32,7 @@ import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios";
 import { getSession, signOut } from "next-auth/react";
 import { parseAndShowErrorInToast } from "@/utils";
+import RolesChecks from "@/components/RolesChecks";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -205,7 +206,7 @@ const ExcelEditor = () => {
     if (hiddenHeaders.length === 0) {
       setShowHiddenColumnModal(false);
     }
-  }, [hiddenHeaders]);  
+  }, [hiddenHeaders]);
 
   const {
     data: queryData,
@@ -691,6 +692,8 @@ const ExcelEditor = () => {
   return (
     <>
       <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <RolesChecks access="has_product_db_access" />
+
         <div className="mb-4 space-x-2 flex items-center">
           <Button onClick={handleSearchModel}>Filter</Button>
           <Input

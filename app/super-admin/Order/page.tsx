@@ -15,6 +15,7 @@ import {
   useUpdateOrderMutation,
 } from "@/redux/apis/usersApis";
 import ApiState from "@/components/ApiState";
+import RolesChecks from "@/components/RolesChecks";
 
 const OrderType = () => {
   const [selectedOrderValue, setSelectedOrderValue] = useState("");
@@ -32,6 +33,7 @@ const OrderType = () => {
   // Options for the dropdown
   const optionsForOrder = [
     { label: "2 Weeks", value: "2W" },
+    { label: "4 Weeks", value: "4W" },
     { label: "6 Weeks", value: "6W" },
     { label: "2 Months", value: "2M" },
     { label: "3 Months", value: "3M" },
@@ -61,6 +63,8 @@ const OrderType = () => {
 
   return (
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <RolesChecks access="has_order_access" />
+
       <div className="p-2 ml-auto">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Select your order type:

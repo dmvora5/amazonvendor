@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
+import RolesChecks from "@/components/RolesChecks";
 
 const options = [
     { value: "fba_inventory", label: "FBA Inventory" },
@@ -597,6 +598,7 @@ const ExcelEditor = () => {
     return (
         <>
             <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
+                <RolesChecks access="has_scraped_data_access" />
 
                 <div className="mb-4 space-x-2 flex items-center">
                     <Button onClick={handleSearchModel}>

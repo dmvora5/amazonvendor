@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import ProcessLoader from "@/components/ProcessLoader";
 import ApiState from "@/components/ApiState";
+import SuperAdminCheck from "@/components/SuperAdminCheck";
 
 function UserTables() {
   const router = useRouter();
@@ -57,6 +58,7 @@ function UserTables() {
 
   return (
     <div className="w-full rounded-2xl">
+      <SuperAdminCheck />
       <ApiState error={error} isSuccess={isSuccess}>
         <ApiState.ArthorizeCheck />
       </ApiState>

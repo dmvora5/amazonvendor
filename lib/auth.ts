@@ -67,7 +67,7 @@ export const authOptions: AuthOptions = {
                  */
                 token.name = user.name
                 token.is_superuser = user.is_superuser
-               
+
 
                 /**
                  * Custom data: added by Dev
@@ -99,12 +99,19 @@ export const authOptions: AuthOptions = {
             //     }
             // }
 
+
             if (token?.user) {
                 const userKeysToKeep = [
                     "email",
                     "first_name",
                     "last_name",
-                    "is_superuser"
+                    "is_superuser",
+                    "has_reports_access",
+                    "has_category_access",
+                    "has_cm_access",
+                    "has_order_access",
+                    "has_product_db_access",
+                    "has_scraped_data_access"
                 ]
 
                 token.user = Object.fromEntries(Object.entries(token?.user)?.filter(([key]) => userKeysToKeep?.includes(key)))

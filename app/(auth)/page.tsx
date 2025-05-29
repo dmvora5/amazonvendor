@@ -74,6 +74,27 @@ export default function LoginPage() {
           dispatch(userApi.util.invalidateTags(["Auth"] as any));
           router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS)
         }
+
+        if (!session?.user?.is_superuser) {
+          if (session?.user?.has_reports_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.REPORT)
+          }
+          if (session?.user?.has_category_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ALLCATEGORIES)
+          }
+          if (session?.user?.has_cm_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CHENNELMAX)
+          }
+          if (session?.user?.has_order_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ORDER)
+          }
+          if (session?.user?.has_product_db_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.PRODUCTDATABASE)
+          }
+          if (session?.user?.has_scraped_data_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.SCREPPEDDATA)
+          }
+        }
       }
 
     } catch (err) {

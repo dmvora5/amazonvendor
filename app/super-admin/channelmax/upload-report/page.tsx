@@ -1,6 +1,7 @@
 "use client";
 
 import ApiState from "@/components/ApiState";
+import RolesChecks from "@/components/RolesChecks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUploadReportMutation } from "@/redux/apis/usersApis";
@@ -46,6 +47,8 @@ const UploadPage = () => {
 
   return (
     <div className="w-full flex justify-center items-center min-h-[90%]">
+      <RolesChecks access="has_cm_access" />
+
       <div className="flex flex-col space-y-6">
         <ApiState error={error} isSuccess={isSuccess}>
           <ApiState.ArthorizeCheck />

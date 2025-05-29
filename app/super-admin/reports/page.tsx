@@ -33,6 +33,7 @@ import axios, { AxiosError } from "axios"
 import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
 import { getSession, signOut } from "next-auth/react";
+import RolesChecks from "@/components/RolesChecks";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -242,7 +243,7 @@ const ExcelEditor = () => {
     if (hiddenHeaders.length === 0) {
       setShowHiddenColumnModal(false);
     }
-  }, [hiddenHeaders]);  
+  }, [hiddenHeaders]);
 
   useEffect(() => {
     if (!(queryData as any)?.file_url) return;
@@ -405,7 +406,7 @@ const ExcelEditor = () => {
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
           {/* {Object.keys(data[0]).map((key) => ( */}
-            {visibleHeaders.map((key) => (
+          {visibleHeaders.map((key) => (
             <th
               key={key}
               className="relative px-4 py-3 text-left"
@@ -425,17 +426,17 @@ const ExcelEditor = () => {
                 </div>
 
                 {key !== "Action" && (
-                   <div className="flex gap-1">
-                  <button
-                    disabled={uploadOptions.isLoading}
-                    className="text-red-500 hover:text-red-700 cursor-pointer"
-                    onClick={() => handleRemoveColumn(key)}
-                  >
-                    <span className="text-lg">×</span>
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      disabled={uploadOptions.isLoading}
+                      className="text-red-500 hover:text-red-700 cursor-pointer"
+                      onClick={() => handleRemoveColumn(key)}
+                    >
+                      <span className="text-lg">×</span>
+                    </button>
 
-                  {/* Toggle Hide/Show column */}
-                  <button
+                    {/* Toggle Hide/Show column */}
+                    <button
                       className="text-blue-500 hover:text-blue-700 cursor-pointer"
                       onClick={() => handleToggleColumnVisibility(key)}
                       title="Hide column"
@@ -643,6 +644,8 @@ const ExcelEditor = () => {
     <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
 
       <div className="mb-4 space-x-2 flex items-center">
+        <RolesChecks access="has_reports_access" />
+
         <Button onClick={handleSearchModel}>
           Filter
         </Button>
@@ -657,9 +660,9 @@ const ExcelEditor = () => {
           SUM
         </Button>
         {hiddenHeaders.length > 0 && (
-            <Button onClick={() => setShowHiddenColumnModal(true)}>
-              Manage Hidden Columns
-            </Button>
+          <Button onClick={() => setShowHiddenColumnModal(true)}>
+            Manage Hidden Columns
+          </Button>
         )}
         <Input
           type="text"

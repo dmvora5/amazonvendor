@@ -6,7 +6,12 @@ export const PAGE_ROUTES = {
         CREATEUSER: "/super-admin/users",
         USERDETAILS: "/super-admin/users/edit-user/",
         CREATECATEGORY: "/super-admin/category/create",
-        ALLCATEGORIES: "/super-admin/category"
+        ALLCATEGORIES: "/super-admin/category",
+        REPORT: "/super-admin/reports",
+        CHENNELMAX: "/super-admin/channelmax/upload-report",
+        ORDER: "/super-admin/Order",
+        PRODUCTDATABASE: "/super-admin/product-database",
+        SCREPPEDDATA: "/super-admin/scraped-data"
     },
     AUTH: {
         LOGIN: "/"
