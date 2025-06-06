@@ -146,8 +146,8 @@ const InputComponent = memo(
         onBlur={handleBlur}
         disabled={disabled}
         className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-            : "focus:ring-blue-500"
+          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+          : "focus:ring-blue-500"
           }`}
       />
     );
@@ -173,7 +173,7 @@ const ExcelEditor = () => {
   const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
   const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
 
-  const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
+  const [fileChange, setFileChange] = useState(false);
 
   const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>(
     []
@@ -443,6 +443,32 @@ const ExcelEditor = () => {
     );
   };
 
+  const handleHeaderNameChange = (e: any, header: any) => {
+    const updatedHeader = e.target.value;
+    const headerIndex = headers.indexOf(header);
+    const newHeaders = [...headers];
+    newHeaders[headerIndex] = updatedHeader;
+    setHeaders(newHeaders);
+
+    const updatedData = data.map((row) => {
+      const newRow: any = {};
+      newHeaders.forEach((newKey, i) => {
+        const oldKey = headers[i];
+        newRow[newKey] = row[oldKey];
+      });
+      return newRow;
+    });
+
+    setData(updatedData);
+    setOriginalData(updatedData);
+
+    // Also update visibleHeaders
+    setHiddenHeaders((prev) =>
+      prev.map((h) => (h === header ? updatedHeader : h))
+    );
+  }
+
+
   // Table Header component
   const Header = () => {
     if (!data || data.length === 0) return null;
@@ -462,29 +488,7 @@ const ExcelEditor = () => {
                     type="text"
                     value={header}
                     onChange={(e) => {
-                      const updatedHeader = e.target.value;
-                      const headerIndex = headers.indexOf(header);
-                      const newHeaders = [...headers];
-                      newHeaders[headerIndex] = updatedHeader;
-                      setHeaders(newHeaders);
-                      setDirty(true);
-
-                      const updatedData = data.map((row) => {
-                        const newRow: any = {};
-                        newHeaders.forEach((newKey, i) => {
-                          const oldKey = headers[i];
-                          newRow[newKey] = row[oldKey];
-                        });
-                        return newRow;
-                      });
-
-                      setData(updatedData);
-                      setOriginalData(updatedData);
-
-                      // Also update visibleHeaders
-                      setHiddenHeaders((prev) =>
-                        prev.map((h) => (h === header ? updatedHeader : h))
-                      );
+                      handleHeaderNameChange(e, header)
                     }}
                     className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -602,8 +606,8 @@ const ExcelEditor = () => {
         const jsonData = XLSX.utils.sheet_to_json(sheet);
         setData(jsonData);
         setOriginalData(jsonData);
+        setFileChange(true);
         setLoading(false);
-        setDirty(true);
       };
 
       reader.readAsArrayBuffer(file);
@@ -650,6 +654,63 @@ const ExcelEditor = () => {
       setDirty(false);
       if (response?.file_url) {
         fetchCSVFromBackend(response?.file_url);
+      }
+    } catch (err: any) {
+      if (err instanceof AxiosError) {
+        if (err.status === 401) {
+          signOut({
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
+          });
+          return;
+        }
+        parseAndShowErrorInToast(err?.response);
+      } else {
+        parseAndShowErrorInToast(err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUploadNewCSV = async () => {
+    setLoading(true)
+    try {
+      // Convert JSON data to CSV or TSV format
+      const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
+      const sheet = XLSX.utils.json_to_sheet(data);
+
+      let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
+      if (delimiter === "\t") {
+        csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
+      }
+
+      // Create a FormData object
+      const formData = new FormData();
+
+      // Create a Blob from CSV or TSV data
+      const csvBlob = new Blob([csvData], { type: "text/csv" });
+
+      // Append the file to the FormData object
+      formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
+      formData.append("report_type", "product_database");
+
+      const session: any = await getSession();
+
+      const { data: response } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/report/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      if (response?.file_url) {
+        fetchCSVFromBackend(response?.file_url);
+        setDirty(false);
+        setFileChange(false);
       }
     } catch (err: any) {
       if (err instanceof AxiosError) {
@@ -853,7 +914,7 @@ const ExcelEditor = () => {
           </Select>
         </div> */}
 
-          {dirty && (
+          {(dirty && !fileChange) && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
@@ -870,6 +931,26 @@ const ExcelEditor = () => {
                 />
               ) : (
                 "Save Changes"
+              )}
+            </Button>
+          )}
+          {fileChange && (
+            <Button
+              className="w-[120px]"
+              disabled={uploadOptions.isLoading || loading}
+              onClick={handleUploadNewCSV}
+              color="primary"
+            >
+              {(uploadOptions.isLoading || loading) ? (
+                <Image
+                  src="/assets/icons/loader.svg"
+                  alt="loader"
+                  width={24}
+                  height={24}
+                  className="animate-spin mx-auto"
+                />
+              ) : (
+                "Upload file"
               )}
             </Button>
           )}
