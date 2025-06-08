@@ -54,7 +54,7 @@ const InputComponent = memo(
     setData,
     setDirty,
     disabled,
-    isDuplicate
+    isDuplicate,
   }: any) => {
     const row = data[index];
     const [state, setState] = useState<string>(row[keyData]);
@@ -180,7 +180,7 @@ const ExcelEditor = () => {
   const [hiddenHeaders, setHiddenHeaders] = useState<string[]>([]);
   const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
   const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
-
+  const [fileChange, setFileChange] = useState(false);
   const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>(
     []
   );
@@ -414,6 +414,31 @@ const ExcelEditor = () => {
           : [...prev, header] // show again
     );
   };
+
+  // const handleHeaderNameChange = (e: any, header: any) => {
+  //   const updatedHeader = e.target.value;
+  //   const headerIndex = headers.indexOf(header);
+  //   const newHeaders = [...headers];
+  //   newHeaders[headerIndex] = updatedHeader;
+  //   setHeaders(newHeaders);
+
+  //   const updatedData = data.map((row) => {
+  //     const newRow: any = {};
+  //     newHeaders.forEach((newKey, i) => {
+  //       const oldKey = headers[i];
+  //       newRow[newKey] = row[oldKey];
+  //     });
+  //     return newRow;
+  //   });
+
+  //   setData(updatedData);
+  //   setOriginalData(updatedData);
+
+  //   // Also update visibleHeaders
+  //   setHiddenHeaders((prev) =>
+  //     prev.map((h) => (h === header ? updatedHeader : h))
+  //   );
+  // };
 
   // Table Header component
   const Header = () => {
@@ -690,6 +715,86 @@ const ExcelEditor = () => {
     return duplicateSet;
   }, [data, selectedValue]);
 
+  const selectCsv = (e: any) => {
+    const file = e.target.files[0];
+
+    if (file) {
+      setLoading(true);
+      // Create a FileReader to read the CSV file
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const binaryString = event.target?.result as string;
+        const workbook = XLSX.read(binaryString, { type: "binary" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        setData(jsonData);
+        setOriginalData(jsonData);
+        setFileChange(true);
+        setLoading(false);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const handleUploadNewCSV = async () => {
+    setLoading(true);
+    try {
+      // Convert JSON data to CSV or TSV format
+      const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
+      const sheet = XLSX.utils.json_to_sheet(data);
+
+      let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
+      if (delimiter === "\t") {
+        csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
+      }
+
+      // Create a FormData object
+      const formData = new FormData();
+
+      // Create a Blob from CSV or TSV data
+      const csvBlob = new Blob([csvData], { type: "text/csv" });
+
+      // Append the file to the FormData object
+      formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
+      formData.append("report_type", "product_database");
+
+      const session: any = await getSession();
+
+      const { data: response } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/report/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      if (response?.file_url) {
+        fetchCSVFromBackend(response?.file_url);
+        setDirty(false);
+        setFileChange(false);
+      }
+    } catch (err: any) {
+      if (err instanceof AxiosError) {
+        if (err.status === 401) {
+          signOut({
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
+          });
+          return;
+        }
+        parseAndShowErrorInToast(err?.response);
+      } else {
+        parseAndShowErrorInToast(err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownloadExcel = () => {
     if (!data || data.length === 0) return;
 
@@ -729,153 +834,192 @@ const ExcelEditor = () => {
   };
 
   return (
-    <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="mb-4 space-x-2 flex items-center">
-        <RolesChecks access="has_reports_access" />
+    <>
+      {selectedValue === "current_inventory" && (
+        <div className="p-6 flex items-center space-x-4">
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">
+              Upload Excel File
+            </span>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={selectCsv}
+              className="mt-1 block w-64 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </label>
+        </div>
+      )}
+      <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <div className="mb-4 space-x-2 flex items-center">
+          <RolesChecks access="has_reports_access" />
 
-        <Button onClick={handleSearchModel}>Filter</Button>
-        <Input
-          type="text"
-          value={searchTerm}
-          onChange={handleSearch}
-          placeholder="Search"
-          className="mr-4 p-3 border border-gray-300 rounded-md"
-        />
-        <Button onClick={handleSumColumnModel} color="primary">
-          SUM
-        </Button>
-        {hiddenHeaders.length > 0 && (
-          <Button onClick={() => setShowHiddenColumnModal(true)}>
-            Manage Hidden Columns
+          <Button onClick={handleSearchModel}>Filter</Button>
+          <Input
+            type="text"
+            value={searchTerm}
+            onChange={handleSearch}
+            placeholder="Search"
+            className="mr-4 p-3 border border-gray-300 rounded-md"
+          />
+          <Button onClick={handleSumColumnModel} color="primary">
+            SUM
           </Button>
-        )}
-        <Input
-          type="text"
-          value={newColumnName}
-          onChange={(e) => setNewColumnName(e.target.value)}
-          placeholder="New Column Name"
-          className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
-        />
+          {hiddenHeaders.length > 0 && (
+            <Button onClick={() => setShowHiddenColumnModal(true)}>
+              Manage Hidden Columns
+            </Button>
+          )}
+          <Input
+            type="text"
+            value={newColumnName}
+            onChange={(e) => setNewColumnName(e.target.value)}
+            placeholder="New Column Name"
+            className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
+          />
 
-        {/* Dropdown to select the column after which to insert the new column */}
-        <Select onValueChange={setSelectedColumn} value={selectedColumn}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select Column to Insert After" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Select Column</SelectLabel>
-              {Object.keys(originalData[0] || {}).map((key) => (
-                <SelectItem key={key} value={key}>
-                  {key}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-
-        <Button onClick={handleAddColumn} color="primary">
-          Add Column
-        </Button>
-
-        <div className="p-2 ml-auto">
-          <Select
-            onValueChange={(e: any) => {
-              setSelectedValue(e);
-              setDirty(false);
-            }}
-            value={selectedValue}
-          >
+          {/* Dropdown to select the column after which to insert the new column */}
+          <Select onValueChange={setSelectedColumn} value={selectedColumn}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select a report" />
+              <SelectValue placeholder="Select Column to Insert After" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Select Report Type</SelectLabel>
-                {options.map((option: any) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                <SelectLabel>Select Column</SelectLabel>
+                {Object.keys(originalData[0] || {}).map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {key}
                   </SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
           </Select>
-        </div>
 
-        {dirty && selectedValue === "current_inventory" && (
-          <Button
-            className="w-[120px]"
-            disabled={uploadOptions.isLoading || loading}
-            onClick={handleUploadCSV}
-            color="primary"
-          >
-            {uploadOptions.isLoading ? (
-              <Image
-                src="/assets/icons/loader.svg"
-                alt="loader"
-                width={24}
-                height={24}
-                className="animate-spin mx-auto"
-              />
-            ) : (
-              "Save Changes"
-            )}
+          <Button onClick={handleAddColumn} color="primary">
+            Add Column
           </Button>
+
+          <div className="p-2 ml-auto">
+            <Select
+              onValueChange={(e: any) => {
+                setSelectedValue(e);
+                setDirty(false);
+              }}
+              value={selectedValue}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select a report" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Select Report Type</SelectLabel>
+                  {options.map((option: any) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {dirty && !fileChange && (
+            <Button
+              className="w-[120px]"
+              disabled={uploadOptions.isLoading || loading}
+              onClick={handleUploadCSV}
+              color="primary"
+            >
+              {uploadOptions.isLoading ? (
+                <Image
+                  src="/assets/icons/loader.svg"
+                  alt="loader"
+                  width={24}
+                  height={24}
+                  className="animate-spin mx-auto"
+                />
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          )}
+
+          {fileChange && (
+            <Button
+              className="w-[120px]"
+              disabled={uploadOptions.isLoading || loading}
+              onClick={handleUploadNewCSV}
+              color="primary"
+            >
+              {uploadOptions.isLoading || loading ? (
+                <Image
+                  src="/assets/icons/loader.svg"
+                  alt="loader"
+                  width={24}
+                  height={24}
+                  className="animate-spin mx-auto"
+                />
+              ) : (
+                "Upload file"
+              )}
+            </Button>
+          )}
+          <div className="relative group">
+            <button
+              onClick={handleDownloadExcel}
+              className="p-2 rounded-full bg-green-600 hover:bg-green-700 text-white focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                />
+              </svg>
+            </button>
+
+            {/* Tooltip */}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+              Download Excel
+            </div>
+          </div>
+        </div>
+
+        {isLoading || loading || isFetching ? (
+          <div className="h-[600px] w-full flex items-center justify-center">
+            <ProcessLoader />
+          </div>
+        ) : (
+          <div className="overflow-x-auto max-h-[620px]">
+            <div className="relative">
+              <table className="min-w-max table-auto">
+                <Header />
+              </table>
+              <List
+                height={containerHeight}
+                itemCount={data.length}
+                itemSize={rowHeight}
+                width={
+                  data.length > 0
+                    ? columnWidth * Object.keys(data[0]).length
+                    : 0
+                }
+                ref={listRef}
+              >
+                {Row}
+              </List>
+            </div>
+          </div>
         )}
-        <div className="relative group">
-          <button
-            onClick={handleDownloadExcel}
-            className="p-2 rounded-full bg-green-600 hover:bg-green-700 text-white focus:outline-none"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-              />
-            </svg>
-          </button>
 
-          {/* Tooltip */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-            Download Excel
-          </div>
-        </div>
-      </div>
-
-      {isLoading || loading || isFetching ? (
-        <div className="h-[600px] w-full flex items-center justify-center">
-          <ProcessLoader />
-        </div>
-      ) : (
-        <div className="overflow-x-auto max-h-[620px]">
-          <div className="relative">
-            <table className="min-w-max table-auto">
-              <Header />
-            </table>
-            <List
-              height={containerHeight}
-              itemCount={data.length}
-              itemSize={rowHeight}
-              width={
-                data.length > 0 ? columnWidth * Object.keys(data[0]).length : 0
-              }
-              ref={listRef}
-            >
-              {Row}
-            </List>
-          </div>
-        </div>
-      )}
-
-      {/* <div className="mt-6 flex justify-between">
+        {/* <div className="mt-6 flex justify-between">
         {dirty && (
           <div className="mt-6 flex justify-center">
             <Button
@@ -899,133 +1043,134 @@ const ExcelEditor = () => {
           </div>
         )}
       </div> */}
-      <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sum Columns</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Multi-select dropdown */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Select Columns to Sum:
-              </label>
-              <ReactSelect
-                options={columnOptions}
-                isMulti
-                value={selectedSumColumns.map((col) => ({
-                  value: col,
-                  label: col,
-                }))}
-                onChange={(selected: any) => {
-                  const cols = selected.map((item: any) => item.value);
-                  setSelectedSumColumns(cols);
-                }}
-                className="react-select-container"
-                classNamePrefix="react-select"
-              />
+        <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Sum Columns</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Multi-select dropdown */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Select Columns to Sum:
+                </label>
+                <ReactSelect
+                  options={columnOptions}
+                  isMulti
+                  value={selectedSumColumns.map((col) => ({
+                    value: col,
+                    label: col,
+                  }))}
+                  onChange={(selected: any) => {
+                    const cols = selected.map((item: any) => item.value);
+                    setSelectedSumColumns(cols);
+                  }}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  New Column Name (DD.MM.YY):
+                </label>
+                <input
+                  type="text"
+                  value={newSumColumnName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Allow only numbers and dots, and limit to format like 02.01.25
+                    if (/^[\d.]{0,8}$/.test(val)) {
+                      setSumNewColumnName(val);
+                    }
+                  }}
+                  className="w-full border px-2 py-1 rounded-md"
+                  placeholder="e.g., 19.12.24"
+                  pattern="\d{2}\.\d{2}\.\d{2}"
+                  title="Format should be DD.MM.YY"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                New Column Name (DD.MM.YY):
-              </label>
-              <input
-                type="text"
-                value={newSumColumnName}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  // Allow only numbers and dots, and limit to format like 02.01.25
-                  if (/^[\d.]{0,8}$/.test(val)) {
-                    setSumNewColumnName(val);
-                  }
-                }}
-                className="w-full border px-2 py-1 rounded-md"
-                placeholder="e.g., 19.12.24"
-                pattern="\d{2}\.\d{2}\.\d{2}"
-                title="Format should be DD.MM.YY"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseSumColumnModel}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateSumColumn}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCloseSumColumnModel}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateSumColumn}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={searchModel} onOpenChange={setSearchModel}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sum Columns</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Multi-select dropdown */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Select Columns to Sum:
-              </label>
-              <ReactSelect
-                options={searchcolumnOptions}
-                isMulti
-                value={selectedSearchColumns.map((col) => ({
-                  value: col,
-                  label: col,
-                }))}
-                onChange={(selected: any) => {
-                  const cols = selected.map((item: any) => item.value);
-                  setSelectedSearchColumns(cols);
-                }}
-                className="react-select-container"
-                classNamePrefix="react-select"
-              />
+        <Dialog open={searchModel} onOpenChange={setSearchModel}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Sum Columns</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Multi-select dropdown */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Select Columns to Sum:
+                </label>
+                <ReactSelect
+                  options={searchcolumnOptions}
+                  isMulti
+                  value={selectedSearchColumns.map((col) => ({
+                    value: col,
+                    label: col,
+                  }))}
+                  onChange={(selected: any) => {
+                    const cols = selected.map((item: any) => item.value);
+                    setSelectedSearchColumns(cols);
+                  }}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseSearchColumnModel}>
-              Cancel
-            </Button>
-            <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {showHiddenColumnModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg shadow-md w-80">
-            <h2 className="text-md font-semibold mb-3">Hidden Columns</h2>
-            {hiddenHeaders.length === 0 ? (
-              <p className="text-sm text-gray-500">No hidden columns</p>
-            ) : (
-              <ul className="space-y-2">
-                {hiddenHeaders.map((header) => (
-                  <li
-                    key={header}
-                    className="flex justify-between items-center bg-gray-100 px-2 py-1 rounded"
-                  >
-                    <span className="text-sm">{header}</span>
-                    <button
-                      onClick={() => handleToggleColumnVisibility(header)}
-                      className="text-red-500 hover:text-red-700"
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCloseSearchColumnModel}>
+                Cancel
+              </Button>
+              <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {showHiddenColumnModal && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-lg shadow-md w-80">
+              <h2 className="text-md font-semibold mb-3">Hidden Columns</h2>
+              {hiddenHeaders.length === 0 ? (
+                <p className="text-sm text-gray-500">No hidden columns</p>
+              ) : (
+                <ul className="space-y-2">
+                  {hiddenHeaders.map((header) => (
+                    <li
+                      key={header}
+                      className="flex justify-between items-center bg-gray-100 px-2 py-1 rounded"
                     >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setShowHiddenColumnModal(false)}
-                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Close
-              </button>
+                      <span className="text-sm">{header}</span>
+                      <button
+                        onClick={() => handleToggleColumnVisibility(header)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setShowHiddenColumnModal(false)}
+                  className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 

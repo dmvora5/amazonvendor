@@ -164,6 +164,7 @@ const ExcelEditor = () => {
     const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
     const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>([]);
     const [searchModel, setSearchModel] = useState(false);
+    const [visibleHeaders, setVisibleHeaders] = useState<string[]>([]);
 
     const rowHeight = 50;
     const containerHeight = 500;
@@ -210,6 +211,7 @@ const ExcelEditor = () => {
             if (json.length) {
                 const key = Object.keys(json[0]);
                 setSelectedColumn(key[0]);
+                setVisibleHeaders(key);
             }
         } catch (error) {
             console.log("Error fetching CSV/TSV:", error);
@@ -594,30 +596,92 @@ const ExcelEditor = () => {
         setSearchModel(true);
     }
 
+    const handleDownloadExcel = () => {
+        if (!data || data.length === 0) return;
+    
+        // Filter only visible columns
+        const filteredData = data.map((row) => {
+          const filteredRow: { [key: string]: any } = {};
+          visibleHeaders.forEach((key) => {
+            filteredRow[key] = row[key];
+          });
+          return filteredRow;
+        });
+    
+        // Convert to worksheet
+        const worksheet = XLSX.utils.json_to_sheet(filteredData);
+    
+        // Create workbook
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    
+        // Format: "Product Database 2025-05-29_14-30.xlsx"
+        const now = new Date();
+        const formattedDate = now
+          .toLocaleString("sv-SE", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+          .replace(" ", "_")
+          .replace(":", "-");
+    
+        const fileName = `Scraped Data ${formattedDate}.xlsx`;
+    
+        // Trigger download
+        XLSX.writeFile(workbook, fileName);
+      };
+
 
     return (
-        <>
-            <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
-                <RolesChecks access="has_scraped_data_access" />
+      <>
+        <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
+          <RolesChecks access="has_scraped_data_access" />
 
-                <div className="mb-4 space-x-2 flex items-center">
-                    <Button onClick={handleSearchModel}>
-                        Filter
-                    </Button>
-                    <Input
-                        type="text"
-                        value={searchTerm}
-                        onChange={handleSearch}
-                        placeholder="Search"
-                        className="mr-4 p-3 border border-gray-300 rounded-md"
-                    />
-                    {/* <Button onClick={handleAddRow}>
+          <div className="mb-4 space-x-2 flex items-center">
+            <Button onClick={handleSearchModel}>Filter</Button>
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearch}
+              placeholder="Search"
+              className="mr-4 p-3 border border-gray-300 rounded-md"
+            />
+            <div className="relative group">
+              <button
+                onClick={handleDownloadExcel}
+                className="p-2 rounded-full bg-green-600 hover:bg-green-700 text-white focus:outline-none"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                  />
+                </svg>
+              </button>
+
+              {/* Tooltip */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                Download Excel
+              </div>
+            </div>
+            {/* <Button onClick={handleAddRow}>
                         Add Row
                     </Button> */}
-                    {/* <Button onClick={handleSumColumnModel} color="primary">
+            {/* <Button onClick={handleSumColumnModel} color="primary">
           SUM
         </Button> */}
-                    {/* <Input
+            {/* <Input
                         type="text"
                         value={newColumnName}
                         onChange={(e) => setNewColumnName(e.target.value)}
@@ -625,8 +689,8 @@ const ExcelEditor = () => {
                         className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
                     /> */}
 
-                    {/* Dropdown to select the column after which to insert the new column */}
-                    {/* <Select onValueChange={setSelectedColumn} value={selectedColumn}>
+            {/* Dropdown to select the column after which to insert the new column */}
+            {/* <Select onValueChange={setSelectedColumn} value={selectedColumn}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Column to Insert After" />
                         </SelectTrigger>
@@ -646,8 +710,7 @@ const ExcelEditor = () => {
                         Add Column
                     </Button> */}
 
-
-                    {/* <div className="p-2 ml-auto">
+            {/* <div className="p-2 ml-auto">
           <Select onValueChange={setSelectedValue} value={selectedValue}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select a report" />
@@ -664,43 +727,48 @@ const ExcelEditor = () => {
             </SelectContent>
           </Select>
         </div> */}
-                    <Dialog open={searchModel} onOpenChange={setSearchModel}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Sum Columns</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                                {/* Multi-select dropdown */}
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">
-                                        Select Columns to Sum:
-                                    </label>
-                                    <ReactSelect
-                                        options={searchcolumnOptions}
-                                        isMulti
-                                        value={selectedSearchColumns.map((col) => ({
-                                            value: col,
-                                            label: col,
-                                        }))}
-                                        onChange={(selected: any) => {
-                                            const cols = selected.map((item: any) => item.value);
-                                            setSelectedSearchColumns(cols);
-                                        }}
-                                        className="react-select-container"
-                                        classNamePrefix="react-select"
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={handleCloseSearchColumnModel}>
-                                    Cancel
-                                </Button>
-                                <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+            <Dialog open={searchModel} onOpenChange={setSearchModel}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Sum Columns</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {/* Multi-select dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Select Columns to Sum:
+                    </label>
+                    <ReactSelect
+                      options={searchcolumnOptions}
+                      isMulti
+                      value={selectedSearchColumns.map((col) => ({
+                        value: col,
+                        label: col,
+                      }))}
+                      onChange={(selected: any) => {
+                        const cols = selected.map((item: any) => item.value);
+                        setSelectedSearchColumns(cols);
+                      }}
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={handleCloseSearchColumnModel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={() => setSearchModel(!searchModel)}>
+                    Done
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
-                    {/* {dirty && (
+            {/* {dirty && (
                         <Button
                             className="w-[120px]"
                             disabled={uploadOptions.isLoading}
@@ -720,34 +788,36 @@ const ExcelEditor = () => {
                             )}
                         </Button>
                     )} */}
-                </div>
+          </div>
 
-                {isLoading || loading || isFetching ? (
-                    <div className="h-[600px] w-full flex items-center justify-center">
-                        <ProcessLoader />
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto max-h-[620px]">
-                        <div className="relative">
-                            <table className="min-w-max table-auto">
-                                <Header />
-                            </table>
-                            <List
-                                height={containerHeight}
-                                itemCount={data.length}
-                                itemSize={rowHeight}
-                                width={
-                                    data.length > 0 ? columnWidth * Object.keys(data[0]).length : 0
-                                }
-                                ref={listRef}
-                            >
-                                {Row}
-                            </List>
-                        </div>
-                    </div>
-                )}
+          {isLoading || loading || isFetching ? (
+            <div className="h-[600px] w-full flex items-center justify-center">
+              <ProcessLoader />
+            </div>
+          ) : (
+            <div className="overflow-x-auto max-h-[620px]">
+              <div className="relative">
+                <table className="min-w-max table-auto">
+                  <Header />
+                </table>
+                <List
+                  height={containerHeight}
+                  itemCount={data.length}
+                  itemSize={rowHeight}
+                  width={
+                    data.length > 0
+                      ? columnWidth * Object.keys(data[0]).length
+                      : 0
+                  }
+                  ref={listRef}
+                >
+                  {Row}
+                </List>
+              </div>
+            </div>
+          )}
 
-                {/* <div className="mt-6 flex justify-between">
+          {/* <div className="mt-6 flex justify-between">
         {dirty && (
           <div className="mt-6 flex justify-center">
             <Button
@@ -771,12 +841,8 @@ const ExcelEditor = () => {
           </div>
         )}
       </div> */}
-
-            </div>
-
-
-
-        </>
+        </div>
+      </>
     );
 };
 
