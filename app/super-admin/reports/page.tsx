@@ -152,11 +152,10 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
-          isDuplicate
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
             ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
             : "focus:ring-blue-500"
-        }`}
+          }`}
       />
     );
   }
@@ -383,9 +382,8 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${
-                isDuplicate ? "text-red-600 font-semibold" : ""
-              }`}
+              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+                }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -923,7 +921,7 @@ const ExcelEditor = () => {
             </Select>
           </div>
 
-          {dirty && !fileChange && (
+          {(dirty && !fileChange && selectedValue === "current_inventory") && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
@@ -992,7 +990,7 @@ const ExcelEditor = () => {
           </div>
         </div>
 
-        {isLoading || loading || isFetching ? (
+        {(isLoading || loading || isFetching) ? (
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
           </div>
