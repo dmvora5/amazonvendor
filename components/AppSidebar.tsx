@@ -30,54 +30,52 @@ const menu = [
     },
     {
         title: "Inventory Reports",
+        access: "pass",
         Icon: Users,
-        access: "has_reports_access",
         subMenus: [
-            // {
-            //     title: "All Inventory",
-            //     url: "/super-admin/inventory/all-inventory",
-            //     Icon: Table
-            // },
+
             {
-                title: "Report",
-                url: "/super-admin/reports",
+                title: "All Inventory",
+                url: "/super-admin/all-inventory",
                 Icon: Table,
+                access: "has_all_inventory_access"
             },
-            // {
-            //     title: "FBA Pivot",
-            //     url: "/super-admin/inventory/fba/pivot",
-            //     Icon: Table
-            // },
-            // {
-            //     title: "7 Days",
-            //     url: "/super-admin/inventory/sevenDays/inventory",
-            //     Icon: Table
-            // },
-            // {
-            //     title: "7 Days Pivot",
-            //     url: "/super-admin/inventory/sevenDays/pivot",
-            //     Icon: Table
-            // },
-            // {
-            //     title: "14 Days",
-            //     url: "/super-admin/inventory/fourteenDays/inventory",
-            //     Icon: Table
-            // },
-            // {
-            //     title: "14 Days Pivot",
-            //     url: "/super-admin/inventory/fourteenDays/pivot",
-            //     Icon: Table
-            // },
-            // {
-            //     title: "30 Days Sales",
-            //     url: "/super-admin/inventory/thirtyDays/inventory",
-            //     Icon: Table
-            // },
-            // {
-            //     title: "30 Days Pivot",
-            //     url: "/super-admin/inventory/thirtyDays/pivot",
-            //     Icon: Table
-            // }
+            {
+                title: "Channel Max",
+                url: "/super-admin/channel-max",
+                Icon: Table,
+                access: "has_cm_access"
+
+            },
+            {
+                title: "Current Inventory",
+                url: "/super-admin/current-inventory",
+                Icon: Table,
+                access: "has_current_inventory_access"
+
+            },
+            {
+                title: "Fba Inventory",
+                url: "/super-admin/fba-inventory",
+                Icon: Table,
+                access: "has_fba_access"
+
+            },
+            {
+                title: "Order History",
+                url: "/super-admin/order-history",
+                Icon: Table,
+                access: "has_order_history_access"
+
+            },
+            {
+                title: "Shipped History",
+                url: "/super-admin/shipped-history",
+                Icon: Table,
+                access: "has_shipped_history_access"
+
+            },
+
         ]
     },
     {
@@ -146,6 +144,8 @@ const menu = [
 
 
 
+
+
 const AppSidebar = ({ session }: any) => {
 
     console.log('sessionInside app side bar', session)
@@ -153,6 +153,45 @@ const AppSidebar = ({ session }: any) => {
     const items = session?.user ? menu : [];
 
     const pathname = usePathname();
+
+
+    const SubMenu = ({ subItem }: any) => {
+
+        if (subItem?.access) {
+            if (session?.user[subItem?.access]) {
+                return (
+                    <SidebarMenuItem key={subItem.title} className="p-2">
+                        <SidebarMenuButton asChild className="pl-5">
+                            <Link href={subItem.url} className={cn(
+                                "sidebar-nav-item p-5",
+                                pathname == subItem.url && "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:text-white"
+                            )}>
+                                <subItem.Icon />
+                                <span className="p-3">{subItem.title}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>)
+            } else {
+                return <></>
+            }
+        } else {
+            return (
+                <SidebarMenuItem key={subItem.title} className="p-2">
+                    <SidebarMenuButton asChild className="pl-5">
+                        <Link href={subItem.url} className={cn(
+                            "sidebar-nav-item p-5",
+                            pathname == subItem.url && "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:text-white"
+                        )}>
+                            <subItem.Icon />
+                            <span className="p-3">{subItem.title}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>)
+        }
+
+    }
+
+
 
     const MenuItem = ({ item }: any) => {
 
@@ -192,7 +231,7 @@ const AppSidebar = ({ session }: any) => {
             )
         }
 
-        if (item?.access && session?.user[item?.access]) {
+        if (item?.access == "pass") {
             return (
                 <Collapsible key={item.title} /*defaultOpen*/ className="group/collapsible">
                     <SidebarGroup>
@@ -207,18 +246,36 @@ const AppSidebar = ({ session }: any) => {
                         <CollapsibleContent>
                             <SidebarGroupContent className="">
                                 <SidebarMenu>
+                                    {console.log('item', item)}
                                     {item.subMenus.map((subItem: any) => (
-                                        <SidebarMenuItem key={subItem.title} className="p-2">
-                                            <SidebarMenuButton asChild className="pl-5">
-                                                <Link href={subItem.url} className={cn(
-                                                    "sidebar-nav-item p-5",
-                                                    pathname == subItem.url && "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:text-white"
-                                                )}>
-                                                    <subItem.Icon />
-                                                    <span className="p-3">{subItem.title}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
+                                        <SubMenu subItem={subItem} />
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </CollapsibleContent>
+                    </SidebarGroup>
+                </Collapsible>
+            )
+        }
+
+        if (item?.access !== "pass" && session?.user[item?.access]) {
+            return (
+                <Collapsible key={item.title} /*defaultOpen*/ className="group/collapsible">
+                    <SidebarGroup>
+                        <SidebarGroupLabel asChild>
+                            <CollapsibleTrigger>
+                                <div className="flex gap-4 items-center">
+                                    <p className="text-[16px] font-semibold p-5">{item.title}</p>
+                                </div>
+                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                            </CollapsibleTrigger>
+                        </SidebarGroupLabel>
+                        <CollapsibleContent>
+                            <SidebarGroupContent className="">
+                                <SidebarMenu>
+                                    {console.log('item', item)}
+                                    {item.subMenus.map((subItem: any) => (
+                                        <SubMenu subItem={subItem} />
                                     ))}
                                 </SidebarMenu>
                             </SidebarGroupContent>

@@ -50,10 +50,7 @@ export const userApi = createApi({
             query: (payload: any) => ({
                 url: API_ROUTES.SUPERADMIN.UPDATEUSER + payload.id + "/",
                 method: "PATCH",
-                body: {
-                    first_name: payload?.first_name,
-                    last_name: payload?.last_name,
-                },
+                body: payload,
             }),
             invalidatesTags: (result: any, error: any, { id }: any) => {
                 console.log('id', id)

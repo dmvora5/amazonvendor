@@ -13,6 +13,8 @@ const SuperAdminLayout = async ({ children }: { children: React.ReactNode }) => 
 
     const session: any = await getServerSession(authOptions);
 
+    console.log('session', session)
+
 
     if (!session?.user) {
         redirect(`${process.env.NEXT_PUBLIC_APP_URL}`)

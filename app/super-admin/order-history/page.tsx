@@ -35,15 +35,15 @@ import { parseAndShowErrorInToast } from "@/utils";
 import { getSession, signOut } from "next-auth/react";
 import RolesChecks from "@/components/RolesChecks";
 
-const options = [
-  { value: "fba_inventory", label: "FBA Inventory" },
-  { value: "all_inventory", label: "All Inventory" },
-  { value: "channel_max", label: "Channel Max" },
-  { value: "order_history", label: "Order History" },
-  { value: "current_inventory", label: "Current Inventory" },
-  // { value: "project_database", label: "Project Database" },
-  { value: "shipped_history", label: "Shipped History" },
-];
+// const options = [
+//   { value: "fba_inventory", label: "FBA Inventory" },
+//   { value: "all_inventory", label: "All Inventory" },
+//   { value: "channel_max", label: "Channel Max" },
+//   { value: "order_history", label: "Order History" },
+//   { value: "current_inventory", label: "Current Inventory" },
+//   // { value: "project_database", label: "Project Database" },
+//   { value: "shipped_history", label: "Shipped History" },
+// ];
 
 const InputComponent = memo(
   ({
@@ -153,8 +153,8 @@ const InputComponent = memo(
         onBlur={handleBlur}
         disabled={disabled}
         className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-            : "focus:ring-blue-500"
+          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+          : "focus:ring-blue-500"
           }`}
       />
     );
@@ -167,7 +167,7 @@ const ExcelEditor = () => {
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
   const [selectedValue, setSelectedValue] =
-    useState<string>("current_inventory");
+    useState<string>("order_history");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
@@ -216,23 +216,27 @@ const ExcelEditor = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer', // Important: tells axios to treat the response as binary
+      });
 
-      const wb = XLSX.read(arrayBuffer, { type: "array" }); // Using array instead of string type
+      const arrayBuffer = response.data;
+
+      const wb = XLSX.read(arrayBuffer, { type: 'array' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
-      console.log("json", json);
+      const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      setOriginalData(JSON.parse(JSON.stringify(json))); // Save original data
-      setData(json); // Also set filtered data initially to the original data
+      console.log('json', json);
+
+      setOriginalData(JSON.parse(JSON.stringify(json)));
+      setData(JSON.parse(JSON.stringify(json)));
+
       if (json.length) {
         const key = Object.keys(json[0]);
         setSelectedColumn(key[0]);
       }
     } catch (error) {
-      console.log("Error fetching CSV/TSV:", error);
+      console.error('Error fetching CSV/TSV:', error);
     } finally {
       setLoading(false);
     }
@@ -850,7 +854,7 @@ const ExcelEditor = () => {
       )}
       <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
         <div className="mb-4 space-x-2 flex items-center">
-          <RolesChecks access="has_reports_access" />
+          <RolesChecks access="has_order_history_access" />
 
           <Button onClick={handleSearchModel}>Filter</Button>
           <Input
@@ -897,7 +901,7 @@ const ExcelEditor = () => {
             Add Column
           </Button>
 
-          <div className="p-2 ml-auto">
+          {/* <div className="p-2 ml-auto">
             <Select
               onValueChange={(e: any) => {
                 setSelectedValue(e);
@@ -919,7 +923,7 @@ const ExcelEditor = () => {
                 </SelectGroup>
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
 
           {(dirty && !fileChange && selectedValue === "current_inventory") && (
             <Button

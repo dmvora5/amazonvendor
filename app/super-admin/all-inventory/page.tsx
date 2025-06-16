@@ -30,19 +30,20 @@ import {
 import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios";
-import { getSession, signOut } from "next-auth/react";
+import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
+import { getSession, signOut } from "next-auth/react";
 import RolesChecks from "@/components/RolesChecks";
 
-const options = [
-  { value: "fba_inventory", label: "FBA Inventory" },
-  { value: "all_inventory", label: "All Inventory" },
-  { value: "channel_max", label: "Channel Max" },
-  { value: "order_history", label: "Order History" },
-  { value: "current_inventory", label: "Current Inventory" },
-  // { value: "project_database", label: "Project Database" },
-  { value: "shipped_history", label: "Shipped History" },
-];
+// const options = [
+//   { value: "fba_inventory", label: "FBA Inventory" },
+//   { value: "all_inventory", label: "All Inventory" },
+//   { value: "channel_max", label: "Channel Max" },
+//   { value: "order_history", label: "Order History" },
+//   { value: "current_inventory", label: "Current Inventory" },
+//   // { value: "project_database", label: "Project Database" },
+//   { value: "shipped_history", label: "Shipped History" },
+// ];
 
 const InputComponent = memo(
   ({
@@ -53,7 +54,7 @@ const InputComponent = memo(
     setData,
     setDirty,
     disabled,
-    isDuplicate
+    isDuplicate,
   }: any) => {
     const row = data[index];
     const [state, setState] = useState<string>(row[keyData]);
@@ -93,6 +94,7 @@ const InputComponent = memo(
       const oriNewData: any = [...originalData];
 
       if (keyData.includes("Supplier")) {
+        console.log("Hear");
         const supplierColumns = Object.keys(newData[index]).filter((key) =>
           key.includes("Supplier")
         );
@@ -102,7 +104,11 @@ const InputComponent = memo(
           totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
         });
 
-        let updatedOrder = initialOrder - totalSupplierValue;
+        // let updatedOrder = initialOrder - totalSupplierValue;
+        let updatedOrder =
+          oriNewData[index]["Total New Inbound"] + totalSupplierValue;
+
+        console.log("updatedOrder", updatedOrder);
 
         if (updatedOrder < 0) {
           supplierColumns.forEach((supplierColumn) => {
@@ -113,7 +119,8 @@ const InputComponent = memo(
             oriNewData[index]["Total New Inbound"];
         } else {
           // newData[index]["Order"] = updatedOrder;
-          newData[index]["Total New Inbound"] = totalSupplierValue;
+          newData[index]["Total New Inbound"] =
+            oriNewData[index]["Total New Inbound"] + totalSupplierValue;
         }
         setData(newData);
         setDirty(true);
@@ -160,7 +167,7 @@ const ExcelEditor = () => {
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
   const [selectedValue, setSelectedValue] =
-    useState<string>("product_database");
+    useState<string>("all_inventory");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
@@ -172,9 +179,7 @@ const ExcelEditor = () => {
   const [hiddenHeaders, setHiddenHeaders] = useState<string[]>([]);
   const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
   const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
-
   const [fileChange, setFileChange] = useState(false);
-
   const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>(
     []
   );
@@ -197,20 +202,6 @@ const ExcelEditor = () => {
     value: key,
     label: key,
   }));
-
-  useEffect(() => {
-    if (originalData.length > 0) {
-      const keys = Object.keys(originalData[0]);
-      setHeaders(keys);
-      setHiddenHeaders([]); // Reset hidden
-    }
-  }, [originalData]);
-
-  useEffect(() => {
-    if (hiddenHeaders.length === 0) {
-      setShowHiddenColumnModal(false);
-    }
-  }, [hiddenHeaders]);
 
   const {
     data: queryData,
@@ -252,6 +243,20 @@ const ExcelEditor = () => {
   }, []);
 
   useEffect(() => {
+    if (originalData.length > 0) {
+      const keys = Object.keys(originalData[0]);
+      setHeaders(keys);
+      setHiddenHeaders([]); // Reset hidden
+    }
+  }, [originalData]);
+
+  useEffect(() => {
+    if (hiddenHeaders.length === 0) {
+      setShowHiddenColumnModal(false);
+    }
+  }, [hiddenHeaders]);
+
+  useEffect(() => {
     if (!(queryData as any)?.file_url) return;
     fetchCSVFromBackend((queryData as any)?.file_url);
   }, [queryData, fetchCSVFromBackend]);
@@ -260,34 +265,6 @@ const ExcelEditor = () => {
     if (!uploadOptions.isSuccess) return;
     setDirty(false);
   }, [uploadOptions.isSuccess]);
-
-  const duplicateValues = useMemo(() => {
-    const checkColumns = ["Product Code", "FBA SKU", "ASIN"];
-    const valueMap: Record<string, Set<string>> = {};
-    const duplicateSet = new Set<string>();
-
-    checkColumns.forEach((col) => {
-      const seen = new Set<string>();
-      const duplicates = new Set<string>();
-
-      data.forEach((row) => {
-        const value = row[col];
-        if (value && seen.has(value)) {
-          duplicates.add(`${col}::${value}`);
-        }
-        seen.add(value);
-      });
-
-      valueMap[col] = duplicates;
-    });
-
-    // Flatten all duplicates into one set
-    Object.entries(valueMap).forEach(([col, duplicates]) => {
-      duplicates.forEach((val) => duplicateSet.add(val));
-    });
-
-    return duplicateSet;
-  }, [data]);
 
   // // Function to handle adding a new column after the selected column
   // const handleAddColumn = () => {
@@ -390,15 +367,6 @@ const ExcelEditor = () => {
     }
   };
 
-  const handleSearchModel = () => {
-    setSearchModel(true);
-  };
-
-  const handleCloseSearchColumnModel = () => {
-    setSearchModel(false); // open the modal
-    setSelectedSearchColumns([]); // Clear selected columns
-  };
-
   // Table Row component
   const Row = ({ index, style }: any) => {
     const row = data[index];
@@ -411,6 +379,7 @@ const ExcelEditor = () => {
         {visibleHeaders.map((key) => {
           const value = row[key];
           const isDuplicate =
+            selectedValue === "current_inventory" &&
             ["Product Code", "FBA SKU", "ASIN"].includes(key) &&
             duplicateValues.has(`${key}::${value}`);
 
@@ -430,7 +399,7 @@ const ExcelEditor = () => {
                 setData={setData}
                 setDirty={setDirty}
                 disabled={uploadOptions.isLoading}
-                isDuplicate={isDuplicate}
+                isDuplicate={isDuplicate} // pass flag
               />
             </div>
           );
@@ -448,63 +417,67 @@ const ExcelEditor = () => {
     );
   };
 
-  const handleHeaderNameChange = (e: any, header: any) => {
-    const updatedHeader = e.target.value;
-    const headerIndex = headers.indexOf(header);
-    const newHeaders = [...headers];
-    newHeaders[headerIndex] = updatedHeader;
-    setHeaders(newHeaders);
+  // const handleHeaderNameChange = (e: any, header: any) => {
+  //   const updatedHeader = e.target.value;
+  //   const headerIndex = headers.indexOf(header);
+  //   const newHeaders = [...headers];
+  //   newHeaders[headerIndex] = updatedHeader;
+  //   setHeaders(newHeaders);
 
-    const updatedData = data.map((row) => {
-      const newRow: any = {};
-      newHeaders.forEach((newKey, i) => {
-        const oldKey = headers[i];
-        newRow[newKey] = row[oldKey];
-      });
-      return newRow;
-    });
+  //   const updatedData = data.map((row) => {
+  //     const newRow: any = {};
+  //     newHeaders.forEach((newKey, i) => {
+  //       const oldKey = headers[i];
+  //       newRow[newKey] = row[oldKey];
+  //     });
+  //     return newRow;
+  //   });
 
-    setData(updatedData);
-    setOriginalData(updatedData);
+  //   setData(updatedData);
+  //   setOriginalData(updatedData);
 
-    // Also update visibleHeaders
-    setHiddenHeaders((prev) =>
-      prev.map((h) => (h === header ? updatedHeader : h))
-    );
-  }
-
+  //   // Also update visibleHeaders
+  //   setHiddenHeaders((prev) =>
+  //     prev.map((h) => (h === header ? updatedHeader : h))
+  //   );
+  // };
 
   // Table Header component
   const Header = () => {
     if (!data || data.length === 0) return null;
 
+    // Match keys that are dates in format: DD.MM.YY
+    const isDateKey = (key: string) => /^\d{2}\.\d{2}\.\d{2}$/.test(key);
+
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
-          {visibleHeaders.map((header, colIndex) => (
+          {/* {Object.keys(data[0]).map((key) => ( */}
+          {visibleHeaders.map((key) => (
             <th
-              key={colIndex}
+              key={key}
               className="relative px-4 py-3 text-left"
               style={{ width: columnWidth }}
             >
               <div className="flex justify-between items-center gap-2">
                 <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={header}
-                    onChange={(e) => {
-                      handleHeaderNameChange(e, header)
-                    }}
-                    className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  {isDateKey(key) && (
+                    <input
+                      type="checkbox"
+                      value={key}
+                      checked={selectedDateColumns.includes(key)}
+                      onChange={(e) => handleDateCheckboxChange(e, key)}
+                    />
+                  )}
+                  <span>{key}</span>
                 </div>
 
-                {header !== "Action" && (
+                {key !== "Action" && (
                   <div className="flex gap-1">
                     <button
                       disabled={uploadOptions.isLoading}
                       className="text-red-500 hover:text-red-700 cursor-pointer"
-                      onClick={() => handleRemoveColumn(header)}
+                      onClick={() => handleRemoveColumn(key)}
                     >
                       <span className="text-lg">×</span>
                     </button>
@@ -512,7 +485,7 @@ const ExcelEditor = () => {
                     {/* Toggle Hide/Show column */}
                     <button
                       className="text-blue-500 hover:text-blue-700 cursor-pointer"
-                      onClick={() => handleToggleColumnVisibility(header)}
+                      onClick={() => handleToggleColumnVisibility(key)}
                       title="Hide column"
                     >
                       👁️
@@ -527,56 +500,56 @@ const ExcelEditor = () => {
     );
   };
 
-  //   const handleDateCheckboxChange = (
-  //     e: React.ChangeEvent<HTMLInputElement>,
-  //     key: string
-  //   ) => {
-  //     const checked = e.target.checked;
+  const handleDateCheckboxChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    key: string
+  ) => {
+    const checked = e.target.checked;
 
-  //     let updatedData = [...data];
+    let updatedData = [...data];
 
-  //     updatedData = updatedData.map((row, idx) => {
-  //       const oriRow = originalData[idx];
-  //       const value = parseFloat(row[key]) || 0;
-  //       let currentInbound = parseFloat(row["Total New Inbound"]) || 0;
+    updatedData = updatedData.map((row, idx) => {
+      const oriRow = originalData[idx];
+      const value = parseFloat(row[key]) || 0;
+      let currentInbound = parseFloat(row["Total New Inbound"]) || 0;
 
-  //       if (checked) {
-  //         // Checkbox Checked => Subtract
-  //         currentInbound -= value;
-  //       } else {
-  //         // Checkbox Unchecked => Add back
-  //         currentInbound += value;
-  //       }
+      if (checked) {
+        // Checkbox Checked => Subtract
+        currentInbound -= value;
+      } else {
+        // Checkbox Unchecked => Add back
+        currentInbound += value;
+      }
 
-  //       if (currentInbound < 0) {
-  //         // If goes negative, revert the row
-  //         const supplierColumns = Object.keys(row).filter((key) =>
-  //           key.includes("Supplier")
-  //         );
-  //         const newRow = { ...row };
-  //         supplierColumns.forEach((col) => {
-  //           newRow[col] = oriRow[col];
-  //         });
-  //         newRow[key] = oriRow[key];
-  //         newRow["Total New Inbound"] = oriRow["Total New Inbound"];
-  //         return newRow;
-  //       } else {
-  //         return {
-  //           ...row,
-  //           "Total New Inbound": currentInbound,
-  //         };
-  //       }
-  //     });
+      if (currentInbound < 0) {
+        // If goes negative, revert the row
+        const supplierColumns = Object.keys(row).filter((key) =>
+          key.includes("Supplier")
+        );
+        const newRow = { ...row };
+        supplierColumns.forEach((col) => {
+          newRow[col] = oriRow[col];
+        });
+        newRow[key] = oriRow[key];
+        newRow["Total New Inbound"] = oriRow["Total New Inbound"];
+        return newRow;
+      } else {
+        return {
+          ...row,
+          "Total New Inbound": currentInbound,
+        };
+      }
+    });
 
-  //     if (checked) {
-  //       setSelectedDateColumns((prev) => [...prev, key]);
-  //     } else {
-  //       setSelectedDateColumns((prev) => prev.filter((col) => col !== key));
-  //     }
+    if (checked) {
+      setSelectedDateColumns((prev) => [...prev, key]);
+    } else {
+      setSelectedDateColumns((prev) => prev.filter((col) => col !== key));
+    }
 
-  //     setData(updatedData);
-  //     setDirty(true);
-  //   };
+    setData(updatedData);
+    setDirty(true);
+  };
 
   // Handle column removal
   const handleRemoveColumn = (columnName: string) => {
@@ -596,33 +569,10 @@ const ExcelEditor = () => {
     setDirty(true);
   };
 
-  const selectCsv = (e: any) => {
-    const file = e.target.files[0];
-
-    if (file) {
-      setLoading(true);
-      // Create a FileReader to read the CSV file
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        const binaryString = event.target?.result as string;
-        const workbook = XLSX.read(binaryString, { type: "binary" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
-        setData(jsonData);
-        setOriginalData(jsonData);
-        setFileChange(true);
-        setLoading(false);
-      };
-
-      reader.readAsArrayBuffer(file);
-    }
-  };
-
   // Upload the CSV data
   const handleUploadCSV = async () => {
-    setLoading(true)
     try {
+      setLoading(true);
       // Convert JSON data to CSV or TSV format
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
       const sheet = XLSX.utils.json_to_sheet(data);
@@ -675,10 +625,123 @@ const ExcelEditor = () => {
     } finally {
       setLoading(false);
     }
+
+    // await submit(formData);
+    // await fetchCSVFromBackend()
+  };
+
+  const handleSumColumnModel = () => {
+    setOpenSumModel(true); // open the modal
+  };
+
+  const handleSearchModel = () => {
+    setSearchModel(true);
+  };
+
+  const handleCloseSearchColumnModel = () => {
+    setSearchModel(false); // open the modal
+    setSelectedSearchColumns([]); // Clear selected columns
+  };
+
+  const handleCloseSumColumnModel = () => {
+    setOpenSumModel(false); // open the modal
+    setSelectedSumColumns([]); // Clear selected columns
+    setSumNewColumnName(""); // Clear the sum column name input
+  };
+
+  const handleCreateSumColumn = () => {
+    if (!newSumColumnName || selectedSumColumns.length === 0) {
+      alert("Please select columns and enter a column name.");
+      return;
+    }
+
+    // Check if the new sum column name already exists
+    if (Object.keys(data[0]).includes(newSumColumnName)) {
+      alert("Column name already exists. Please choose a different name.");
+      return;
+    }
+
+    // Calculate the sum for the selected columns
+    const updatedData = data.map((row) => {
+      const sum = selectedSumColumns.reduce((acc, col) => {
+        const val = parseFloat(row[col]) || 0; // Handle non-numeric values by defaulting to 0
+        return acc + val;
+      }, 0);
+
+      // Create a new row with the sum and without the selected sum columns
+      const newRow = { ...row, [newSumColumnName]: sum };
+
+      // Remove the selected sum columns from the new row
+      selectedSumColumns.forEach((col) => {
+        delete newRow[col];
+      });
+
+      return newRow;
+    });
+
+    // Update the data with the new sum column
+    setData(updatedData);
+    setOpenSumModel(false); // Close the modal
+    setSelectedSumColumns(selectedSumColumns || []); // Clear selected columns
+    setSumNewColumnName(""); // Clear the sum column name input
+    setDirty(true);
+  };
+
+  const duplicateValues = useMemo(() => {
+    if (selectedValue !== "current_inventory") return new Set<string>();
+
+    const checkColumns = ["Product Code", "FBA SKU", "ASIN"];
+    const valueMap: Record<string, Set<string>> = {};
+    const duplicateSet = new Set<string>();
+
+    checkColumns.forEach((col) => {
+      const seen = new Set<string>();
+      const duplicates = new Set<string>();
+
+      data.forEach((row) => {
+        const value = row[col];
+        if (value && seen.has(value)) {
+          duplicates.add(`${col}::${value}`);
+        }
+        seen.add(value);
+      });
+
+      valueMap[col] = duplicates;
+    });
+
+    // Flatten all duplicates into one set
+    Object.entries(valueMap).forEach(([col, duplicates]) => {
+      duplicates.forEach((val) => duplicateSet.add(val));
+    });
+
+    return duplicateSet;
+  }, [data, selectedValue]);
+
+  const selectCsv = (e: any) => {
+    const file = e.target.files[0];
+
+    if (file) {
+      setLoading(true);
+      // Create a FileReader to read the CSV file
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const binaryString = event.target?.result as string;
+        const workbook = XLSX.read(binaryString, { type: "binary" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        setData(jsonData);
+        setOriginalData(jsonData);
+        setFileChange(true);
+        setLoading(false);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
   };
 
   const handleUploadNewCSV = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Convert JSON data to CSV or TSV format
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
@@ -734,70 +797,6 @@ const ExcelEditor = () => {
     }
   };
 
-  const handleSumColumnModel = () => {
-    setOpenSumModel(true); // open the modal
-  };
-
-  const handleCloseSumColumnModel = () => {
-    setOpenSumModel(false); // open the modal
-    setSelectedSumColumns([]); // Clear selected columns
-    setSumNewColumnName(""); // Clear the sum column name input
-  };
-
-  const handleCreateSumColumn = () => {
-    if (!newSumColumnName || selectedSumColumns.length === 0) {
-      alert("Please select columns and enter a column name.");
-      return;
-    }
-
-    // Check if the new sum column name already exists
-    if (Object.keys(originalData[0]).includes(newSumColumnName)) {
-      alert("Column name already exists. Please choose a different name.");
-      return;
-    }
-
-    // Calculate the sum for the selected columns
-    const updatedData = originalData.map((row) => {
-      const sum = selectedSumColumns.reduce((acc, col) => {
-        const val = parseFloat(row[col]) || 0; // Handle non-numeric values by defaulting to 0
-        return acc + val;
-      }, 0);
-
-      // Create a new row with the sum and without the selected sum columns
-      const newRow = { ...row, [newSumColumnName]: sum };
-
-      // Remove the selected sum columns from the new row
-      selectedSumColumns.forEach((col) => {
-        delete newRow[col];
-      });
-
-      return newRow;
-    });
-
-    // Update the data with the new sum column
-    setData(updatedData);
-    setOpenSumModel(false); // Close the modal
-    setSelectedSumColumns([]); // Clear selected columns
-    setSumNewColumnName(""); // Clear the sum column name input
-    setDirty(true);
-  };
-
-  const handleAddRow = () => {
-    const newRow = Object.keys(originalData[0] || {}).reduce(
-      (acc: any, key) => {
-        acc[key] = ""; // or null, depending on your default value for the new row
-        return acc;
-      },
-      {}
-    );
-
-    // Add new row to both data and originalData
-    setData((prevData) => [...prevData, newRow]);
-    setOriginalData((prevData) => [...prevData, newRow]);
-
-    setDirty(true); // Mark as dirty since the data has changed
-  };
-
   const handleDownloadExcel = () => {
     if (!data || data.length === 0) return;
 
@@ -830,7 +829,7 @@ const ExcelEditor = () => {
       .replace(" ", "_")
       .replace(":", "-");
 
-    const fileName = `Product Database ${formattedDate}.xlsx`;
+    const fileName = `${selectedValue} ${formattedDate}.xlsx`;
 
     // Trigger download
     XLSX.writeFile(workbook, fileName);
@@ -838,23 +837,25 @@ const ExcelEditor = () => {
 
   return (
     <>
-      <div className="p-6 flex items-center space-x-4">
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">
-            Upload Excel File
-          </span>
-          <input
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={selectCsv}
-            className="mt-1 block w-64 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
-          />
-        </label>
-      </div>
+      {selectedValue === "current_inventory" && (
+        <div className="p-6 flex items-center space-x-4">
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">
+              Upload Excel File
+            </span>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={selectCsv}
+              className="mt-1 block w-64 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </label>
+        </div>
+      )}
       <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
-        <RolesChecks access="has_product_db_access" />
-
         <div className="mb-4 space-x-2 flex items-center">
+          <RolesChecks access="has_all_inventory_access" />
+
           <Button onClick={handleSearchModel}>Filter</Button>
           <Input
             type="text"
@@ -863,10 +864,9 @@ const ExcelEditor = () => {
             placeholder="Search"
             className="mr-4 p-3 border border-gray-300 rounded-md"
           />
-          <Button onClick={handleAddRow}>Add Row</Button>
-          {/* <Button onClick={handleSumColumnModel} color="primary">
-          SUM
-        </Button> */}
+          <Button onClick={handleSumColumnModel} color="primary">
+            SUM
+          </Button>
           {hiddenHeaders.length > 0 && (
             <Button onClick={() => setShowHiddenColumnModal(true)}>
               Manage Hidden Columns
@@ -902,31 +902,37 @@ const ExcelEditor = () => {
           </Button>
 
           {/* <div className="p-2 ml-auto">
-          <Select onValueChange={setSelectedValue} value={selectedValue}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select a report" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Select Report Type</SelectLabel>
-                {options.map((option: any) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div> */}
+            <Select
+              onValueChange={(e: any) => {
+                setSelectedValue(e);
+                setDirty(false);
+              }}
+              value={selectedValue}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select a report" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Select Report Type</SelectLabel>
+                  {options.map((option: any) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div> */}
 
-          {(dirty && !fileChange) && (
+          {(dirty && !fileChange && selectedValue === "current_inventory") && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
               onClick={handleUploadCSV}
               color="primary"
             >
-              {(uploadOptions.isLoading || loading) ? (
+              {uploadOptions.isLoading ? (
                 <Image
                   src="/assets/icons/loader.svg"
                   alt="loader"
@@ -939,6 +945,7 @@ const ExcelEditor = () => {
               )}
             </Button>
           )}
+
           {fileChange && (
             <Button
               className="w-[120px]"
@@ -946,7 +953,7 @@ const ExcelEditor = () => {
               onClick={handleUploadNewCSV}
               color="primary"
             >
-              {(uploadOptions.isLoading || loading) ? (
+              {uploadOptions.isLoading || loading ? (
                 <Image
                   src="/assets/icons/loader.svg"
                   alt="loader"
@@ -987,7 +994,7 @@ const ExcelEditor = () => {
           </div>
         </div>
 
-        {isLoading || loading || isFetching ? (
+        {(isLoading || loading || isFetching) ? (
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
           </div>
@@ -1093,78 +1100,78 @@ const ExcelEditor = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-      <Dialog open={searchModel} onOpenChange={setSearchModel}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sum Columns</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Multi-select dropdown */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Select Columns to Sum:
-              </label>
-              <ReactSelect
-                options={searchcolumnOptions}
-                isMulti
-                value={selectedSearchColumns.map((col) => ({
-                  value: col,
-                  label: col,
-                }))}
-                onChange={(selected: any) => {
-                  const cols = selected.map((item: any) => item.value);
-                  setSelectedSearchColumns(cols);
-                }}
-                className="react-select-container"
-                classNamePrefix="react-select"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseSearchColumnModel}>
-              Cancel
-            </Button>
-            <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {showHiddenColumnModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg shadow-md w-80">
-            <h2 className="text-md font-semibold mb-3">Hidden Columns</h2>
-            {hiddenHeaders.length === 0 ? (
-              <p className="text-sm text-gray-500">No hidden columns</p>
-            ) : (
-              <ul className="space-y-2">
-                {hiddenHeaders.map((header) => (
-                  <li
-                    key={header}
-                    className="flex justify-between items-center bg-gray-100 px-2 py-1 rounded"
-                  >
-                    <span className="text-sm">{header}</span>
-                    <button
-                      onClick={() => handleToggleColumnVisibility(header)}
-                      className="text-red-500 hover:text-red-700"
+        <Dialog open={searchModel} onOpenChange={setSearchModel}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Sum Columns</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Multi-select dropdown */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Select Columns to Sum:
+                </label>
+                <ReactSelect
+                  options={searchcolumnOptions}
+                  isMulti
+                  value={selectedSearchColumns.map((col) => ({
+                    value: col,
+                    label: col,
+                  }))}
+                  onChange={(selected: any) => {
+                    const cols = selected.map((item: any) => item.value);
+                    setSelectedSearchColumns(cols);
+                  }}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCloseSearchColumnModel}>
+                Cancel
+              </Button>
+              <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {showHiddenColumnModal && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-lg shadow-md w-80">
+              <h2 className="text-md font-semibold mb-3">Hidden Columns</h2>
+              {hiddenHeaders.length === 0 ? (
+                <p className="text-sm text-gray-500">No hidden columns</p>
+              ) : (
+                <ul className="space-y-2">
+                  {hiddenHeaders.map((header) => (
+                    <li
+                      key={header}
+                      className="flex justify-between items-center bg-gray-100 px-2 py-1 rounded"
                     >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setShowHiddenColumnModal(false)}
-                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Close
-              </button>
+                      <span className="text-sm">{header}</span>
+                      <button
+                        onClick={() => handleToggleColumnVisibility(header)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setShowHiddenColumnModal(false)}
+                  className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 };

@@ -30,6 +30,7 @@ import {
 import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
 import RolesChecks from "@/components/RolesChecks";
+import axios from "axios";
 
 const options = [
     { value: "fba_inventory", label: "FBA Inventory" },
@@ -194,31 +195,35 @@ const ExcelEditor = () => {
 
     const [submit, uploadOptions] = useUpdateReportMutation();
 
-    const fetchCSVFromBackend = useCallback(async (url: string) => {
-        try {
-            setLoading(true);
+   const fetchCSVFromBackend = useCallback(async (url: string) => {
+    try {
+      setLoading(true);
 
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const arrayBuffer = await blob.arrayBuffer();
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer', // Important: tells axios to treat the response as binary
+      });
 
-            const wb = XLSX.read(arrayBuffer, { type: "array" });  // Using array instead of string type
-            const sheet = wb.Sheets[wb.SheetNames[0]];
-            const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null }); // Default empty cells to null
+      const arrayBuffer = response.data;
 
-            setOriginalData(JSON.parse(JSON.stringify(json))); // Save original data
-            setData(json); // Also set filtered data initially to the original data
-            if (json.length) {
-                const key = Object.keys(json[0]);
-                setSelectedColumn(key[0]);
-                setVisibleHeaders(key);
-            }
-        } catch (error) {
-            console.log("Error fetching CSV/TSV:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+      console.log('json', json);
+
+      setOriginalData(JSON.parse(JSON.stringify(json)));
+      setData(JSON.parse(JSON.stringify(json)));
+
+      if (json.length) {
+        const key = Object.keys(json[0]);
+        setSelectedColumn(key[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching CSV/TSV:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
 
     useEffect(() => {

@@ -30,12 +30,16 @@ const userFormSchema = z.object({
   password: z
     .string({ message: "password must be a string" })
     .min(8, { message: "password must be at least 8 characters long" }),
-  has_reports_access: z.boolean().default(false),
   has_category_access: z.boolean().default(false),
   has_cm_access: z.boolean().default(false),
   has_order_access: z.boolean().default(false),
   has_product_db_access: z.boolean().default(false),
   has_scraped_data_access: z.boolean().default(false),
+  has_fba_access: z.boolean().default(false),
+  has_current_inventory_access: z.boolean().default(false),
+  has_all_inventory_access: z.boolean().default(false),
+  has_order_history_access: z.boolean().default(false),
+  has_shipped_history_access: z.boolean().default(false),
 });
 
 export default function CreateUserForm() {
@@ -62,18 +66,24 @@ export default function CreateUserForm() {
       last_name: "",
       email: "",
       password: "",
-      has_reports_access: false,
       has_category_access: false,
       has_cm_access: false,
       has_order_access: false,
       has_product_db_access: false,
       has_scraped_data_access: false,
+      has_fba_access: false,
+      has_current_inventory_access: false,
+      has_all_inventory_access: false,
+      has_order_history_access: false,
+      has_shipped_history_access: false,
+
     },
   });
 
   const { control, handleSubmit } = form;
 
   async function onSubmit(data: any) {
+    console.log('data', data)
     await submit(data);
   }
 
@@ -200,12 +210,16 @@ export default function CreateUserForm() {
               <h3 className="text-lg font-semibold mt-6 mb-2">Permissions</h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { name: "has_reports_access", label: "Reports Access" },
                   { name: "has_category_access", label: "Category Access" },
                   { name: "has_cm_access", label: "CM Access" },
                   { name: "has_order_access", label: "Order Access" },
                   { name: "has_product_db_access", label: "Product DB Access" },
                   { name: "has_scraped_data_access", label: "Scraped Data Access" },
+                  { name: "has_fba_access", label: "Fba Inventory Access" },
+                  { name: "has_current_inventory_access", label: "Current Inventory Access" },
+                  { name: "has_all_inventory_access", label: "All Inventory Access" },
+                  { name: "has_order_history_access", label: "Order History Access" },
+                  { name: "has_shipped_history_access", label: "Shipped History Access" },
                 ].map(({ name, label }) => (
                   <FormField
                     key={name}

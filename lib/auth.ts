@@ -32,6 +32,8 @@ export const authOptions: AuthOptions = {
                     //     throw new Error(JSON.stringify(data))
                     // }
 
+                    console.log('data?.user', data?.user)
+
                     if (data?.user && data?.tokens) {
                         return { ...data?.user, access_token: data?.tokens?.access }
                     }
@@ -106,12 +108,16 @@ export const authOptions: AuthOptions = {
                     "first_name",
                     "last_name",
                     "is_superuser",
-                    "has_reports_access",
                     "has_category_access",
                     "has_cm_access",
                     "has_order_access",
                     "has_product_db_access",
-                    "has_scraped_data_access"
+                    "has_scraped_data_access",
+                    "has_fba_access",
+                    "has_current_inventory_access",
+                    "has_all_inventory_access",
+                    "has_order_history_access",
+                    "has_shipped_history_access",
                 ]
 
                 token.user = Object.fromEntries(Object.entries(token?.user)?.filter(([key]) => userKeysToKeep?.includes(key)))
