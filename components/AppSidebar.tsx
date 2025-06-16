@@ -8,7 +8,14 @@ import { ALargeSmall, ChevronDown, PackageIcon, Table, Users } from "lucide-reac
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-
+const reportMenu = [
+    "has_all_inventory_access",
+    "has_cm_access",
+    "has_current_inventory_access",
+    "has_fba_access",
+    "has_order_history_access",
+    "has_shipped_history_access",
+]
 
 const menu = [
     {
@@ -55,7 +62,7 @@ const menu = [
 
             },
             {
-                title: "Fba Inventory",
+                title: "FBA Inventory",
                 url: "/super-admin/fba-inventory",
                 Icon: Table,
                 access: "has_fba_access"
@@ -142,6 +149,17 @@ const menu = [
 ]
 
 
+const isShowReportMenu = (session: any) => {
+    const keys = Object.keys(session?.user)
+
+    for(const key of reportMenu) {
+        if(session?.user[key]) {
+            return true
+        }
+    }
+
+    return false
+}
 
 
 
@@ -193,8 +211,10 @@ const AppSidebar = ({ session }: any) => {
 
 
 
-    const MenuItem = ({ item }: any) => {
 
+
+    const MenuItem = ({ item }: any) => {
+        isShowReportMenu(session)
         if (session?.user?.is_superuser) {
             return (
                 <Collapsible key={item.title} /*defaultOpen*/ className="group/collapsible">
@@ -231,7 +251,9 @@ const AppSidebar = ({ session }: any) => {
             )
         }
 
-        if (item?.access == "pass") {
+
+
+        if (item?.access == "pass" && isShowReportMenu(session)) {
             return (
                 <Collapsible key={item.title} /*defaultOpen*/ className="group/collapsible">
                     <SidebarGroup>
