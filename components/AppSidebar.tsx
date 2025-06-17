@@ -134,7 +134,7 @@ const menu = [
         ]
     },
     {
-        title: "Scraped data",
+        title: "Scraped Data",
         Icon: PackageIcon,
         access: "has_scraped_data_access",
         subMenus: [
