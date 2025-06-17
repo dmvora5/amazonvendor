@@ -139,7 +139,7 @@ const menu = [
         access: "has_scraped_data_access",
         subMenus: [
             {
-                title: "Scraped data",
+                title: "Scraped Data",
                 url: "/super-admin/scraped-data",
                 Icon: PackageIcon
             }
