@@ -93,14 +93,14 @@ const InputComponent = memo(
       newData[index][keyData] = e.target.value;
       const oriNewData: any = [...originalData];
 
-      if (keyData.includes("Supplier")) {
-        console.log("Hear");
-        const supplierColumns = Object.keys(newData[index]).filter((key) =>
-          key.includes("Supplier")
+      if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
+        // Include all columns with 'Supplier' or 'Coming Back'
+        const relevantColumns = Object.keys(newData[index]).filter(
+          (key) => key.includes("Supplier") || key.includes("Coming Back")
         );
         let totalSupplierValue = 0;
 
-        supplierColumns.forEach((supplierColumn) => {
+        relevantColumns.forEach((supplierColumn) => {
           totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
         });
 
@@ -111,7 +111,7 @@ const InputComponent = memo(
         console.log("updatedOrder", updatedOrder);
 
         if (updatedOrder < 0) {
-          supplierColumns.forEach((supplierColumn) => {
+          relevantColumns.forEach((supplierColumn) => {
             newData[index][supplierColumn] = oriNewData[index][supplierColumn];
           });
           // newData[index]["Order"] = oriNewData[index]["Order"];
@@ -152,10 +152,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -217,16 +218,16 @@ const ExcelEditor = () => {
       setLoading(true);
 
       const response = await axios.get(url, {
-        responseType: 'arraybuffer', // Important: tells axios to treat the response as binary
+        responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });
 
       const arrayBuffer = response.data;
 
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      console.log('json', json);
+      console.log("json", json);
 
       setOriginalData(JSON.parse(JSON.stringify(json)));
       setData(JSON.parse(JSON.stringify(json)));
@@ -236,7 +237,7 @@ const ExcelEditor = () => {
         setSelectedColumn(key[0]);
       }
     } catch (error) {
-      console.error('Error fetching CSV/TSV:', error);
+      console.error("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
@@ -249,6 +250,13 @@ const ExcelEditor = () => {
       setHiddenHeaders([]); // Reset hidden
     }
   }, [originalData]);
+
+  useEffect(() => {
+    if (data.length > 0) {
+      const newHeaders = Object.keys(data[0]);
+      setHeaders(newHeaders);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (hiddenHeaders.length === 0) {
@@ -386,8 +394,9 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -678,11 +687,10 @@ const ExcelEditor = () => {
 
       return newRow;
     });
-
     // Update the data with the new sum column
     setData(updatedData);
     setOpenSumModel(false); // Close the modal
-    setSelectedSumColumns(selectedSumColumns || []); // Clear selected columns
+    setSelectedSumColumns([]); // Clear selected columns
     setSumNewColumnName(""); // Clear the sum column name input
     setDirty(true);
   };
