@@ -612,24 +612,23 @@ const ExcelEditor = () => {
 
   const handleDownloadExcel = () => {
     if (!data || data.length === 0) return;
-
-    // Filter only visible columns
+  
+    const headersToInclude = visibleHeaders.length > 0
+      ? visibleHeaders
+      : Object.keys(data[0]);
+  
     const filteredData = data.map((row) => {
       const filteredRow: { [key: string]: any } = {};
-      visibleHeaders.forEach((key) => {
+      headersToInclude.forEach((key) => {
         filteredRow[key] = row[key];
       });
       return filteredRow;
     });
-
-    // Convert to worksheet
+  
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
-
-    // Create workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-
-    // Format: "Product Database 2025-05-29_14-30.xlsx"
+  
     const now = new Date();
     const formattedDate = now
       .toLocaleString("sv-SE", {
@@ -641,13 +640,10 @@ const ExcelEditor = () => {
       })
       .replace(" ", "_")
       .replace(":", "-");
-
+  
     const fileName = `Scraped Data ${formattedDate}.xlsx`;
-
-    // Trigger download
     XLSX.writeFile(workbook, fileName);
-  };
-
+  };  
 
   return (
     <>
