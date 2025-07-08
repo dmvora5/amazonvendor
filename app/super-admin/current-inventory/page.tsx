@@ -34,6 +34,7 @@ import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
 import { getSession, signOut } from "next-auth/react";
 import RolesChecks from "@/components/RolesChecks";
+import { toast } from "react-toastify";
 
 // const options = [
 //   { value: "fba_inventory", label: "FBA Inventory" },
@@ -617,6 +618,7 @@ const ExcelEditor = () => {
 
       setDirty(false);
       if (response?.file_url) {
+        toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
       }
     } catch (err: any) {
