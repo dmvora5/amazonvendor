@@ -181,6 +181,9 @@ const ExcelEditor = () => {
   );
   const [searchModel, setSearchModel] = useState(false);
 
+  const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
+  const [searchIndex, setSearchIndex] = useState<number[]>([])
+
   const rowHeight = 50;
   const containerHeight = 500;
   const columnWidth = 250;
@@ -372,24 +375,34 @@ const ExcelEditor = () => {
 
     if (term === "") {
       setData(originalData); // Reset to original data when search term is cleared
+      setSearchData([])
+      setSearchIndex([])
     } else {
-      const filteredData = originalData.filter((row) => {
-        if (!selectedSearchColumns.length) {
-          return Object.values(row).some((value) =>
+      const states: any = []
+      const filteredData = originalData.reduce((acc, row, index) => {
+        // Check if the row matches the search term
+        const matchesSearchTerm = selectedSearchColumns.length
+          ? selectedSearchColumns
+            .map((column) => row[column])
+            .some((value) => String(value).toLowerCase().includes(term))
+          : Object.values(row).some((value) =>
             String(value).toLowerCase().includes(term)
           );
-        } else {
-          const slectedKeysRow = selectedSearchColumns.map(
-            (ele: any) => row[ele]
-          );
-          return Object.values(slectedKeysRow).some((value) =>
-            String(value).toLowerCase().includes(term)
-          );
+
+        // If the row matches, add it to the accumulator with its index
+        if (matchesSearchTerm) {
+          acc.push({ ...row });
+          states.push(index)
         }
-      });
-      setData(filteredData);
+        return acc;
+      }, []);
+      console.log('filteredData', filteredData)
+      console.log('states', states)
+      setSearchIndex(states)
+      setSearchData(filteredData);
     }
   };
+
 
   const handleSearchModel = () => {
     setSearchModel(true);
@@ -683,8 +696,25 @@ const ExcelEditor = () => {
     setLoading(true)
     try {
       // Convert JSON data to CSV or TSV format
+      const updatedData = [...data];
+
+      if (searchData.length > 0 && searchIndex.length > 0) {
+        // Loop through each index in the 'searchIndex'
+        searchIndex.forEach((index) => {
+          // Find the corresponding element in 'searchData' (same index as searchIndex)
+          const newItem = searchData[index];
+
+          // Replace the element in 'data' at the specified index with the item from 'searchData'
+          if (newItem) {
+            updatedData[index] = newItem;
+          }
+        });
+      }
+
+
+
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
-      const sheet = XLSX.utils.json_to_sheet(data);
+      const sheet = XLSX.utils.json_to_sheet(updatedData);
 
       let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
       if (delimiter === "\t") {
@@ -717,6 +747,9 @@ const ExcelEditor = () => {
       if (response?.file_url) {
         toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
+        setSearchData([])
+        setSearchIndex([])
+        setSearchTerm("")
         setDirty(false);
         setFileChange(false);
       }
@@ -1002,10 +1035,10 @@ const ExcelEditor = () => {
               </table>
               <List
                 height={containerHeight}
-                itemCount={data.length}
+                itemCount={searchData.length ? searchData.length : data.length}
                 itemSize={rowHeight}
                 width={
-                  data.length > 0
+                  (searchData.length > 0 ? searchData.length : data.length > 0)
                     ? columnWidth * Object.keys(data[0]).length
                     : 0
                 }
