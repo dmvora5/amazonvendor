@@ -835,7 +835,14 @@ const ExcelEditor = () => {
     const filteredData = data.map((row) => {
       const filteredRow: { [key: string]: any } = {};
       visibleHeaders.forEach((key) => {
-        filteredRow[key] = row[key];
+        let value = row[key];
+
+        // ✅ Truncate long text to 32,767 characters
+        if (typeof value === "string" && value.length > 32767) {
+          value = value.substring(0, 32767);
+        }
+
+        filteredRow[key] = value;
       });
       return filteredRow;
     });
