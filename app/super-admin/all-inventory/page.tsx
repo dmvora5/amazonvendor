@@ -152,10 +152,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -166,8 +167,7 @@ const ExcelEditor = () => {
   const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
-  const [selectedValue, setSelectedValue] =
-    useState<string>("all_inventory");
+  const [selectedValue, setSelectedValue] = useState<string>("all_inventory");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
@@ -186,7 +186,7 @@ const ExcelEditor = () => {
   const [searchModel, setSearchModel] = useState(false);
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
-  const [searchIndex, setSearchIndex] = useState<number[]>([])
+  const [searchIndex, setSearchIndex] = useState<number[]>([]);
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -220,16 +220,16 @@ const ExcelEditor = () => {
       setLoading(true);
 
       const response = await axios.get(url, {
-        responseType: 'arraybuffer', // Important: tells axios to treat the response as binary
+        responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });
 
       const arrayBuffer = response.data;
 
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      console.log('json', json);
+      console.log("json", json);
 
       setOriginalData(JSON.parse(JSON.stringify(json)));
       setData(JSON.parse(JSON.stringify(json)));
@@ -239,7 +239,7 @@ const ExcelEditor = () => {
         setSelectedColumn(key[0]);
       }
     } catch (error) {
-      console.error('Error fetching CSV/TSV:', error);
+      console.error("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
@@ -345,43 +345,49 @@ const ExcelEditor = () => {
   };
 
   // Handle search
-  const handleSearch = (e: any) => {
-    const term = e.target.value.toLowerCase();
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
     setSearchTerm(term);
 
-    if (term === "") {
-      setData(originalData); // Reset to original data when search term is cleared
-      setSearchData([])
-      setSearchIndex([])
+    if (term.trim() === "") {
+      setData(originalData);
+      setSearchData([]);
+      setSearchIndex([]);
     } else {
-      const states: any = []
-      const filteredData = originalData.reduce((acc, row, index) => {
-        // Check if the row matches the search term
-        const matchesSearchTerm = selectedSearchColumns.length
-          ? selectedSearchColumns
-            .map((column) => row[column])
-            .some((value) => String(value).toLowerCase().includes(term))
-          : Object.values(row).some((value) =>
-            String(value).toLowerCase().includes(term)
-          );
+      const lowerTerm = term.toLowerCase();
+      const states: number[] = [];
 
-        // If the row matches, add it to the accumulator with its index
+      const filteredData = originalData.reduce((acc: any[], row, index) => {
+        const matchesSearchTerm = selectedSearchColumns.length
+          ? selectedSearchColumns.some((column) =>
+              String(row[column] ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            )
+          : Object.values(row).some((value) =>
+              String(value ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            );
+
         if (matchesSearchTerm) {
           acc.push({ ...row });
-          states.push(index)
+          states.push(index);
         }
         return acc;
       }, []);
-      console.log('filteredData', filteredData)
-      console.log('states', states)
-      setSearchIndex(states)
+
+      console.log("filteredData", filteredData);
+      console.log("states", states);
+
+      setSearchIndex(states);
       setSearchData(filteredData);
     }
   };
 
   // Table Row component
   const Row = ({ index, style }: any) => {
-    const row = data[index];
+    const row = searchData.length > 0 ? searchData[index] : data[index];
 
     return (
       <div
@@ -398,14 +404,15 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
               <InputComponent
                 originalData={originalData}
-                data={data}
+                data={searchData.length > 0 ? searchData : data}
                 index={index}
                 keyData={key}
                 setData={setData}
@@ -586,7 +593,6 @@ const ExcelEditor = () => {
     try {
       setLoading(true);
 
-
       const updatedData = [...data];
 
       if (searchData.length > 0 && searchIndex.length > 0) {
@@ -601,8 +607,6 @@ const ExcelEditor = () => {
           }
         });
       }
-
-
 
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
       const sheet = XLSX.utils.json_to_sheet(updatedData);
@@ -640,9 +644,9 @@ const ExcelEditor = () => {
       setDirty(false);
       if (response?.file_url) {
         fetchCSVFromBackend(response?.file_url);
-        setSearchData([])
-        setSearchIndex([])
-        setSearchTerm("")
+        setSearchData([]);
+        setSearchIndex([]);
+        setSearchTerm("");
       }
     } catch (err: any) {
       if (err instanceof AxiosError) {
@@ -959,7 +963,7 @@ const ExcelEditor = () => {
             </Select>
           </div> */}
 
-          {(dirty && !fileChange && selectedValue === "current_inventory") && (
+          {dirty && !fileChange && selectedValue === "current_inventory" && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
@@ -1028,7 +1032,7 @@ const ExcelEditor = () => {
           </div>
         </div>
 
-        {(isLoading || loading || isFetching) ? (
+        {isLoading || loading || isFetching ? (
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
           </div>
@@ -1138,13 +1142,13 @@ const ExcelEditor = () => {
         <Dialog open={searchModel} onOpenChange={setSearchModel}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Sum Columns</DialogTitle>
+              <DialogTitle>Search Columns</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {/* Multi-select dropdown */}
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Select Columns to Sum:
+                  Select Columns to Search:
                 </label>
                 <ReactSelect
                   options={searchcolumnOptions}

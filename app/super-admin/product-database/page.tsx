@@ -369,36 +369,38 @@ const ExcelEditor = () => {
   };
 
   // Handle search
-  const handleSearch = (e: any) => {
-    const term = e.target.value.toLowerCase();
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
     setSearchTerm(term);
 
-    if (term === "") {
-      setData(originalData); // Reset to original data when search term is cleared
-      setSearchData([])
-      setSearchIndex([])
+    if (term.trim() === "") {
+      setData(originalData);
+      setSearchData([]);
+      setSearchIndex([]);
     } else {
-      const states: any = []
-      const filteredData = originalData.reduce((acc, row, index) => {
-        // Check if the row matches the search term
-        const matchesSearchTerm = selectedSearchColumns.length
-          ? selectedSearchColumns
-            .map((column) => row[column])
-            .some((value) => String(value).toLowerCase().includes(term))
-          : Object.values(row).some((value) =>
-            String(value).toLowerCase().includes(term)
-          );
+      const lowerTerm = term.toLowerCase();
+      const states: number[] = [];
 
-        // If the row matches, add it to the accumulator with its index
+      const filteredData = originalData.reduce((acc: any[], row, index) => {
+        const matchesSearchTerm = selectedSearchColumns.length
+          ? selectedSearchColumns.some((column) =>
+              String(row[column] ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            )
+          : Object.values(row).some((value) =>
+              String(value ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            );
+
         if (matchesSearchTerm) {
           acc.push({ ...row });
-          states.push(index)
+          states.push(index);
         }
         return acc;
       }, []);
-      console.log('filteredData', filteredData)
-      console.log('states', states)
-      setSearchIndex(states)
+      setSearchIndex(states);
       setSearchData(filteredData);
     }
   };
@@ -415,7 +417,7 @@ const ExcelEditor = () => {
 
   // Table Row component
   const Row = ({ index, style }: any) => {
-    const row = data[index];
+    const row = searchData.length > 0 ? searchData[index] : data[index];
 
     return (
       <div
@@ -438,7 +440,7 @@ const ExcelEditor = () => {
             >
               <InputComponent
                 originalData={originalData}
-                data={data}
+                data={searchData.length > 0 ? searchData : data}
                 index={index}
                 keyData={key}
                 setData={setData}
@@ -874,7 +876,7 @@ const ExcelEditor = () => {
 
   return (
     <>
-      <div className="p-6 flex items-center space-x-4">
+      {/* <div className="p-6 flex items-center space-x-4">
         <label className="block">
           <span className="text-sm font-medium text-gray-700">
             Upload Excel File
@@ -886,7 +888,7 @@ const ExcelEditor = () => {
             className="mt-1 block w-64 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
           />
         </label>
-      </div>
+      </div> */}
       <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
         <RolesChecks access="has_product_db_access" />
 
@@ -1133,13 +1135,13 @@ const ExcelEditor = () => {
       <Dialog open={searchModel} onOpenChange={setSearchModel}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sum Columns</DialogTitle>
+            <DialogTitle>Search Columns</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Multi-select dropdown */}
             <div>
               <label className="block text-sm font-medium mb-1">
-                Select Columns to Sum:
+                Select Columns to Search:
               </label>
               <ReactSelect
                 options={searchcolumnOptions}

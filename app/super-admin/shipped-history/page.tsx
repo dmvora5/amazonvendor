@@ -342,29 +342,28 @@ const ExcelEditor = () => {
   };
 
   // Handle search
-  const handleSearch = (e: any) => {
-    const term = e.target.value.toLowerCase();
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
     setSearchTerm(term);
-
-    if (term === "") {
-      setData(originalData); // Reset to original data when search term is cleared
-    } else {
-      const filteredData = originalData.filter((row) => {
-        if (!selectedSearchColumns.length) {
-          return Object.values(row).some((value) =>
-            String(value).toLowerCase().includes(term)
-          );
-        } else {
-          const slectedKeysRow = selectedSearchColumns.map(
-            (ele: any) => row[ele]
-          );
-          return Object.values(slectedKeysRow).some((value) =>
-            String(value).toLowerCase().includes(term)
-          );
-        }
-      });
-      setData(filteredData);
+  
+    if (term.trim() === "") {
+      setData(originalData); // Reset
+      return;
     }
+  
+    const lowerTerm = term.toLowerCase();
+  
+    const filteredData = originalData.filter((row) => {
+      const valuesToSearch = selectedSearchColumns.length
+        ? selectedSearchColumns.map((key) => row[key])
+        : Object.values(row);
+  
+      return valuesToSearch.some((value) =>
+        String(value ?? "").toLowerCase().includes(lowerTerm)
+      );
+    });
+  
+    setData(filteredData);
   };
 
   // Table Row component
@@ -1104,13 +1103,13 @@ const ExcelEditor = () => {
         <Dialog open={searchModel} onOpenChange={setSearchModel}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Sum Columns</DialogTitle>
+              <DialogTitle>Search Columns</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {/* Multi-select dropdown */}
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Select Columns to Sum:
+                  Select Columns to Search:
                 </label>
                 <ReactSelect
                   options={searchcolumnOptions}

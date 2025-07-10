@@ -130,6 +130,11 @@ const menu = [
                 title: "Product Database",
                 url: "/super-admin/product-database",
                 Icon: PackageIcon
+            },
+            {
+                title: "Upload Report",
+                url: "/super-admin/productdatabase/upload-report",
+                Icon: PackageIcon
             }
         ]
     },
