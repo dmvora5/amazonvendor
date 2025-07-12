@@ -36,16 +36,6 @@ import { getSession, signOut } from "next-auth/react";
 import RolesChecks from "@/components/RolesChecks";
 import { toast } from "react-toastify";
 
-// const options = [
-//   { value: "fba_inventory", label: "FBA Inventory" },
-//   { value: "all_inventory", label: "All Inventory" },
-//   { value: "channel_max", label: "Channel Max" },
-//   { value: "order_history", label: "Order History" },
-//   { value: "current_inventory", label: "Current Inventory" },
-//   // { value: "project_database", label: "Project Database" },
-//   { value: "shipped_history", label: "Shipped History" },
-// ];
-
 const InputComponent = memo(
   ({
     originalData,
@@ -56,96 +46,79 @@ const InputComponent = memo(
     setDirty,
     disabled,
     isDuplicate,
+    searchData,
+    setSearchData,
+    row
   }: any) => {
-    const row = data[index];
+    // const row = searchData.length > 0 ? searchData[index] : data[index];
     const [state, setState] = useState<string>(row[keyData]);
-    const [initialOrder] = useState(originalData[index]?.Order || 0);
 
     const handleChange = (e: any) => {
-      const { name, value } = e.target;
-      setState(value);
-
-      // Clone the data to avoid mutating originalData
-      const updatedData = [...data];
-
-      // if (keyData.includes("Supplier ")) {
-      //   const supplierColumns = Object.keys(updatedData[index]).filter((key) =>
-      //     key.includes("Supplier ")
-      //   );
-      //   let totalSupplierValue = 0;
-
-      //   supplierColumns.forEach((supplierColumn) => {
-      //     totalSupplierValue +=
-      //       parseFloat(updatedData[index][supplierColumn]) || 0;
-      //   });
-
-      //   updatedData[index]["Total New Inbound"] = totalSupplierValue;
-      //   let updatedOrder = initialOrder - totalSupplierValue;
-
-      //   updatedData[index]["Order"] = updatedOrder;
-      // }
-
-      // Now setData updates `data`, not `originalData`
-      // setData(updatedData);
+      setState(e.target.value); // Live input state
     };
 
     const handleBlur = (e: any) => {
-      const newData: any = [...data];
-      newData[index][keyData] = e.target.value;
-      const oriNewData: any = [...originalData];
+      const newValue = e.target.value;
 
-      if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
-        // Include all columns with 'Supplier' or 'Coming Back'
-        const relevantColumns = Object.keys(newData[index]).filter(
-          (key) => key.includes("Supplier") || key.includes("Coming Back")
+      // 1️⃣ Update full data array
+      setData((prev: any[]) => {
+        const newData = [...prev];
+
+        const globalIndex = newData.findIndex((row: any) =>
+          Object.keys(row).every((key) => row[key] === data[index][key])
         );
-        let totalSupplierValue = 0;
 
-        relevantColumns.forEach((supplierColumn) => {
-          totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
-        });
+        if (globalIndex !== -1) {
+          newData[globalIndex][keyData] = newValue;
 
-        // let updatedOrder = initialOrder - totalSupplierValue;
-        let updatedOrder =
-          oriNewData[index]["Total New Inbound"] + totalSupplierValue;
+          // ⬇️ Handle Total New Inbound logic
+          if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
+            const relevantColumns = Object.keys(newData[globalIndex]).filter(
+              (key) => key.includes("Supplier") || key.includes("Coming Back")
+            );
 
-        console.log("updatedOrder", updatedOrder);
+            let totalSupplierValue = 0;
+            relevantColumns.forEach((supplierColumn) => {
+              totalSupplierValue +=
+                parseFloat(newData[globalIndex][supplierColumn]) || 0;
+            });
 
-        if (updatedOrder < 0) {
-          relevantColumns.forEach((supplierColumn) => {
-            newData[index][supplierColumn] = oriNewData[index][supplierColumn];
-          });
-          // newData[index]["Order"] = oriNewData[index]["Order"];
-          newData[index]["Total New Inbound"] =
-            oriNewData[index]["Total New Inbound"];
-        } else {
-          // newData[index]["Order"] = updatedOrder;
-          newData[index]["Total New Inbound"] =
-            oriNewData[index]["Total New Inbound"] + totalSupplierValue;
+            const oriInbound =
+              originalData[globalIndex]["Total New Inbound"] || 0;
+            const updatedOrder = oriInbound + totalSupplierValue;
+
+            if (updatedOrder < 0) {
+              relevantColumns.forEach((supplierColumn) => {
+                newData[globalIndex][supplierColumn] =
+                  originalData[globalIndex][supplierColumn];
+              });
+              newData[globalIndex]["Total New Inbound"] =
+                originalData[globalIndex]["Total New Inbound"];
+            } else {
+              newData[globalIndex]["Total New Inbound"] = updatedOrder;
+            }
+          }
+
+          return newData;
         }
-        setData(newData);
-        setDirty(true);
-      } else {
-        // Update `data`, not `originalData`
-        setData(newData);
-        setDirty(true);
+
+        return prev;
+      });
+
+      // 2️⃣ Sync with visible input
+      setState(newValue);
+
+      // 3️⃣ ✅ Also update searchData if active
+      if (searchData?.length > 0 && setSearchData) {
+        setSearchData((prev: any[]) => {
+          const updated = [...prev];
+          updated[index][keyData] = newValue;
+          return updated;
+        });
       }
+
+      setDirty(true);
     };
-
-    // const handleBlur = (e: any) => {
-    //   const newData: any = [...data];
-    //   newData[index][keyData] = e.target.value;
-
-    //   // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
-    //   // if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
-    //   //   const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
-    //   //   const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
-    //   //   newData[index]["Order"] = supplierAOrder + supplierBOrder;
-    //   // }
-
-    //   setData(newData);
-    //   setDirty(true); // Set dirty flag when data is changed
-    // };
 
     return (
       <Input
@@ -153,10 +126,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -187,8 +161,7 @@ const ExcelEditor = () => {
   const [searchModel, setSearchModel] = useState(false);
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
-  const [searchIndex, setSearchIndex] = useState<number[]>([])
-
+  const [searchIndex, setSearchIndex] = useState<number[]>([]);
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -409,8 +382,9 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -422,7 +396,10 @@ const ExcelEditor = () => {
                 setData={setData}
                 setDirty={setDirty}
                 disabled={uploadOptions.isLoading}
-                isDuplicate={isDuplicate} // pass flag
+                isDuplicate={isDuplicate}
+                row={row}
+                setSearchData={setSearchData}
+                searchData={searchData}
               />
             </div>
           );
@@ -596,41 +573,16 @@ const ExcelEditor = () => {
   const handleUploadCSV = async () => {
     try {
       setLoading(true);
-      // Convert JSON data to CSV or TSV format
-
       const updatedData = [...data];
 
-      if (searchData.length > 0 && searchIndex.length > 0) {
-        // Loop through each index in the 'searchIndex'
-        searchIndex.forEach((index) => {
-          // Find the corresponding element in 'searchData' (same index as searchIndex)
-          const newItem = searchData[index];
-
-          // Replace the element in 'data' at the specified index with the item from 'searchData'
-          if (newItem) {
-            updatedData[index] = newItem;
-          }
-        });
-      }
-
-
-
-      const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
+      const delimiter = "\t";
       const sheet = XLSX.utils.json_to_sheet(updatedData);
+      let csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter });
 
-      let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
-      if (delimiter === "\t") {
-        csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
-      }
-
-      // Create a FormData object
       const formData = new FormData();
-
-      // Create a Blob from CSV or TSV data
       const csvBlob = new Blob([csvData], { type: "text/csv" });
 
-      // Append the file to the FormData object
-      formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
+      formData.append("file", csvBlob, "data.csv");
       formData.append("report_type", selectedValue);
       formData.append("selected_date", selectedDateColumns.join(","));
 
@@ -651,28 +603,18 @@ const ExcelEditor = () => {
       if (response?.file_url) {
         toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
-        setSearchData([])
-        setSearchIndex([])
-        setSearchTerm("")
+        setSearchData([]);
+        setSearchTerm("");
       }
     } catch (err: any) {
-      if (err instanceof AxiosError) {
-        if (err.status === 401) {
-          signOut({
-            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
-          });
-          return;
-        }
-        parseAndShowErrorInToast(err?.response);
-      } else {
-        parseAndShowErrorInToast(err);
+      if (err instanceof AxiosError && err.status === 401) {
+        signOut({ callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}` });
+        return;
       }
+      parseAndShowErrorInToast(err?.response || err);
     } finally {
       setLoading(false);
     }
-
-    // await submit(formData);
-    // await fetchCSVFromBackend()
   };
 
   const handleSumColumnModel = () => {
@@ -881,7 +823,7 @@ const ExcelEditor = () => {
 
   return (
     <>
-      {selectedValue === "current_inventory" && (
+      {/* {selectedValue === "current_inventory" && (
         <div className="p-6 flex items-center space-x-4">
           <label className="block">
             <span className="text-sm font-medium text-gray-700">
@@ -895,7 +837,7 @@ const ExcelEditor = () => {
             />
           </label>
         </div>
-      )}
+      )} */}
       <div className="w-[95%] mx-auto p-6 bg-white rounded-lg shadow-lg">
         <div className="mb-4 space-x-2 flex items-center">
           <RolesChecks access="has_current_inventory_access" />
@@ -969,7 +911,7 @@ const ExcelEditor = () => {
             </Select>
           </div> */}
 
-          {(dirty && !fileChange && selectedValue === "current_inventory") && (
+          {dirty && !fileChange && selectedValue === "current_inventory" && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
@@ -1038,7 +980,7 @@ const ExcelEditor = () => {
           </div>
         </div>
 
-        {(isLoading || loading || isFetching) ? (
+        {isLoading || loading || isFetching ? (
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
           </div>

@@ -71,8 +71,6 @@ const UploadPage = () => {
         }
       );
 
-      console.log("🚀 ~ handleUploadNewCSV ~ response:", response);
-
       if (response?.detail) {
         toast.success(response.detail);
         setFileChange(false);

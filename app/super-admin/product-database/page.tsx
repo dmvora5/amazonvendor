@@ -54,91 +54,74 @@ const InputComponent = memo(
     setData,
     setDirty,
     disabled,
-    isDuplicate
+    isDuplicate,
+    searchData,
+    setSearchData,
   }: any) => {
     const row = data[index];
     const [state, setState] = useState<string>(row[keyData]);
     const [initialOrder] = useState(originalData[index]?.Order || 0);
 
     const handleChange = (e: any) => {
-      const { name, value } = e.target;
-      setState(value);
-
-      // Clone the data to avoid mutating originalData
-      const updatedData = [...data];
-
-      // if (keyData.includes("Supplier ")) {
-      //   const supplierColumns = Object.keys(updatedData[index]).filter((key) =>
-      //     key.includes("Supplier ")
-      //   );
-      //   let totalSupplierValue = 0;
-
-      //   supplierColumns.forEach((supplierColumn) => {
-      //     totalSupplierValue +=
-      //       parseFloat(updatedData[index][supplierColumn]) || 0;
-      //   });
-
-      //   updatedData[index]["Total New Inbound"] = totalSupplierValue;
-      //   let updatedOrder = initialOrder - totalSupplierValue;
-
-      //   updatedData[index]["Order"] = updatedOrder;
-      // }
-
-      // Now setData updates `data`, not `originalData`
-      // setData(updatedData);
+      setState(e.target.value); // just update local state
     };
 
     const handleBlur = (e: any) => {
-      const newData: any = [...data];
-      newData[index][keyData] = e.target.value;
-      const oriNewData: any = [...originalData];
+      const newValue = e.target.value;
 
-      if (keyData.includes("Supplier")) {
-        const supplierColumns = Object.keys(newData[index]).filter((key) =>
-          key.includes("Supplier")
+      setData((prevData: any[]) => {
+        const updatedData = [...prevData];
+
+        // Find actual row in main data by matching all keys (even if filtered by search)
+        const globalIndex = updatedData.findIndex((row) =>
+          Object.keys(row).every((key) => row[key] === data[index][key])
         );
-        let totalSupplierValue = 0;
 
-        supplierColumns.forEach((supplierColumn) => {
-          totalSupplierValue += parseFloat(newData[index][supplierColumn]) || 0;
-        });
+        if (globalIndex !== -1) {
+          updatedData[globalIndex][keyData] = newValue;
 
-        let updatedOrder = initialOrder - totalSupplierValue;
+          if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
+            const relevantCols = Object.keys(updatedData[globalIndex]).filter(
+              (key) => key.includes("Supplier") || key.includes("Coming Back")
+            );
 
-        if (updatedOrder < 0) {
-          supplierColumns.forEach((supplierColumn) => {
-            newData[index][supplierColumn] = oriNewData[index][supplierColumn];
-          });
-          // newData[index]["Order"] = oriNewData[index]["Order"];
-          newData[index]["Total New Inbound"] =
-            oriNewData[index]["Total New Inbound"];
-        } else {
-          // newData[index]["Order"] = updatedOrder;
-          newData[index]["Total New Inbound"] = totalSupplierValue;
+            let totalSupplierValue = 0;
+            relevantCols.forEach((col) => {
+              totalSupplierValue +=
+                parseFloat(updatedData[globalIndex][col]) || 0;
+            });
+
+            const oriInbound =
+              originalData[globalIndex]["Total New Inbound"] || 0;
+            const updatedInbound = oriInbound + totalSupplierValue;
+
+            if (updatedInbound < 0) {
+              relevantCols.forEach((col) => {
+                updatedData[globalIndex][col] = originalData[globalIndex][col];
+              });
+              updatedData[globalIndex]["Total New Inbound"] =
+                originalData[globalIndex]["Total New Inbound"];
+            } else {
+              updatedData[globalIndex]["Total New Inbound"] = updatedInbound;
+            }
+          }
         }
-        setData(newData);
-        setDirty(true);
-      } else {
-        // Update `data`, not `originalData`
-        setData(newData);
-        setDirty(true);
+
+        return updatedData;
+      });
+
+      // ✅ Update filtered (search) view too if active
+      if (searchData?.length > 0 && setSearchData) {
+        setSearchData((prev: any[]) => {
+          const updatedSearchData = [...prev];
+          updatedSearchData[index][keyData] = newValue;
+          return updatedSearchData;
+        });
       }
+
+      setState(newValue); // update visible value
+      setDirty(true);
     };
-
-    // const handleBlur = (e: any) => {
-    //   const newData: any = [...data];
-    //   newData[index][keyData] = e.target.value;
-
-    //   // If the "Supplier A Order" or "Supplier B Order" column is updated, recalculate "Order"
-    //   // if (keyData === "Supplier A Order" || keyData === "Supplier B Order") {
-    //   //   const supplierAOrder = parseFloat(newData[index]["Supplier A Order"]) || 0;
-    //   //   const supplierBOrder = parseFloat(newData[index]["Supplier B Order"]) || 0;
-    //   //   newData[index]["Order"] = supplierAOrder + supplierBOrder;
-    //   // }
-
-    //   setData(newData);
-    //   setDirty(true); // Set dirty flag when data is changed
-    // };
 
     return (
       <Input
@@ -146,10 +129,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -182,7 +166,7 @@ const ExcelEditor = () => {
   const [searchModel, setSearchModel] = useState(false);
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
-  const [searchIndex, setSearchIndex] = useState<number[]>([])
+  const [searchIndex, setSearchIndex] = useState<number[]>([]);
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -230,16 +214,16 @@ const ExcelEditor = () => {
       setLoading(true);
 
       const response = await axios.get(url, {
-        responseType: 'arraybuffer', // Important: tells axios to treat the response as binary
+        responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });
 
       const arrayBuffer = response.data;
 
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      console.log('json', json);
+      console.log("json", json);
 
       setOriginalData(JSON.parse(JSON.stringify(json)));
       setData(JSON.parse(JSON.stringify(json)));
@@ -249,7 +233,7 @@ const ExcelEditor = () => {
         setSelectedColumn(key[0]);
       }
     } catch (error) {
-      console.error('Error fetching CSV/TSV:', error);
+      console.error("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
@@ -292,51 +276,6 @@ const ExcelEditor = () => {
 
     return duplicateSet;
   }, [data]);
-
-  // // Function to handle adding a new column after the selected column
-  // const handleAddColumn = () => {
-  //   if (newColumnName.trim() && selectedColumn) {
-  //     const headerObject = { ...originalData[0] }; // Copy the header object
-  //     const headerKeys = Object.keys(headerObject); // Get all the column keys
-  //     const selectedIndex = headerKeys.indexOf(selectedColumn); // Find the index of the selected column
-
-  //     if (selectedIndex === -1) return; // If selected column is not found, return
-
-  //     // Step 1: Insert the new column key into the header keys array at the correct position
-  //     headerKeys.splice(selectedIndex + 1, 0, newColumnName); // Insert after selected column
-
-  //     // Step 2: Rebuild the header object with the new column added
-  //     const newHeaderObject: any = {};
-  //     headerKeys.forEach((key) => {
-  //       newHeaderObject[key] = headerObject[key] || null; // Keep existing keys and add the new column with an empty value
-  //     });
-
-  //     // Step 3: Update each row in originalData to reflect the new column (set the new column to null or empty string)
-  //     const updatedData = originalData.map((row, index) => {
-  //       if (index === 0) return newHeaderObject; // If it's the header row, update it
-
-  //       const updatedRow = { ...row };
-
-  //       // Add new column with null or empty string for all rows
-  //       updatedRow[newColumnName] = null; // New column with null value for existing rows
-
-  //       // Ensure rows are updated correctly according to the new column order
-  //       const reorderedRow: any = {};
-  //       headerKeys.forEach((key) => {
-  //         reorderedRow[key] = updatedRow[key] || null; // Ensure each row has the same order as header
-  //       });
-
-  //       return reorderedRow;
-  //     });
-
-  //     // Step 4: Update both the header and the rows with the new column
-  //     // setOriginalData([newHeaderObject, ...updatedData]); // Set the updated header and rows
-  //     setData([newHeaderObject, ...updatedData]); // Update filtered data (if used for searching)
-
-  //     setNewColumnName(""); // Clear input after adding
-  //     setDirty(true); // Mark as dirty after making changes
-  //   }
-  // };
 
   const handleAddColumn = () => {
     if (newColumnName.trim() && selectedColumn) {
@@ -405,7 +344,6 @@ const ExcelEditor = () => {
     }
   };
 
-
   const handleSearchModel = () => {
     setSearchModel(true);
   };
@@ -433,8 +371,9 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -447,6 +386,8 @@ const ExcelEditor = () => {
                 setDirty={setDirty}
                 disabled={uploadOptions.isLoading}
                 isDuplicate={isDuplicate}
+                searchData={searchData}
+                setSearchData={setSearchData}
               />
             </div>
           );
@@ -487,8 +428,7 @@ const ExcelEditor = () => {
     setHiddenHeaders((prev) =>
       prev.map((h) => (h === header ? updatedHeader : h))
     );
-  }
-
+  };
 
   // Table Header component
   const Header = () => {
@@ -509,7 +449,7 @@ const ExcelEditor = () => {
                     type="text"
                     value={header}
                     onChange={(e) => {
-                      handleHeaderNameChange(e, header)
+                      handleHeaderNameChange(e, header);
                     }}
                     className="w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -637,7 +577,7 @@ const ExcelEditor = () => {
 
   // Upload the CSV data
   const handleUploadCSV = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Convert JSON data to CSV or TSV format
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
@@ -695,7 +635,7 @@ const ExcelEditor = () => {
   };
 
   const handleUploadNewCSV = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Convert JSON data to CSV or TSV format
       const updatedData = [...data];
@@ -712,8 +652,6 @@ const ExcelEditor = () => {
           }
         });
       }
-
-
 
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
       const sheet = XLSX.utils.json_to_sheet(updatedData);
@@ -749,9 +687,9 @@ const ExcelEditor = () => {
       if (response?.file_url) {
         toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
-        setSearchData([])
-        setSearchIndex([])
-        setSearchTerm("")
+        setSearchData([]);
+        setSearchIndex([]);
+        setSearchTerm("");
         setDirty(false);
         setFileChange(false);
       }
@@ -957,14 +895,14 @@ const ExcelEditor = () => {
           </Select>
         </div> */}
 
-          {(dirty && !fileChange) && (
+          {dirty && !fileChange && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
               onClick={handleUploadCSV}
               color="primary"
             >
-              {(uploadOptions.isLoading || loading) ? (
+              {uploadOptions.isLoading || loading ? (
                 <Image
                   src="/assets/icons/loader.svg"
                   alt="loader"
@@ -984,7 +922,7 @@ const ExcelEditor = () => {
               onClick={handleUploadNewCSV}
               color="primary"
             >
-              {(uploadOptions.isLoading || loading) ? (
+              {uploadOptions.isLoading || loading ? (
                 <Image
                   src="/assets/icons/loader.svg"
                   alt="loader"
