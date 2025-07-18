@@ -48,7 +48,7 @@ const InputComponent = memo(
     isDuplicate,
     searchData,
     setSearchData,
-    row
+    row,
   }: any) => {
     // const row = searchData.length > 0 ? searchData[index] : data[index];
     const [state, setState] = useState<string>(row[keyData]);
@@ -983,6 +983,10 @@ const ExcelEditor = () => {
         {isLoading || loading || isFetching ? (
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
+          </div>
+        ) : searchTerm.trim() !== "" && searchData.length === 0 ? (
+          <div className="h-[600px] w-full flex items-center justify-center text-gray-500 text-lg">
+            No matching data found
           </div>
         ) : (
           <div className="overflow-x-auto max-h-[620px]">

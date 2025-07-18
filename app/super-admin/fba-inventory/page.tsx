@@ -152,10 +152,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -166,8 +167,7 @@ const ExcelEditor = () => {
   const [originalData, setOriginalData] = useState<any[]>([]); // Holds original data
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>(""); // Selected column for new column
-  const [selectedValue, setSelectedValue] =
-    useState<string>("fba_inventory");
+  const [selectedValue, setSelectedValue] = useState<string>("fba_inventory");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [dirty, setDirty] = useState<boolean>(false);
@@ -186,7 +186,7 @@ const ExcelEditor = () => {
   const [searchModel, setSearchModel] = useState(false);
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
-  const [searchIndex, setSearchIndex] = useState<number[]>([])
+  const [searchIndex, setSearchIndex] = useState<number[]>([]);
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -220,16 +220,16 @@ const ExcelEditor = () => {
       setLoading(true);
 
       const response = await axios.get(url, {
-        responseType: 'arraybuffer', // Important: tells axios to treat the response as binary
+        responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });
 
       const arrayBuffer = response.data;
 
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      console.log('json', json);
+      console.log("json", json);
 
       setOriginalData(JSON.parse(JSON.stringify(json)));
       setData(JSON.parse(JSON.stringify(json)));
@@ -239,7 +239,7 @@ const ExcelEditor = () => {
         setSelectedColumn(key[0]);
       }
     } catch (error) {
-      console.error('Error fetching CSV/TSV:', error);
+      console.error("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
@@ -400,8 +400,9 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -604,8 +605,6 @@ const ExcelEditor = () => {
         });
       }
 
-
-
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
       const sheet = XLSX.utils.json_to_sheet(updatedData);
 
@@ -641,9 +640,9 @@ const ExcelEditor = () => {
       setDirty(false);
       if (response?.file_url) {
         fetchCSVFromBackend(response?.file_url);
-        setSearchData([])
-        setSearchIndex([])
-        setSearchTerm("")
+        setSearchData([]);
+        setSearchIndex([]);
+        setSearchTerm("");
       }
     } catch (err: any) {
       if (err instanceof AxiosError) {
@@ -960,7 +959,7 @@ const ExcelEditor = () => {
             </Select>
           </div> */}
 
-          {(dirty && !fileChange && selectedValue === "current_inventory") && (
+          {dirty && !fileChange && selectedValue === "current_inventory" && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
@@ -1029,9 +1028,13 @@ const ExcelEditor = () => {
           </div>
         </div>
 
-        {(isLoading || loading || isFetching) ? (
+        {isLoading || loading || isFetching ? (
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
+          </div>
+        ) : searchTerm.trim() !== "" && searchData.length === 0 ? (
+          <div className="h-[600px] w-full flex items-center justify-center text-gray-500 text-lg">
+            No matching data found
           </div>
         ) : (
           <div className="overflow-x-auto max-h-[620px]">

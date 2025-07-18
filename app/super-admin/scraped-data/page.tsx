@@ -161,9 +161,12 @@ const ExcelEditor = () => {
   const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
   const [newSumColumnName, setSumNewColumnName] = useState("");
   const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
-
+  const [isSearching, setIsSearching] = useState(false);
+  const [noResults, setNoResults] = useState(false);
   const [originalDataTemp, setOriginalDatatmp] = useState<any[]>([]); // Holds original data
-  const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>([]);
+  const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>(
+    []
+  );
   const [searchModel, setSearchModel] = useState(false);
   const [visibleHeaders, setVisibleHeaders] = useState<string[]>([]);
 
@@ -187,11 +190,10 @@ const ExcelEditor = () => {
     isFetching,
   } = useGetReportQuery(selectedValue);
 
-  const searchcolumnOptions = Object.keys(originalData[0] || {})
-    .map((key) => ({
-      value: key,
-      label: key,
-    }));
+  const searchcolumnOptions = Object.keys(originalData[0] || {}).map((key) => ({
+    value: key,
+    label: key,
+  }));
 
   const [submit, uploadOptions] = useUpdateReportMutation();
 
@@ -200,23 +202,23 @@ const ExcelEditor = () => {
       setLoading(true);
 
       const response = await axios.get(url, {
-        responseType: 'arraybuffer', // Important: tells axios to treat the response as binary
+        responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });
 
       const arrayBuffer = response.data;
 
       // Decode the array buffer to a string using utf-8 encoding
-      const text = new TextDecoder('utf-8').decode(arrayBuffer);
+      const text = new TextDecoder("utf-8").decode(arrayBuffer);
 
       // Manually remove the BOM (if it exists)
-      const cleanText = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+      const cleanText = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 
       // Convert the cleaned text to an array buffer for XLSX processing
-      const wb = XLSX.read(cleanText, { type: 'string' });
+      const wb = XLSX.read(cleanText, { type: "string" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      console.log('json', json);
+      console.log("json", json);
 
       setOriginalData(JSON.parse(JSON.stringify(json)));
       setData(JSON.parse(JSON.stringify(json)));
@@ -226,14 +228,11 @@ const ExcelEditor = () => {
         setSelectedColumn(key[0]);
       }
     } catch (error) {
-      console.error('Error fetching CSV/TSV:', error);
+      console.error("Error fetching CSV/TSV:", error);
     } finally {
       setLoading(false);
     }
   }, []);
-
-
-
 
   useEffect(() => {
     if (!(queryData as any)?.file_url) return;
@@ -249,9 +248,6 @@ const ExcelEditor = () => {
     setSearchModel(false); // open the modal
     setSelectedSearchColumns([]); // Clear selected columns
   };
-
-
-
 
   // // Function to handle adding a new column after the selected column
   // const handleAddColumn = () => {
@@ -332,24 +328,31 @@ const ExcelEditor = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
-  
+
     if (term.trim() === "") {
+      setIsSearching(false);
+      setNoResults(false);
       setData(originalData); // Reset
       return;
     }
-  
+
+    setIsSearching(true);
+
     const lowerTerm = term.toLowerCase();
-  
+
     const filteredData = originalData.filter((row) => {
       const valuesToSearch = selectedSearchColumns.length
         ? selectedSearchColumns.map((key) => row[key])
         : Object.values(row);
-  
+
       return valuesToSearch.some((value) =>
-        String(value ?? "").toLowerCase().includes(lowerTerm)
+        String(value ?? "")
+          .toLowerCase()
+          .includes(lowerTerm)
       );
     });
-  
+
+    setNoResults(filteredData.length === 0);
     setData(filteredData);
   };
 
@@ -502,18 +505,18 @@ const ExcelEditor = () => {
     const file = e.target.files[0];
 
     if (file) {
-      setLoading(true)
+      setLoading(true);
       // Create a FileReader to read the CSV file
       const reader = new FileReader();
 
       reader.onload = (event) => {
         const binaryString = event.target?.result as string;
-        const workbook = XLSX.read(binaryString, { type: 'binary' });
+        const workbook = XLSX.read(binaryString, { type: "binary" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
-        setData(jsonData)
+        setData(jsonData);
         setOriginalData(jsonData);
-        setLoading(false)
+        setLoading(false);
         setDirty(true);
       };
 
@@ -595,10 +598,13 @@ const ExcelEditor = () => {
   };
 
   const handleAddRow = () => {
-    const newRow = Object.keys(originalData[0] || {}).reduce((acc: any, key) => {
-      acc[key] = ""; // or null, depending on your default value for the new row
-      return acc;
-    }, {});
+    const newRow = Object.keys(originalData[0] || {}).reduce(
+      (acc: any, key) => {
+        acc[key] = ""; // or null, depending on your default value for the new row
+        return acc;
+      },
+      {}
+    );
 
     // Add new row to both data and originalData
     setData((prevData) => [...prevData, newRow]);
@@ -608,15 +614,14 @@ const ExcelEditor = () => {
   };
   const handleSearchModel = () => {
     setSearchModel(true);
-  }
+  };
 
   const handleDownloadExcel = () => {
     if (!data || data.length === 0) return;
-  
-    const headersToInclude = visibleHeaders.length > 0
-      ? visibleHeaders
-      : Object.keys(data[0]);
-  
+
+    const headersToInclude =
+      visibleHeaders.length > 0 ? visibleHeaders : Object.keys(data[0]);
+
     const filteredData = data.map((row) => {
       const filteredRow: { [key: string]: any } = {};
       headersToInclude.forEach((key) => {
@@ -624,11 +629,11 @@ const ExcelEditor = () => {
       });
       return filteredRow;
     });
-  
+
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-  
+
     const now = new Date();
     const formattedDate = now
       .toLocaleString("sv-SE", {
@@ -640,10 +645,10 @@ const ExcelEditor = () => {
       })
       .replace(" ", "_")
       .replace(":", "-");
-  
+
     const fileName = `Scraped Data ${formattedDate}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-  };  
+  };
 
   return (
     <>
@@ -803,6 +808,10 @@ const ExcelEditor = () => {
         {isLoading || loading || isFetching ? (
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
+          </div>
+        ) : data.length === 0 ? (
+          <div className="h-[600px] w-full flex items-center justify-center text-gray-500 text-lg">
+            No matching data found
           </div>
         ) : (
           <div className="overflow-x-auto max-h-[620px]">

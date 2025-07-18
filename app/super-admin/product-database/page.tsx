@@ -967,6 +967,10 @@ const ExcelEditor = () => {
           <div className="h-[600px] w-full flex items-center justify-center">
             <ProcessLoader />
           </div>
+        ) : searchTerm.trim() !== "" && searchData.length === 0 ? (
+          <div className="h-[600px] w-full flex items-center justify-center text-gray-500 text-lg">
+            No matching data found
+          </div>
         ) : (
           <div className="overflow-x-auto max-h-[620px]">
             <div className="relative">
