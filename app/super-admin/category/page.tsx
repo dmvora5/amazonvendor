@@ -47,7 +47,7 @@ function CategoryTables() {
       [id]:
         id === "category"
           ? value
-          : value === ""
+          : !value
             ? ""
             : parseInt(value, 10) || 0,
     }));
@@ -61,7 +61,7 @@ function CategoryTables() {
         ...Object.fromEntries(
           priceFields.map(({ id }) => [
             id,
-            (selectedCategory[id] === "" || selectedCategory[id] == null) ? null : selectedCategory[id],
+            !selectedCategory[id] ? null : selectedCategory[id],
           ])
         ),
       };
