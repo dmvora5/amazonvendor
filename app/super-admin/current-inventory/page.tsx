@@ -126,11 +126,10 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
-          isDuplicate
-            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-            : "focus:ring-blue-500"
-        }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
+          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+          : "focus:ring-blue-500"
+          }`}
       />
     );
   }
@@ -162,6 +161,8 @@ const ExcelEditor = () => {
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
   const [searchIndex, setSearchIndex] = useState<number[]>([]);
+
+  const [saveModel, setSaveModel] = useState(false)
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -203,8 +204,6 @@ const ExcelEditor = () => {
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
-
-      console.log("json", json);
 
       setOriginalData(JSON.parse(JSON.stringify(json)));
       setData(JSON.parse(JSON.stringify(json)));
@@ -342,15 +341,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-              String(row[column] ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            )
+            String(row[column] ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          )
           : Object.values(row).some((value) =>
-              String(value ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            );
+            String(value ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          );
 
         if (matchesSearchTerm) {
           acc.push({ ...row });
@@ -382,9 +381,8 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${
-                isDuplicate ? "text-red-600 font-semibold" : ""
-              }`}
+              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+                }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -573,6 +571,7 @@ const ExcelEditor = () => {
   const handleUploadCSV = async () => {
     try {
       setLoading(true);
+      setSaveModel(false)
       const updatedData = [...data];
 
       const delimiter = "\t";
@@ -915,7 +914,7 @@ const ExcelEditor = () => {
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
-              onClick={handleUploadCSV}
+              onClick={() => setSaveModel(true)}
               color="primary"
             >
               {uploadOptions.isLoading ? (
@@ -1035,6 +1034,64 @@ const ExcelEditor = () => {
           </div>
         )}
       </div> */}
+        {/**are you sure */}
+        <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Sum columns</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Multi-select dropdown */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Select Columns to Sum:
+                </label>
+                <ReactSelect
+                  options={columnOptions}
+                  isMulti
+                  value={selectedSumColumns.map((col) => ({
+                    value: col,
+                    label: col,
+                  }))}
+                  onChange={(selected: any) => {
+                    const cols = selected.map((item: any) => item.value);
+                    setSelectedSumColumns(cols);
+                  }}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  New Column Name (DD.MM.YY):
+                </label>
+                <input
+                  type="text"
+                  value={newSumColumnName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Allow only numbers and dots, and limit to format like 02.01.25
+                    if (/^[\d.]{0,8}$/.test(val)) {
+                      setSumNewColumnName(val);
+                    }
+                  }}
+                  className="w-full border px-2 py-1 rounded-md"
+                  placeholder="e.g., 19.12.24"
+                  pattern="\d{2}\.\d{2}\.\d{2}"
+                  title="Format should be DD.MM.YY"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCloseSumColumnModel}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateSumColumn}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
         <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
           <DialogContent>
             <DialogHeader>
@@ -1091,38 +1148,19 @@ const ExcelEditor = () => {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={searchModel} onOpenChange={setSearchModel}>
+        <Dialog open={saveModel} onOpenChange={setSaveModel}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Search Columns</DialogTitle>
+              <DialogTitle>Save Changes</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              {/* Multi-select dropdown */}
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Select Columns to Search:
-                </label>
-                <ReactSelect
-                  options={searchcolumnOptions}
-                  isMulti
-                  value={selectedSearchColumns.map((col) => ({
-                    value: col,
-                    label: col,
-                  }))}
-                  onChange={(selected: any) => {
-                    const cols = selected.map((item: any) => item.value);
-                    setSelectedSearchColumns(cols);
-                  }}
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                />
-              </div>
+            <div className="flex">
+             
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={handleCloseSearchColumnModel}>
+              <Button variant="outline" onClick={() => setSaveModel(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
+              <Button onClick={handleUploadCSV}>Done</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

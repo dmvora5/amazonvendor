@@ -129,11 +129,10 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
-          isDuplicate
-            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-            : "focus:ring-blue-500"
-        }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
+          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+          : "focus:ring-blue-500"
+          }`}
       />
     );
   }
@@ -157,6 +156,7 @@ const ExcelEditor = () => {
   const [hiddenHeaders, setHiddenHeaders] = useState<string[]>([]);
   const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
   const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
+  const [saveModel, setSaveModel] = useState(false)
 
   const [fileChange, setFileChange] = useState(false);
 
@@ -323,15 +323,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-              String(row[column] ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            )
+            String(row[column] ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          )
           : Object.values(row).some((value) =>
-              String(value ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            );
+            String(value ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          );
 
         if (matchesSearchTerm) {
           acc.push({ ...row });
@@ -371,9 +371,8 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${
-                isDuplicate ? "text-red-600 font-semibold" : ""
-              }`}
+              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+                }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -578,6 +577,7 @@ const ExcelEditor = () => {
   // Upload the CSV data
   const handleUploadCSV = async () => {
     setLoading(true);
+    setSaveModel(false);
     try {
       // Convert JSON data to CSV or TSV format
       const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
@@ -899,7 +899,7 @@ const ExcelEditor = () => {
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
-              onClick={handleUploadCSV}
+              onClick={() => setSaveModel(true)}
               color="primary"
             >
               {uploadOptions.isLoading || loading ? (
@@ -1109,6 +1109,25 @@ const ExcelEditor = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={saveModel} onOpenChange={setSaveModel}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Changes</DialogTitle>
+          </DialogHeader>
+          <div className="flex">
+
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveModel(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUploadCSV}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
       {showHiddenColumnModal && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
