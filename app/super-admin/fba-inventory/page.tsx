@@ -89,12 +89,11 @@ const InputComponent = memo(
     };
 
     const handleBlur = (e: any) => {
+      console.log("call")
       const newData: any = [...data];
       newData[index][keyData] = e.target.value;
       const oriNewData: any = [...originalData];
-
       if (keyData.includes("Supplier")) {
-        console.log("Hear");
         const supplierColumns = Object.keys(newData[index]).filter((key) =>
           key.includes("Supplier")
         );

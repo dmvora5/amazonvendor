@@ -60,6 +60,53 @@ const InputComponent = memo(
     const handleBlur = (e: any) => {
       const newValue = e.target.value;
 
+      setData((prev: any[]) => {
+        const newData = [...prev];  // Shallow copy of the array
+
+        const globalIndex = newData.findIndex((row: any) =>
+          Object.keys(row).every((key) => row[key] === data[index][key])
+        );
+
+        if (globalIndex !== -1) {
+          const newRow = { ...newData[globalIndex] };  // Deep copy of the row
+
+          newRow[keyData] = newValue;
+
+          // ⬇️ Handle Total New Inbound logic
+          if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
+            const relevantColumns = Object.keys(newRow).filter(
+              (key) => key.includes("Supplier") || key.includes("Coming Back")
+            );
+
+            let totalSupplierValue = 0;
+            relevantColumns.forEach((supplierColumn) => {
+              totalSupplierValue +=
+                parseFloat(newRow[supplierColumn]) || 0;
+            });
+
+            const oriInbound =
+              originalData[globalIndex]["Total New Inbound"] || 0;
+            const updatedOrder = oriInbound + totalSupplierValue;
+
+            if (updatedOrder < 0) {
+              relevantColumns.forEach((supplierColumn) => {
+                newRow[supplierColumn] = originalData[globalIndex][supplierColumn];
+              });
+              newRow["Total New Inbound"] = originalData[globalIndex]["Total New Inbound"];
+            } else {
+              newRow["Total New Inbound"] = updatedOrder;
+            }
+          }
+
+          newData[globalIndex] = newRow;  // Update the row in the new data array
+
+          return newData;
+        }
+
+        return prev;
+      });
+
+
       // 1️⃣ Update full data array
       setData((prev: any[]) => {
         const newData = [...prev];
@@ -82,10 +129,12 @@ const InputComponent = memo(
               totalSupplierValue +=
                 parseFloat(newData[globalIndex][supplierColumn]) || 0;
             });
-
+            console.log('originalData[globalIndex]["Total New Inbound"]', originalData[globalIndex]["Total New Inbound"])
             const oriInbound =
-              originalData[globalIndex]["Total New Inbound"] || 0;
+              data[globalIndex]["Total New Inbound"] || 0;
             const updatedOrder = oriInbound + totalSupplierValue;
+
+
 
             if (updatedOrder < 0) {
               relevantColumns.forEach((supplierColumn) => {
@@ -1154,7 +1203,7 @@ const ExcelEditor = () => {
               <DialogTitle>Save Changes</DialogTitle>
             </DialogHeader>
             <div className="flex">
-             
+
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setSaveModel(false)}>
