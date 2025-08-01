@@ -53,12 +53,24 @@ const InputComponent = memo(
     // const row = searchData.length > 0 ? searchData[index] : data[index];
     const [state, setState] = useState<string>(row[keyData]);
 
+    const [previousData, setPreviousData] = useState(() =>
+      Object.keys(row)
+        .filter((key) => key.includes("Supplier") || key.includes("Coming Back"))
+        .reduce((acc: any, key) => {
+          acc[key] = originalData[index][key];
+          return acc;
+        }, {})
+    );
+
+
     const handleChange = (e: any) => {
       setState(e.target.value); // Live input state
     };
 
     const handleBlur = (e: any) => {
       const newValue = e.target.value;
+
+      console.log('previousData', previousData)
 
       setData((prev: any[]) => {
         const newData = [...prev];  // Shallow copy of the array
@@ -80,8 +92,20 @@ const InputComponent = memo(
 
             let totalSupplierValue = 0;
             relevantColumns.forEach((supplierColumn) => {
-              totalSupplierValue +=
-                parseFloat(newRow[supplierColumn]) || 0;
+              if (previousData[supplierColumn] !== parseFloat(newRow[supplierColumn])) {
+                if (parseFloat(newRow[supplierColumn]) < previousData[supplierColumn]) {
+                  totalSupplierValue -=
+                    (previousData[supplierColumn] - (parseFloat(newRow[supplierColumn]) || 0));
+                } else if (parseFloat(newRow[supplierColumn]) > previousData[supplierColumn]) {
+                  totalSupplierValue +=
+                    ((parseFloat(newRow[supplierColumn]) || 0) - previousData[supplierColumn]);
+                }
+                else {
+                  totalSupplierValue +=
+                    parseFloat(newRow[supplierColumn]) || 0;
+                }
+              }
+
             });
 
             const oriInbound =
@@ -107,52 +131,6 @@ const InputComponent = memo(
       });
 
 
-      // 1️⃣ Update full data array
-      setData((prev: any[]) => {
-        const newData = [...prev];
-
-        const globalIndex = newData.findIndex((row: any) =>
-          Object.keys(row).every((key) => row[key] === data[index][key])
-        );
-
-        if (globalIndex !== -1) {
-          newData[globalIndex][keyData] = newValue;
-
-          // ⬇️ Handle Total New Inbound logic
-          if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
-            const relevantColumns = Object.keys(newData[globalIndex]).filter(
-              (key) => key.includes("Supplier") || key.includes("Coming Back")
-            );
-
-            let totalSupplierValue = 0;
-            relevantColumns.forEach((supplierColumn) => {
-              totalSupplierValue +=
-                parseFloat(newData[globalIndex][supplierColumn]) || 0;
-            });
-            console.log('originalData[globalIndex]["Total New Inbound"]', originalData[globalIndex]["Total New Inbound"])
-            const oriInbound =
-              data[globalIndex]["Total New Inbound"] || 0;
-            const updatedOrder = oriInbound + totalSupplierValue;
-
-
-
-            if (updatedOrder < 0) {
-              relevantColumns.forEach((supplierColumn) => {
-                newData[globalIndex][supplierColumn] =
-                  originalData[globalIndex][supplierColumn];
-              });
-              newData[globalIndex]["Total New Inbound"] =
-                originalData[globalIndex]["Total New Inbound"];
-            } else {
-              newData[globalIndex]["Total New Inbound"] = updatedOrder;
-            }
-          }
-
-          return newData;
-        }
-
-        return prev;
-      });
 
       // 2️⃣ Sync with visible input
       setState(newValue);
@@ -261,6 +239,11 @@ const ExcelEditor = () => {
         const key = Object.keys(json[0]);
         setSelectedColumn(key[0]);
       }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 5000); // wait for the data to be loaded
+      })
+
     } catch (error) {
       console.error("Error fetching CSV/TSV:", error);
     } finally {

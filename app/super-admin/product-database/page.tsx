@@ -232,6 +232,10 @@ const ExcelEditor = () => {
         const key = Object.keys(json[0]);
         setSelectedColumn(key[0]);
       }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 5000); // wait for the data to be loaded
+      })
     } catch (error) {
       console.error("Error fetching CSV/TSV:", error);
     } finally {

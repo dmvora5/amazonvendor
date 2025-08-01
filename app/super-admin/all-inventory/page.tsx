@@ -902,24 +902,24 @@ const ExcelEditor = () => {
             placeholder="Search"
             className="mr-4 p-3 border border-gray-300 rounded-md"
           />
-          <Button onClick={handleSumColumnModel} color="primary">
+          {/* <Button onClick={handleSumColumnModel} color="primary">
             SUM
-          </Button>
+          </Button> */}
           {hiddenHeaders.length > 0 && (
             <Button onClick={() => setShowHiddenColumnModal(true)}>
               Manage Hidden Columns
             </Button>
           )}
-          <Input
+          {/* <Input
             type="text"
             value={newColumnName}
             onChange={(e) => setNewColumnName(e.target.value)}
             placeholder="New Column Name"
             className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
-          />
+          /> */}
 
           {/* Dropdown to select the column after which to insert the new column */}
-          <Select onValueChange={setSelectedColumn} value={selectedColumn}>
+          {/* <Select onValueChange={setSelectedColumn} value={selectedColumn}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select Column to Insert After" />
             </SelectTrigger>
@@ -937,7 +937,7 @@ const ExcelEditor = () => {
 
           <Button onClick={handleAddColumn} color="primary">
             Add Column
-          </Button>
+          </Button> */}
 
           {/* <div className="p-2 ml-auto">
             <Select
@@ -963,7 +963,7 @@ const ExcelEditor = () => {
             </Select>
           </div> */}
 
-          {dirty && !fileChange && selectedValue === "current_inventory" && (
+          {/* {dirty && !fileChange && selectedValue === "current_inventory" && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
@@ -982,9 +982,9 @@ const ExcelEditor = () => {
                 "Save Changes"
               )}
             </Button>
-          )}
+          )} */}
 
-          {fileChange && (
+          {/* {fileChange && (
             <Button
               className="w-[120px]"
               disabled={uploadOptions.isLoading || loading}
@@ -1003,7 +1003,7 @@ const ExcelEditor = () => {
                 "Upload file"
               )}
             </Button>
-          )}
+          )} */}
           <div className="relative group">
             <button
               onClick={handleDownloadExcel}
