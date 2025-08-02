@@ -226,6 +226,10 @@ const ExcelEditor = () => {
         responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });
 
+      const fileSizeInBytes = response.headers['content-length'];
+      const fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toFixed(2); // Convert to MB and round to 2 decimal places
+      console.log(`File size: ${fileSizeInMB} MB`);
+
       const arrayBuffer = response.data;
 
       const wb = XLSX.read(arrayBuffer, { type: "array" });
@@ -604,14 +608,17 @@ const ExcelEditor = () => {
     try {
       setLoading(true);
       setSaveModel(false)
-      const updatedData = [...data];
+      const updatedData = JSON.parse(JSON.stringify([...data]));
 
       const delimiter = "\t";
       const sheet = XLSX.utils.json_to_sheet(updatedData);
       let csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter });
-
+      
+      csvData = csvData?.replace(/[^\x00-\x7F]/g, '');
+      const csvBlob = new Blob([csvData], { type: "text/csv;charset=utf-8" });
       const formData = new FormData();
-      const csvBlob = new Blob([csvData], { type: "text/csv" });
+
+      console.log("csvBlob.size", csvBlob.size / (1024 * 1024))
 
       formData.append("file", csvBlob, "data.csv");
       formData.append("report_type", selectedValue);
@@ -639,14 +646,92 @@ const ExcelEditor = () => {
       }
     } catch (err: any) {
       if (err instanceof AxiosError && err.status === 401) {
+        setLoading(false);
         signOut({ callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}` });
         return;
       }
       parseAndShowErrorInToast(err?.response || err);
-    } finally {
-      setLoading(false);
     }
   };
+
+
+  // const handleUploadCSV = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setSaveModel(false);
+
+  //     // Step 1: Prepare Data (filter only visible columns)
+  //     const updatedData = JSON.parse(JSON.stringify([...data]));
+
+  //     // Filter data to only include visible columns
+  //     const filteredData = updatedData.map((row: any) => {
+  //       const filteredRow: { [key: string]: any } = {};
+  //       visibleHeaders.forEach((key) => {
+  //         filteredRow[key] = row[key]; // Ensure no extra data is included
+  //       });
+  //       return filteredRow;
+  //     });
+
+  //     console.log("Filtered Data Length:", filteredData.length); // Check how many rows you have
+  //     console.log("Filtered Data Sample:", filteredData.slice(0, 5)); // Log the first 5 rows to inspect
+
+
+  //     // Step 2: Log filtered data before conversion
+  //     console.log('Filtered Data:', filteredData); // Ensure no extra data is added
+
+  //     // Step 3: Convert filtered data to a worksheet (no additional formatting)
+  //     const sheet = XLSX.utils.json_to_sheet(filteredData,);
+
+  //     // Step 4: Convert the worksheet to CSV format
+  //     let csvData = XLSX.utils.sheet_to_csv(sheet, { FS: "\t" });
+
+  //     // Step 5: Log CSV data size before Blob creation
+  //     console.log('CSV Data Size Before Blob:', csvData.length);
+
+  //     // Step 6: Create Blob from CSV data
+  //     // Step 3: Add BOM (Byte Order Mark) to the CSV data for UTF-8-SIG encoding
+  //     const bom = "\uFEFF"; // BOM for UTF-8-SIG
+  //     const utf8SigData: any = bom + csvData; // Prepend BOM to CSV data
+
+  //     console.log('CSV Data with BOM Size:', utf8SigData.length); // Log size with BOM added
+
+  //     const csvBlob = new Blob([csvData], { type: "text/csv;charset=utf-8" });
+
+  //     // Step 4: Create FormData object and append the CSV data as a string
+  //     const formData = new FormData();
+  //     formData.append("file", csvBlob, "data.csv");
+
+  //     // Step 9: Upload the file
+  //     const session: any = await getSession();
+  //     const { data: response } = await axios.post(
+  //       `${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/update-report/`,
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //           Authorization: `Bearer ${session?.access_token}`,
+  //         },
+  //       }
+  //     );
+
+  //     setDirty(false);
+  //     if (response?.file_url) {
+  //       toast.success("File uploaded successfully!");
+  //       fetchCSVFromBackend(response?.file_url); // Reload the file after successful upload
+  //       setSearchData([]);
+  //       setSearchTerm("");
+  //     }
+  //   } catch (err: any) {
+  //     if (err instanceof AxiosError && err.status === 401) {
+  //       signOut({ callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}` });
+  //       return;
+  //     }
+  //     parseAndShowErrorInToast(err?.response || err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
 
   const handleSumColumnModel = () => {
     setOpenSumModel(true); // open the modal
@@ -1189,10 +1274,10 @@ const ExcelEditor = () => {
 
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setSaveModel(false)}>
+              <Button disabled={loading} variant="outline" onClick={() => setSaveModel(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleUploadCSV}>Done</Button>
+              <Button disabled={loading} onClick={handleUploadCSV}>Done</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

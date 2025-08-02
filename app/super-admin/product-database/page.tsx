@@ -592,11 +592,14 @@ const ExcelEditor = () => {
         csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
       }
 
-      // Create a FormData object
-      const formData = new FormData();
+      csvData = csvData?.replace(/[^\x00-\x7F]/g, '');
 
+
+      // Create a FormData object
+      
       // Create a Blob from CSV or TSV data
-      const csvBlob = new Blob([csvData], { type: "text/csv" });
+      const csvBlob = new Blob([csvData], { type: "text/csv;charset=utf-8" });
+      const formData = new FormData();
 
       // Append the file to the FormData object
       formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
@@ -622,6 +625,7 @@ const ExcelEditor = () => {
         fetchCSVFromBackend(response?.file_url);
       }
     } catch (err: any) {
+      setLoading(false);
       if (err instanceof AxiosError) {
         if (err.status === 401) {
           signOut({
@@ -633,9 +637,7 @@ const ExcelEditor = () => {
       } else {
         parseAndShowErrorInToast(err);
       }
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const handleUploadNewCSV = async () => {
