@@ -234,6 +234,11 @@ const ExcelEditor = () => {
 
       const response = await axios.get(url, {
         responseType: "arraybuffer", // Important: tells axios to treat the response as binary
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       });
 
       const fileSizeInBytes = response.headers["content-length"];
@@ -253,10 +258,6 @@ const ExcelEditor = () => {
         const key = Object.keys(json[0]);
         setSelectedColumn(key[0]);
       }
-
-      await new Promise((resolve) => {
-        setTimeout(resolve, 5000); // wait for the data to be loaded
-      });
     } catch (error) {
       console.error("Error fetching CSV/TSV:", error);
     } finally {
@@ -667,6 +668,10 @@ const ExcelEditor = () => {
 
       setDirty(false);
       if (response?.file_url) {
+        console.log("response?.file_url :>> ", response?.file_url);
+        await new Promise((resolve) => {
+          setTimeout(resolve, 5000); // wait for the data to be loaded
+        });
         toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
         setSearchData([]);

@@ -129,10 +129,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -156,7 +157,7 @@ const ExcelEditor = () => {
   const [hiddenHeaders, setHiddenHeaders] = useState<string[]>([]);
   const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
   const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
-  const [saveModel, setSaveModel] = useState(false)
+  const [saveModel, setSaveModel] = useState(false);
 
   const [fileChange, setFileChange] = useState(false);
 
@@ -215,6 +216,11 @@ const ExcelEditor = () => {
 
       const response = await axios.get(url, {
         responseType: "arraybuffer", // Important: tells axios to treat the response as binary
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       });
 
       const arrayBuffer = response.data;
@@ -233,9 +239,9 @@ const ExcelEditor = () => {
         setSelectedColumn(key[0]);
       }
 
-      await new Promise((resolve) => {
-        setTimeout(resolve, 5000); // wait for the data to be loaded
-      })
+      // await new Promise((resolve) => {
+      //   setTimeout(resolve, 5000); // wait for the data to be loaded
+      // });
     } catch (error) {
       console.error("Error fetching CSV/TSV:", error);
     } finally {
@@ -327,15 +333,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-            String(row[column] ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          )
+              String(row[column] ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            )
           : Object.values(row).some((value) =>
-            String(value ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          );
+              String(value ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            );
 
         if (matchesSearchTerm) {
           acc.push({ ...row });
@@ -375,8 +381,9 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -592,11 +599,10 @@ const ExcelEditor = () => {
         csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
       }
 
-      csvData = csvData?.replace(/[^\x00-\x7F]/g, '');
-
+      csvData = csvData?.replace(/[^\x00-\x7F]/g, "");
 
       // Create a FormData object
-      
+
       // Create a Blob from CSV or TSV data
       const csvBlob = new Blob([csvData], { type: "text/csv;charset=utf-8" });
       const formData = new FormData();
@@ -621,6 +627,10 @@ const ExcelEditor = () => {
 
       setDirty(false);
       if (response?.file_url) {
+        console.log("response?.file_url :>> ", response?.file_url);
+        await new Promise((resolve) => {
+          setTimeout(resolve, 5000); // wait for the data to be loaded
+        });
         toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
       }
@@ -637,7 +647,7 @@ const ExcelEditor = () => {
       } else {
         parseAndShowErrorInToast(err);
       }
-    } 
+    }
   };
 
   const handleUploadNewCSV = async () => {
@@ -1121,9 +1131,7 @@ const ExcelEditor = () => {
           <DialogHeader>
             <DialogTitle>Save Changes</DialogTitle>
           </DialogHeader>
-          <div className="flex">
-
-          </div>
+          <div className="flex"></div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveModel(false)}>
               Cancel
@@ -1132,8 +1140,6 @@ const ExcelEditor = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-
 
       {showHiddenColumnModal && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
