@@ -55,13 +55,14 @@ const InputComponent = memo(
 
     const [previousData, setPreviousData] = useState(() =>
       Object.keys(row)
-        .filter((key) => key.includes("Supplier") || key.includes("Coming Back"))
+        .filter(
+          (key) => key.includes("Supplier") || key.includes("Coming Back")
+        )
         .reduce((acc: any, key) => {
           acc[key] = originalData[index][key];
           return acc;
         }, {})
     );
-
 
     const handleChange = (e: any) => {
       setState(e.target.value); // Live input state
@@ -70,17 +71,17 @@ const InputComponent = memo(
     const handleBlur = (e: any) => {
       const newValue = e.target.value;
 
-      console.log('previousData', previousData)
+      console.log("previousData", previousData);
 
       setData((prev: any[]) => {
-        const newData = [...prev];  // Shallow copy of the array
+        const newData = [...prev]; // Shallow copy of the array
 
         const globalIndex = newData.findIndex((row: any) =>
           Object.keys(row).every((key) => row[key] === data[index][key])
         );
 
         if (globalIndex !== -1) {
-          const newRow = { ...newData[globalIndex] };  // Deep copy of the row
+          const newRow = { ...newData[globalIndex] }; // Deep copy of the row
 
           newRow[keyData] = newValue;
 
@@ -92,20 +93,28 @@ const InputComponent = memo(
 
             let totalSupplierValue = 0;
             relevantColumns.forEach((supplierColumn) => {
-              if (previousData[supplierColumn] !== parseFloat(newRow[supplierColumn])) {
-                if (parseFloat(newRow[supplierColumn]) < previousData[supplierColumn]) {
+              if (
+                previousData[supplierColumn] !==
+                parseFloat(newRow[supplierColumn])
+              ) {
+                if (
+                  parseFloat(newRow[supplierColumn]) <
+                  previousData[supplierColumn]
+                ) {
                   totalSupplierValue -=
-                    (previousData[supplierColumn] - (parseFloat(newRow[supplierColumn]) || 0));
-                } else if (parseFloat(newRow[supplierColumn]) > previousData[supplierColumn]) {
+                    previousData[supplierColumn] -
+                    (parseFloat(newRow[supplierColumn]) || 0);
+                } else if (
+                  parseFloat(newRow[supplierColumn]) >
+                  previousData[supplierColumn]
+                ) {
                   totalSupplierValue +=
-                    ((parseFloat(newRow[supplierColumn]) || 0) - previousData[supplierColumn]);
-                }
-                else {
-                  totalSupplierValue +=
-                    parseFloat(newRow[supplierColumn]) || 0;
+                    (parseFloat(newRow[supplierColumn]) || 0) -
+                    previousData[supplierColumn];
+                } else {
+                  totalSupplierValue += parseFloat(newRow[supplierColumn]) || 0;
                 }
               }
-
             });
 
             const oriInbound =
@@ -114,23 +123,23 @@ const InputComponent = memo(
 
             if (updatedOrder < 0) {
               relevantColumns.forEach((supplierColumn) => {
-                newRow[supplierColumn] = originalData[globalIndex][supplierColumn];
+                newRow[supplierColumn] =
+                  originalData[globalIndex][supplierColumn];
               });
-              newRow["Total New Inbound"] = originalData[globalIndex]["Total New Inbound"];
+              newRow["Total New Inbound"] =
+                originalData[globalIndex]["Total New Inbound"];
             } else {
               newRow["Total New Inbound"] = updatedOrder;
             }
           }
 
-          newData[globalIndex] = newRow;  // Update the row in the new data array
+          newData[globalIndex] = newRow; // Update the row in the new data array
 
           return newData;
         }
 
         return prev;
       });
-
-
 
       // 2️⃣ Sync with visible input
       setState(newValue);
@@ -153,10 +162,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -189,7 +199,7 @@ const ExcelEditor = () => {
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
   const [searchIndex, setSearchIndex] = useState<number[]>([]);
 
-  const [saveModel, setSaveModel] = useState(false)
+  const [saveModel, setSaveModel] = useState(false);
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -226,7 +236,7 @@ const ExcelEditor = () => {
         responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });
 
-      const fileSizeInBytes = response.headers['content-length'];
+      const fileSizeInBytes = response.headers["content-length"];
       const fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toFixed(2); // Convert to MB and round to 2 decimal places
       console.log(`File size: ${fileSizeInMB} MB`);
 
@@ -246,8 +256,7 @@ const ExcelEditor = () => {
 
       await new Promise((resolve) => {
         setTimeout(resolve, 5000); // wait for the data to be loaded
-      })
-
+      });
     } catch (error) {
       console.error("Error fetching CSV/TSV:", error);
     } finally {
@@ -377,15 +386,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-            String(row[column] ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          )
+              String(row[column] ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            )
           : Object.values(row).some((value) =>
-            String(value ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          );
+              String(value ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            );
 
         if (matchesSearchTerm) {
           acc.push({ ...row });
@@ -417,8 +426,9 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -480,55 +490,73 @@ const ExcelEditor = () => {
   const Header = () => {
     if (!data || data.length === 0) return null;
 
-    // Match keys that are dates in format: DD.MM.YY
-    const isDateKey = (key: string) => /^\d{2}\.\d{2}\.\d{2}$/.test(key);
+    // Detect slash or dot date strings like 4/8/25 or 04.08.25
+    const isLooseDateKey = (key: string) =>
+      /^(\d{1,2})[./](\d{1,2})[./](\d{2})$/.test(key.trim());
+
+    // Convert "4/8/25" or "4.8.25" to "04.08.25"
+    const formatDateKey = (key: string) => {
+      const match = key.trim().match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})$/);
+      if (!match) return key;
+      const [, d, m, y] = match;
+      const dd = d.padStart(2, "0");
+      const mm = m.padStart(2, "0");
+      return `${dd}.${mm}.${y}`;
+    };
 
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
-          {/* {Object.keys(data[0]).map((key) => ( */}
-          {visibleHeaders.map((key) => (
-            <th
-              key={key}
-              className="relative px-4 py-3 text-left"
-              style={{ width: columnWidth }}
-            >
-              <div className="flex justify-between items-center gap-2">
-                <div className="flex items-center gap-1">
-                  {isDateKey(key) && (
-                    <input
-                      type="checkbox"
-                      value={key}
-                      checked={selectedDateColumns.includes(key)}
-                      onChange={(e) => handleDateCheckboxChange(e, key)}
-                    />
-                  )}
-                  <span>{key}</span>
-                </div>
+          {visibleHeaders.map((rawKey) => {
+            const key = rawKey.trim();
+            const isDate = isLooseDateKey(key);
+            const formattedKey = isDate ? formatDateKey(key) : key;
+            const isSelected = selectedDateColumns.includes(formattedKey);
 
-                {key !== "Action" && (
-                  <div className="flex gap-1">
-                    <button
-                      disabled={uploadOptions.isLoading}
-                      className="text-red-500 hover:text-red-700 cursor-pointer"
-                      onClick={() => handleRemoveColumn(key)}
-                    >
-                      <span className="text-lg">×</span>
-                    </button>
-
-                    {/* Toggle Hide/Show column */}
-                    <button
-                      className="text-blue-500 hover:text-blue-700 cursor-pointer"
-                      onClick={() => handleToggleColumnVisibility(key)}
-                      title="Hide column"
-                    >
-                      👁️
-                    </button>
+            return (
+              <th
+                key={formattedKey}
+                className="relative px-4 py-3 text-left"
+                style={{ width: columnWidth }}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {isDate && (
+                      <input
+                        type="checkbox"
+                        value={formattedKey}
+                        checked={isSelected}
+                        onChange={(e) =>
+                          handleDateCheckboxChange(e, formattedKey)
+                        }
+                      />
+                    )}
+                    <span>{formattedKey}</span>
                   </div>
-                )}
-              </div>
-            </th>
-          ))}
+
+                  {key !== "Action" && (
+                    <div className="flex gap-1">
+                      <button
+                        disabled={uploadOptions.isLoading}
+                        className="text-red-500 hover:text-red-700 cursor-pointer"
+                        onClick={() => handleRemoveColumn(key)}
+                      >
+                        <span className="text-lg">×</span>
+                      </button>
+
+                      <button
+                        className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                        onClick={() => handleToggleColumnVisibility(key)}
+                        title="Hide column"
+                      >
+                        👁️
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </th>
+            );
+          })}
         </tr>
       </thead>
     );
@@ -607,18 +635,18 @@ const ExcelEditor = () => {
   const handleUploadCSV = async () => {
     try {
       setLoading(true);
-      setSaveModel(false)
+      setSaveModel(false);
       const updatedData = JSON.parse(JSON.stringify([...data]));
 
       const delimiter = "\t";
       const sheet = XLSX.utils.json_to_sheet(updatedData);
       let csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter });
-      
-      csvData = csvData?.replace(/[^\x00-\x7F]/g, '');
+
+      csvData = csvData?.replace(/[^\x00-\x7F]/g, "");
       const csvBlob = new Blob([csvData], { type: "text/csv;charset=utf-8" });
       const formData = new FormData();
 
-      console.log("csvBlob.size", csvBlob.size / (1024 * 1024))
+      console.log("csvBlob.size", csvBlob.size / (1024 * 1024));
 
       formData.append("file", csvBlob, "data.csv");
       formData.append("report_type", selectedValue);
@@ -654,7 +682,6 @@ const ExcelEditor = () => {
     }
   };
 
-
   // const handleUploadCSV = async () => {
   //   try {
   //     setLoading(true);
@@ -674,7 +701,6 @@ const ExcelEditor = () => {
 
   //     console.log("Filtered Data Length:", filteredData.length); // Check how many rows you have
   //     console.log("Filtered Data Sample:", filteredData.slice(0, 5)); // Log the first 5 rows to inspect
-
 
   //     // Step 2: Log filtered data before conversion
   //     console.log('Filtered Data:', filteredData); // Ensure no extra data is added
@@ -731,7 +757,6 @@ const ExcelEditor = () => {
   //     setLoading(false);
   //   }
   // };
-
 
   const handleSumColumnModel = () => {
     setOpenSumModel(true); // open the modal
@@ -1208,7 +1233,6 @@ const ExcelEditor = () => {
           </DialogContent>
         </Dialog>
 
-
         <Dialog open={openSumModel} onOpenChange={setOpenSumModel}>
           <DialogContent>
             <DialogHeader>
@@ -1270,14 +1294,18 @@ const ExcelEditor = () => {
             <DialogHeader>
               <DialogTitle>Save Changes</DialogTitle>
             </DialogHeader>
-            <div className="flex">
-
-            </div>
+            <div className="flex"></div>
             <DialogFooter>
-              <Button disabled={loading} variant="outline" onClick={() => setSaveModel(false)}>
+              <Button
+                disabled={loading}
+                variant="outline"
+                onClick={() => setSaveModel(false)}
+              >
                 Cancel
               </Button>
-              <Button disabled={loading} onClick={handleUploadCSV}>Done</Button>
+              <Button disabled={loading} onClick={handleUploadCSV}>
+                Done
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
