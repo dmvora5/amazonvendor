@@ -509,6 +509,7 @@ const ExcelEditor = () => {
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
           {visibleHeaders.map((rawKey) => {
+            console.log('rawKey', rawKey)
             const key = rawKey.trim();
             const isDate = isLooseDateKey(key);
             const formattedKey = isDate ? formatDateKey(key) : key;

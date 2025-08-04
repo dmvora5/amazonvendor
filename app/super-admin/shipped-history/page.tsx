@@ -153,8 +153,8 @@ const InputComponent = memo(
         onBlur={handleBlur}
         disabled={disabled}
         className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-            : "focus:ring-blue-500"
+          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+          : "focus:ring-blue-500"
           }`}
       />
     );
@@ -453,55 +453,65 @@ const ExcelEditor = () => {
   const Header = () => {
     if (!data || data.length === 0) return null;
 
-    // Match keys that are dates in format: DD.MM.YY
-    const isDateKey = (key: string) => /^\d{2}\.\d{2}\.\d{2}$/.test(key);
+    // Detect slash or dot date strings like 4/8/25 or 04.08.25
+    const isLooseDateKey = (key: string) =>
+      /^(\d{1,2})[./](\d{1,2})[./](\d{2})$/.test(key.trim());
+
+    // Convert "4/8/25" or "4.8.25" to "04.08.25"
+    const formatDateKey = (key: string) => {
+      const match = key.trim().match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})$/);
+      if (!match) return key;
+      const [, d, m, y] = match;
+      const dd = d.padStart(2, "0");
+      const mm = m.padStart(2, "0");
+      return `${dd}.${mm}.${y}`;
+    };
 
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
-          {/* {Object.keys(data[0]).map((key) => ( */}
-          {visibleHeaders.map((key) => (
-            <th
-              key={key}
-              className="relative px-4 py-3 text-left"
-              style={{ width: columnWidth }}
-            >
-              <div className="flex justify-between items-center gap-2">
-                <div className="flex items-center gap-1">
-                  {/* {isDateKey(key) && (
-                    <input
-                      type="checkbox"
-                      value={key}
-                      checked={selectedDateColumns.includes(key)}
-                      onChange={(e) => handleDateCheckboxChange(e, key)}
-                    />
-                  )} */}
-                  <span>{key}</span>
-                </div>
+          {visibleHeaders.map((rawKey) => {
+            console.log('rawKey', rawKey)
+            const key = rawKey.trim();
+            const isDate = isLooseDateKey(key);
+            const formattedKey = isDate ? formatDateKey(key) : key;
+            const isSelected = selectedDateColumns.includes(formattedKey);
 
-                {key !== "Action" && (
-                  <div className="flex gap-1">
-                    {/* <button
-                      disabled={uploadOptions.isLoading}
-                      className="text-red-500 hover:text-red-700 cursor-pointer"
-                      onClick={() => handleRemoveColumn(key)}
-                    >
-                      <span className="text-lg">×</span>
-                    </button> */}
-
-                    {/* Toggle Hide/Show column */}
-                    <button
-                      className="text-blue-500 hover:text-blue-700 cursor-pointer"
-                      onClick={() => handleToggleColumnVisibility(key)}
-                      title="Hide column"
-                    >
-                      👁️
-                    </button>
+            return (
+              <th
+                key={formattedKey}
+                className="relative px-4 py-3 text-left"
+                style={{ width: columnWidth }}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    
+                    <span>{formattedKey}</span>
                   </div>
-                )}
-              </div>
-            </th>
-          ))}
+
+                  {key !== "Action" && (
+                    <div className="flex gap-1">
+                      {/* <button
+                        disabled={uploadOptions.isLoading}
+                        className="text-red-500 hover:text-red-700 cursor-pointer"
+                        onClick={() => handleRemoveColumn(key)}
+                      >
+                        <span className="text-lg">×</span>
+                      </button> */}
+
+                      <button
+                        className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                        onClick={() => handleToggleColumnVisibility(key)}
+                        title="Hide column"
+                      >
+                        👁️
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </th>
+            );
+          })}
         </tr>
       </thead>
     );
