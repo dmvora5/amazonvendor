@@ -147,9 +147,71 @@ const InputComponent = memo(
       // 3️⃣ ✅ Also update searchData if active
       if (searchData?.length > 0 && setSearchData) {
         setSearchData((prev: any[]) => {
-          const updated = [...prev];
-          updated[index][keyData] = newValue;
-          return updated;
+          const newData = [...prev]; // Shallow copy of the array
+
+          const globalIndex = newData.findIndex((row: any) =>
+            Object.keys(row).every((key) => row[key] === data[index][key])
+          );
+
+          if (globalIndex !== -1) {
+            const newRow = { ...newData[globalIndex] }; // Deep copy of the row
+
+            newRow[keyData] = newValue;
+
+            // ⬇️ Handle Total New Inbound logic
+            if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
+              const relevantColumns = Object.keys(newRow).filter(
+                (key) => key.includes("Supplier") || key.includes("Coming Back")
+              );
+
+              let totalSupplierValue = 0;
+              relevantColumns.forEach((supplierColumn) => {
+                if (
+                  previousData[supplierColumn] !==
+                  parseFloat(newRow[supplierColumn])
+                ) {
+                  if (
+                    parseFloat(newRow[supplierColumn]) <
+                    previousData[supplierColumn]
+                  ) {
+                    totalSupplierValue -=
+                      previousData[supplierColumn] -
+                      (parseFloat(newRow[supplierColumn]) || 0);
+                  } else if (
+                    parseFloat(newRow[supplierColumn]) >
+                    previousData[supplierColumn]
+                  ) {
+                    totalSupplierValue +=
+                      (parseFloat(newRow[supplierColumn]) || 0) -
+                      previousData[supplierColumn];
+                  } else {
+                    totalSupplierValue += parseFloat(newRow[supplierColumn]) || 0;
+                  }
+                }
+              });
+
+              const oriInbound =
+                originalData[globalIndex]["Total New Inbound"] || 0;
+              const updatedOrder = oriInbound + totalSupplierValue;
+
+              if (updatedOrder < 0) {
+                relevantColumns.forEach((supplierColumn) => {
+                  newRow[supplierColumn] =
+                    originalData[globalIndex][supplierColumn];
+                });
+                newRow["Total New Inbound"] =
+                  originalData[globalIndex]["Total New Inbound"];
+              } else {
+                newRow["Total New Inbound"] = updatedOrder;
+              }
+            }
+
+            newData[globalIndex] = newRow; // Update the row in the new data array
+
+            return newData;
+          }
+
+          return prev;
         });
       }
 
@@ -162,11 +224,10 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
-          isDuplicate
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
             ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
             : "focus:ring-blue-500"
-        }`}
+          }`}
       />
     );
   }
@@ -387,15 +448,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-              String(row[column] ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            )
+            String(row[column] ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          )
           : Object.values(row).some((value) =>
-              String(value ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            );
+            String(value ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          );
 
         if (matchesSearchTerm) {
           acc.push({ ...row });
@@ -427,9 +488,8 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${
-                isDuplicate ? "text-red-600 font-semibold" : ""
-              }`}
+              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+                }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
