@@ -159,7 +159,10 @@ const InputComponent = memo(
             newRow[keyData] = newValue;
 
             // ⬇️ Handle Total New Inbound logic
-            if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
+            if (
+              keyData.includes("Supplier") ||
+              keyData.includes("Coming Back")
+            ) {
               const relevantColumns = Object.keys(newRow).filter(
                 (key) => key.includes("Supplier") || key.includes("Coming Back")
               );
@@ -185,7 +188,8 @@ const InputComponent = memo(
                       (parseFloat(newRow[supplierColumn]) || 0) -
                       previousData[supplierColumn];
                   } else {
-                    totalSupplierValue += parseFloat(newRow[supplierColumn]) || 0;
+                    totalSupplierValue +=
+                      parseFloat(newRow[supplierColumn]) || 0;
                   }
                 }
               });
@@ -224,10 +228,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
             ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
             : "focus:ring-blue-500"
-          }`}
+        }`}
       />
     );
   }
@@ -255,6 +260,13 @@ const ExcelEditor = () => {
   const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>(
     []
   );
+  const [editingSupplierHeaderKey, setEditingSupplierHeaderKey] = useState<
+    string | null
+  >(null);
+  const [supplierHeaderNames, setSupplierHeaderNames] = useState<{
+    [key: string]: string;
+  }>({});
+
   const [searchModel, setSearchModel] = useState(false);
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
@@ -448,15 +460,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-            String(row[column] ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          )
+              String(row[column] ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            )
           : Object.values(row).some((value) =>
-            String(value ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          );
+              String(value ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            );
 
         if (matchesSearchTerm) {
           acc.push({ ...row });
@@ -488,8 +500,9 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+              className={`px-4 py-2 flex-shrink-0 ${
+                isDuplicate ? "text-red-600 font-semibold" : ""
+              }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -569,7 +582,7 @@ const ExcelEditor = () => {
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
           {visibleHeaders.map((rawKey) => {
-            console.log('rawKey', rawKey)
+            // console.log("rawKey", rawKey);
             const key = rawKey.trim();
             const isDate = isLooseDateKey(key);
             const formattedKey = isDate ? formatDateKey(key) : key;
@@ -593,11 +606,64 @@ const ExcelEditor = () => {
                         }
                       />
                     )}
-                    <span>{formattedKey}</span>
+
+                    {/* Header text or input for editing */}
+                    {editingSupplierHeaderKey === formattedKey ? (
+                      <input
+                        type="text"
+                        value={
+                          supplierHeaderNames[formattedKey] || formattedKey
+                        }
+                        autoFocus
+                        onChange={(e) =>
+                          setSupplierHeaderNames((prev) => ({
+                            ...prev,
+                            [formattedKey]: e.target.value,
+                          }))
+                        }
+                        onBlur={() => {
+                          handleEditSupplierHeader(
+                            formattedKey,
+                            supplierHeaderNames[formattedKey] || formattedKey
+                          );
+                          setEditingSupplierHeaderKey(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleEditSupplierHeader(
+                              formattedKey,
+                              supplierHeaderNames[formattedKey] || formattedKey
+                            );
+                            setEditingSupplierHeaderKey(null);
+                          }
+                        }}
+                        className="border px-1 py-0.5 text-sm"
+                        style={{ width: "100%" }}
+                      />
+                    ) : (
+                      <span>
+                        {supplierHeaderNames[formattedKey] || formattedKey}
+                      </span>
+                    )}
                   </div>
 
                   {key !== "Action" && (
                     <div className="flex gap-1">
+                      {/* Edit button */}
+                      {formattedKey.startsWith("Supplier") &&
+                        editingSupplierHeaderKey !== formattedKey && (
+                          <button
+                            className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                            onClick={() =>
+                              setEditingSupplierHeaderKey(formattedKey)
+                            }
+                            title="Edit Header"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                      {/* Remove button */}
                       <button
                         disabled={uploadOptions.isLoading}
                         className="text-red-500 hover:text-red-700 cursor-pointer"
@@ -606,6 +672,7 @@ const ExcelEditor = () => {
                         <span className="text-lg">×</span>
                       </button>
 
+                      {/* Hide button */}
                       <button
                         className="text-blue-500 hover:text-blue-700 cursor-pointer"
                         onClick={() => handleToggleColumnVisibility(key)}
@@ -693,12 +760,32 @@ const ExcelEditor = () => {
     setDirty(true);
   };
 
+  const handleEditSupplierHeader = (oldKey: string, newKey: string) => {
+    if (!newKey || oldKey === newKey) return;
+
+    setSupplierHeaderNames((prev) => ({
+      ...prev,
+      [oldKey]: newKey,
+    }));
+
+    setDirty(true); // optional, if you want to track that the header was edited
+  };
+
   // Upload the CSV data
   const handleUploadCSV = async () => {
     try {
       setLoading(true);
       setSaveModel(false);
-      const updatedData = JSON.parse(JSON.stringify([...data]));
+      // const updatedData = JSON.parse(JSON.stringify([...data]));
+      const updatedData = data.map((row) => {
+        const newRow: Record<string, any> = {};
+        Object.keys(row).forEach((key) => {
+          // Use the edited header if exists, otherwise keep original key
+          const headerName = supplierHeaderNames[key] || key;
+          newRow[headerName] = row[key];
+        });
+        return newRow;
+      });
 
       const delimiter = "\t";
       const sheet = XLSX.utils.json_to_sheet(updatedData);
@@ -1049,6 +1136,7 @@ const ExcelEditor = () => {
         <div className="mb-4 space-x-2 flex items-center">
           <RolesChecks access="has_current_inventory_access" />
 
+          {/* <Button onClick={handleSearchModel}>Search Filter</Button> */}
           <Button onClick={handleSearchModel}>Filter</Button>
           <Input
             type="text"
@@ -1375,6 +1463,40 @@ const ExcelEditor = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* <Dialog open={searchModel} onOpenChange={setSearchModel}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Search Columns</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Select Columns to Search:
+                </label>
+                <ReactSelect
+                  options={searchcolumnOptions}
+                  isMulti
+                  value={selectedSearchColumns.map((col) => ({
+                    value: col,
+                    label: col,
+                  }))}
+                  onChange={(selected: any) => {
+                    const cols = selected.map((item: any) => item.value);
+                    setSelectedSearchColumns(cols);
+                  }}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCloseSearchColumnModel}>
+                Cancel
+              </Button>
+              <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog> */}
         {showHiddenColumnModal && (
           <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
             <div className="bg-white p-4 rounded-lg shadow-md w-80">

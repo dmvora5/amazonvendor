@@ -149,7 +149,19 @@ const menu = [
                 Icon: PackageIcon
             }
         ]
-    }
+    },
+    {
+        title: "Current Inventory",
+        Icon: PackageIcon,
+        access: "has_current_inventory_access",
+        subMenus: [
+            {
+                title: "Upload Report",
+                url: "/super-admin/current-inventory/upload-report",
+                Icon: PackageIcon
+            }
+        ]
+    },
 
 ]
 
