@@ -49,6 +49,7 @@ const InputComponent = memo(
     searchData,
     setSearchData,
     row,
+    setOriginalData,
   }: any) => {
     // const row = searchData.length > 0 ? searchData[index] : data[index];
     const [state, setState] = useState<string>(row[keyData]);
@@ -134,6 +135,16 @@ const InputComponent = memo(
           }
 
           newData[globalIndex] = newRow; // Update the row in the new data array
+
+          const originalIndex = row.__originalIndex ?? index; // fallback to index if not set
+          setOriginalData((prev: any[]) => {
+            const updatedOriginal = [...prev];
+            updatedOriginal[originalIndex] = {
+              ...updatedOriginal[originalIndex],
+              ...newRow,
+            };
+            return updatedOriginal;
+          });
 
           return newData;
         }
@@ -273,6 +284,9 @@ const ExcelEditor = () => {
   const [searchIndex, setSearchIndex] = useState<number[]>([]);
 
   const [saveModel, setSaveModel] = useState(false);
+  const [filterModel, setFilterModel] = useState(false);
+  const [selectedFilterColumn, setSelectedFilterColumn] = useState<string>("");
+  const [filterColumnValue, setFilterColumnValue] = useState<string>("");
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -288,6 +302,11 @@ const ExcelEditor = () => {
     }));
 
   const searchcolumnOptions = Object.keys(originalData[0] || {}).map((key) => ({
+    value: key,
+    label: key,
+  }));
+
+  const filterColumnOptions = Object.keys(originalData[0] || {}).map((key) => ({
     value: key,
     label: key,
   }));
@@ -471,7 +490,8 @@ const ExcelEditor = () => {
             );
 
         if (matchesSearchTerm) {
-          acc.push({ ...row });
+          // acc.push({ ...row });
+          acc.push({ ...row, __originalIndex: index });
           states.push(index);
         }
         return acc;
@@ -518,6 +538,7 @@ const ExcelEditor = () => {
                 row={row}
                 setSearchData={setSearchData}
                 searchData={searchData}
+                setOriginalData={setOriginalData}
               />
             </div>
           );
@@ -918,6 +939,9 @@ const ExcelEditor = () => {
   const handleSearchModel = () => {
     setSearchModel(true);
   };
+  const handleFliterModel = () => {
+    setFilterModel(true);
+  };
 
   const handleCloseSearchColumnModel = () => {
     setSearchModel(false); // open the modal
@@ -1115,6 +1139,49 @@ const ExcelEditor = () => {
     XLSX.writeFile(workbook, fileName);
   };
 
+  const handleApplyFilter = () => {
+    if (!selectedFilterColumn) return;
+
+    const filtered = originalData
+      .map((row, idx) => ({
+        ...row,
+        __originalIndex: row.__originalIndex ?? idx,
+      }))
+      .filter((row) => {
+        const cellValue = row[selectedFilterColumn];
+
+        // Remove if empty/null
+        if (!cellValue) return false;
+
+        // Remove if includes filterColumnValue
+        if (filterColumnValue) {
+          return !cellValue
+            .toString()
+            .toLowerCase()
+            .includes(filterColumnValue.toLowerCase());
+        }
+
+        return true; // keep non-empty rows if no filterColumnValue
+      });
+
+    setData(filtered);
+    setFilterModel(false);
+  };
+  const handleClearFilter = () => {
+    setSelectedFilterColumn("");
+    setFilterColumnValue("");
+
+    setData((prevData) => {
+      // Merge edits from currently visible filtered data back into originalData
+      return originalData.map((row, idx) => {
+        const editedRow = prevData.find((d) => d.__originalIndex === idx);
+        return editedRow ? { ...row, ...editedRow } : row;
+      });
+    });
+
+    setFilterModel(false);
+  };
+
   return (
     <>
       {/* {selectedValue === "current_inventory" && (
@@ -1137,7 +1204,7 @@ const ExcelEditor = () => {
           <RolesChecks access="has_current_inventory_access" />
 
           {/* <Button onClick={handleSearchModel}>Search Filter</Button> */}
-          <Button onClick={handleSearchModel}>Filter</Button>
+          <Button onClick={handleFliterModel}>Filter</Button>
           <Input
             type="text"
             value={searchTerm}
@@ -1463,6 +1530,66 @@ const ExcelEditor = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* Filter modal */}
+        <Dialog open={filterModel} onOpenChange={setFilterModel}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Filter Column</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Select single column */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Select Column to Filter:
+                </label>
+                <ReactSelect
+                  options={filterColumnOptions} // renamed from filterColumnOptions
+                  isMulti={false} // single select
+                  value={
+                    selectedFilterColumn
+                      ? {
+                          value: selectedFilterColumn,
+                          label: selectedFilterColumn,
+                        }
+                      : null
+                  }
+                  onChange={(selected: any) => {
+                    setSelectedFilterColumn(selected?.value || "");
+                    setFilterColumnValue(""); // reset input when column changes
+                  }}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+              </div>
+
+              {/* Input for selected column */}
+              {selectedFilterColumn && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Enter Value For Remove Row "{selectedFilterColumn}":
+                  </label>
+                  <input
+                    type="text"
+                    value={filterColumnValue}
+                    onChange={(e) => setFilterColumnValue(e.target.value)}
+                    className="border px-2 py-1 w-full text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={handleClearFilter}>
+                Clear
+              </Button>
+
+              <Button onClick={handleApplyFilter}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* search model */}
         {/* <Dialog open={searchModel} onOpenChange={setSearchModel}>
           <DialogContent>
             <DialogHeader>
