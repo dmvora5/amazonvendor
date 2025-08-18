@@ -797,11 +797,18 @@ const ExcelEditor = () => {
     try {
       setLoading(true);
       setSaveModel(false);
-      // const updatedData = JSON.parse(JSON.stringify([...data]));
-      const updatedData = data.map((row) => {
+
+      // ✅ Merge edits from data (filtered/visible rows) into originalData
+      const mergedData = originalData.map((row, idx) => {
+        const editedRow = data.find((d) => d.__originalIndex === idx);
+        return editedRow ? { ...row, ...editedRow } : row;
+      });
+
+      // ✅ Then use mergedData for CSV
+      const updatedData = mergedData.map((row) => {
         const newRow: Record<string, any> = {};
         Object.keys(row).forEach((key) => {
-          // Use the edited header if exists, otherwise keep original key
+          if (key === "__originalIndex") return;
           const headerName = supplierHeaderNames[key] || key;
           newRow[headerName] = row[key];
         });
@@ -838,9 +845,7 @@ const ExcelEditor = () => {
       setDirty(false);
       if (response?.file_url) {
         console.log("response?.file_url :>> ", response?.file_url);
-        await new Promise((resolve) => {
-          setTimeout(resolve, 5000); // wait for the data to be loaded
-        });
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
         setSearchData([]);
