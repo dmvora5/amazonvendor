@@ -136,15 +136,15 @@ const InputComponent = memo(
 
           newData[globalIndex] = newRow; // Update the row in the new data array
 
-          const originalIndex = row.__originalIndex ?? index; // fallback to index if not set
-          setOriginalData((prev: any[]) => {
-            const updatedOriginal = [...prev];
-            updatedOriginal[originalIndex] = {
-              ...updatedOriginal[originalIndex],
-              ...newRow,
-            };
-            return updatedOriginal;
-          });
+          // const originalIndex = row.__originalIndex ?? index; // fallback to index if not set
+          // setOriginalData((prev: any[]) => {
+          //   const updatedOriginal = [...prev];
+          //   updatedOriginal[originalIndex] = {
+          //     ...updatedOriginal[originalIndex],
+          //     ...newRow,
+          //   };
+          //   return updatedOriginal;
+          // });
 
           return newData;
         }
@@ -286,7 +286,7 @@ const ExcelEditor = () => {
   const [saveModel, setSaveModel] = useState(false);
   const [filterModel, setFilterModel] = useState(false);
   const [selectedFilterColumn, setSelectedFilterColumn] = useState<string>("");
-  const [filterColumnValue, setFilterColumnValue] = useState<string>("");
+  const [filterColumnValue, setFilterColumnValue] = useState<string[]>([]);
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -671,18 +671,17 @@ const ExcelEditor = () => {
                   {key !== "Action" && (
                     <div className="flex gap-1">
                       {/* Edit button */}
-                      {formattedKey.startsWith("Supplier") &&
-                        editingSupplierHeaderKey !== formattedKey && (
-                          <button
-                            className="text-blue-500 hover:text-blue-700 cursor-pointer"
-                            onClick={() =>
-                              setEditingSupplierHeaderKey(formattedKey)
-                            }
-                            title="Edit Header"
-                          >
-                            ✏️
-                          </button>
-                        )}
+                      {editingSupplierHeaderKey !== formattedKey && (
+                        <button
+                          className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                          onClick={() =>
+                            setEditingSupplierHeaderKey(formattedKey)
+                          }
+                          title="Edit Header"
+                        >
+                          ✏️
+                        </button>
+                      )}
 
                       {/* Remove button */}
                       <button
@@ -1155,18 +1154,23 @@ const ExcelEditor = () => {
       .filter((row) => {
         const cellValue = row[selectedFilterColumn];
 
-        // Remove if empty/null
-        if (!cellValue) return false;
-
-        // Remove if includes filterColumnValue
-        if (filterColumnValue) {
-          return !cellValue
-            .toString()
-            .toLowerCase()
-            .includes(filterColumnValue.toLowerCase());
+        // ✅ If "null" checkbox selected → remove rows where value is null/empty
+        if (
+          filterColumnValue.includes("null") &&
+          (cellValue === null || cellValue === "")
+        ) {
+          return false;
         }
 
-        return true; // keep non-empty rows if no filterColumnValue
+        // ✅ If "zero" checkbox selected → remove rows where value is 0
+        if (
+          filterColumnValue.includes("zero") &&
+          (cellValue === 0 || cellValue === "0")
+        ) {
+          return false;
+        }
+
+        return true; // keep everything else
       });
 
     setData(filtered);
@@ -1174,10 +1178,9 @@ const ExcelEditor = () => {
   };
   const handleClearFilter = () => {
     setSelectedFilterColumn("");
-    setFilterColumnValue("");
+    setFilterColumnValue([]);
 
     setData((prevData) => {
-      // Merge edits from currently visible filtered data back into originalData
       return originalData.map((row, idx) => {
         const editedRow = prevData.find((d) => d.__originalIndex === idx);
         return editedRow ? { ...row, ...editedRow } : row;
@@ -1208,8 +1211,8 @@ const ExcelEditor = () => {
         <div className="mb-4 space-x-2 flex items-center">
           <RolesChecks access="has_current_inventory_access" />
 
-          {/* <Button onClick={handleSearchModel}>Search Filter</Button> */}
           <Button onClick={handleFliterModel}>Filter</Button>
+          <Button onClick={handleSearchModel}>Search Filter</Button>
           <Input
             type="text"
             value={searchTerm}
@@ -1549,8 +1552,8 @@ const ExcelEditor = () => {
                   Select Column to Filter:
                 </label>
                 <ReactSelect
-                  options={filterColumnOptions} // renamed from filterColumnOptions
-                  isMulti={false} // single select
+                  options={filterColumnOptions}
+                  isMulti={false}
                   value={
                     selectedFilterColumn
                       ? {
@@ -1561,25 +1564,55 @@ const ExcelEditor = () => {
                   }
                   onChange={(selected: any) => {
                     setSelectedFilterColumn(selected?.value || "");
-                    setFilterColumnValue(""); // reset input when column changes
+                    setFilterColumnValue([]); // reset input when column changes
                   }}
                   className="react-select-container"
                   classNamePrefix="react-select"
                 />
               </div>
 
-              {/* Input for selected column */}
+              {/* Checkboxes instead of input */}
               {selectedFilterColumn && (
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Enter Value For Remove Row "{selectedFilterColumn}":
+                    Remove Rows Where "{selectedFilterColumn}" Is:
                   </label>
-                  <input
-                    type="text"
-                    value={filterColumnValue}
-                    onChange={(e) => setFilterColumnValue(e.target.value)}
-                    className="border px-2 py-1 w-full text-sm"
-                  />
+
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={filterColumnValue.includes("null")}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFilterColumnValue((prev) => [...prev, "null"]);
+                          } else {
+                            setFilterColumnValue((prev) =>
+                              prev.filter((v) => v !== "null")
+                            );
+                          }
+                        }}
+                      />
+                      <span>Null / Empty</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={filterColumnValue.includes("zero")}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFilterColumnValue((prev) => [...prev, "zero"]);
+                          } else {
+                            setFilterColumnValue((prev) =>
+                              prev.filter((v) => v !== "zero")
+                            );
+                          }
+                        }}
+                      />
+                      <span>0 Value</span>
+                    </label>
+                  </div>
                 </div>
               )}
             </div>
@@ -1595,7 +1628,7 @@ const ExcelEditor = () => {
         </Dialog>
 
         {/* search model */}
-        {/* <Dialog open={searchModel} onOpenChange={setSearchModel}>
+        <Dialog open={searchModel} onOpenChange={setSearchModel}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Search Columns</DialogTitle>
@@ -1628,7 +1661,7 @@ const ExcelEditor = () => {
               <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog> */}
+        </Dialog>
         {showHiddenColumnModal && (
           <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
             <div className="bg-white p-4 rounded-lg shadow-md w-80">
