@@ -87,64 +87,40 @@ const InputComponent = memo(
           newRow[keyData] = newValue;
 
           // ⬇️ Handle Total New Inbound logic
+          // ✅ Recalculate Total New Inbound fresh every time
           if (keyData.includes("Supplier") || keyData.includes("Coming Back")) {
             const relevantColumns = Object.keys(newRow).filter(
               (key) => key.includes("Supplier") || key.includes("Coming Back")
             );
 
-            let totalSupplierValue = 0;
-            relevantColumns.forEach((supplierColumn) => {
-              if (
-                previousData[supplierColumn] !==
-                parseFloat(newRow[supplierColumn])
-              ) {
-                if (
-                  parseFloat(newRow[supplierColumn]) <
-                  previousData[supplierColumn]
-                ) {
-                  totalSupplierValue -=
-                    previousData[supplierColumn] -
-                    (parseFloat(newRow[supplierColumn]) || 0);
-                } else if (
-                  parseFloat(newRow[supplierColumn]) >
-                  previousData[supplierColumn]
-                ) {
-                  totalSupplierValue +=
-                    (parseFloat(newRow[supplierColumn]) || 0) -
-                    previousData[supplierColumn];
-                } else {
-                  totalSupplierValue += parseFloat(newRow[supplierColumn]) || 0;
-                }
-              }
-            });
+            const totalSupplierValue = relevantColumns.reduce((sum, col) => {
+              return sum + (parseFloat(newRow[col]) || 0);
+            }, 0);
 
-            const oriInbound =
-              originalData[globalIndex]["Total New Inbound"] || 0;
-            const updatedOrder = oriInbound + totalSupplierValue;
-
-            if (updatedOrder < 0) {
-              relevantColumns.forEach((supplierColumn) => {
-                newRow[supplierColumn] =
-                  originalData[globalIndex][supplierColumn];
+            // Prevent negative inbound
+            if (totalSupplierValue < 0) {
+              relevantColumns.forEach((col) => {
+                newRow[col] = originalData[globalIndex][col];
               });
               newRow["Total New Inbound"] =
                 originalData[globalIndex]["Total New Inbound"];
             } else {
-              newRow["Total New Inbound"] = updatedOrder;
+              newRow["Total New Inbound"] = totalSupplierValue;
             }
           }
+          console.log("🚀 ~ handleBlur ~ newRow:", newRow);
 
           newData[globalIndex] = newRow; // Update the row in the new data array
 
-          // const originalIndex = row.__originalIndex ?? index; // fallback to index if not set
-          // setOriginalData((prev: any[]) => {
-          //   const updatedOriginal = [...prev];
-          //   updatedOriginal[originalIndex] = {
-          //     ...updatedOriginal[originalIndex],
-          //     ...newRow,
-          //   };
-          //   return updatedOriginal;
-          // });
+          const originalIndex = row.__originalIndex ?? index; // fallback to index if not set
+          setOriginalData((prev: any[]) => {
+            const updatedOriginal = [...prev];
+            updatedOriginal[originalIndex] = {
+              ...updatedOriginal[originalIndex],
+              ...newRow,
+            };
+            return updatedOriginal;
+          });
 
           return newData;
         }
