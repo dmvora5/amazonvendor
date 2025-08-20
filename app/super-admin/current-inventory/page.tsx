@@ -215,11 +215,10 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
-          isDuplicate
-            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-            : "focus:ring-blue-500"
-        }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
+          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+          : "focus:ring-blue-500"
+          }`}
       />
     );
   }
@@ -455,15 +454,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-              String(row[column] ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            )
+            String(row[column] ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          )
           : Object.values(row).some((value) =>
-              String(value ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            );
+            String(value ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          );
 
         if (matchesSearchTerm) {
           // acc.push({ ...row });
@@ -486,7 +485,7 @@ const ExcelEditor = () => {
         style={style}
         className="flex border-b hover:bg-gray-50 overflow-x-hidden"
       >
-        {visibleHeaders.map((key) => {
+        {visibleHeaders.filter(k => k !== "__originalIndex").map((key) => {
           const value = row[key];
           const isDuplicate =
             selectedValue === "current_inventory" &&
@@ -496,9 +495,8 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${
-                isDuplicate ? "text-red-600 font-semibold" : ""
-              }`}
+              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+                }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
@@ -578,7 +576,7 @@ const ExcelEditor = () => {
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
-          {visibleHeaders.map((rawKey) => {
+          {visibleHeaders.filter(k => k !== "__originalIndex").map((rawKey) => {
             // console.log("rawKey", rawKey);
             const key = rawKey.trim();
             const isDate = isLooseDateKey(key);
@@ -1088,6 +1086,7 @@ const ExcelEditor = () => {
     const filteredData = data.map((row) => {
       const filteredRow: { [key: string]: any } = {};
       visibleHeaders.forEach((key) => {
+        if (key === "__originalIndex") return;
         filteredRow[key] = row[key];
       });
       return filteredRow;
@@ -1346,7 +1345,7 @@ const ExcelEditor = () => {
                 itemSize={rowHeight}
                 width={
                   (searchData.length > 0 ? searchData.length : data.length > 0)
-                    ? columnWidth * Object.keys(data[0]).length
+                    ? columnWidth * Object.keys(data[0]).filter(key => key !== "__originalIndex").length
                     : 0
                 }
                 ref={listRef}
@@ -1533,9 +1532,9 @@ const ExcelEditor = () => {
                   value={
                     selectedFilterColumn
                       ? {
-                          value: selectedFilterColumn,
-                          label: selectedFilterColumn,
-                        }
+                        value: selectedFilterColumn,
+                        label: selectedFilterColumn,
+                      }
                       : null
                   }
                   onChange={(selected: any) => {
