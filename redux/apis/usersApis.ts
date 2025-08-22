@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report"],
+    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report", "Cookies"],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -277,6 +277,15 @@ export const userApi = createApi({
             invalidatesTags: ["Report"],
         }),
 
+        //cookies
+        addCookies: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.CREATECOOKIES,
+                method: "POST",
+                body: payload,
+            }),
+            invalidatesTags: [{ type: 'Cookies'}]
+        }),
     })
 });
 
@@ -306,5 +315,7 @@ export const {
     useGetAllCategoryQuery,
     useEditCategoryQuery,
     useUpdateCategoryMutation,
-    useDeletecategoryMutation
+    useDeletecategoryMutation,
+    //cookies
+    useAddCookiesMutation
 } = userApi;

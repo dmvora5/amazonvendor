@@ -45,7 +45,10 @@ export const API_ROUTES = {
         GETALLCATEGORY: "/category/category-re-order-list/",
         CATEGORYDETAILS: "/category/category-re-order/",
         UPDATECATEGORY: "/category/category-re-order/",
-        DELETECATEGORY: "/category/category-re-order/"
+        DELETECATEGORY: "/category/category-re-order/",
+
+        //cookies
+        CREATECOOKIES: "/update-cookie/"
     },
     AUTH: {
         FORGETPASSWORD: '/users/send-password-reset-code-mail/',

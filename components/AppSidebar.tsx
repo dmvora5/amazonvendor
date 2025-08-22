@@ -162,6 +162,18 @@ const menu = [
             }
         ]
     },
+    {
+        title: "Cookies",
+        Icon: PackageIcon,
+        access: "has_current_inventory_cookies",
+        subMenus: [
+            {
+                title: "Cookies",
+                url: "/super-admin/cookies",
+                Icon: PackageIcon
+            }
+        ]
+    },
 
 ]
 
