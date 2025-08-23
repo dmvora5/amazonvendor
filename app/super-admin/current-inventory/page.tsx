@@ -215,10 +215,11 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-          : "focus:ring-blue-500"
-          }`}
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+          isDuplicate
+            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+            : "focus:ring-blue-500"
+        }`}
       />
     );
   }
@@ -262,6 +263,9 @@ const ExcelEditor = () => {
   const [filterModel, setFilterModel] = useState(false);
   const [selectedFilterColumn, setSelectedFilterColumn] = useState<string>("");
   const [filterColumnValue, setFilterColumnValue] = useState<string[]>([]);
+  // track applied filter state
+  const [activeFilter, setActiveFilter] = useState<any>(null);
+  const [openAddColumnModal, setOpenAddColumnModal] = useState(false);
 
   const rowHeight = 50;
   const containerHeight = 500;
@@ -434,47 +438,59 @@ const ExcelEditor = () => {
       setOriginalData(updatedData); // update your full source data
       setData(updatedData); // update visible data (filtered, if applicable)
       setNewColumnName("");
+      setSelectedColumn("");
       setDirty(true);
+      setOpenAddColumnModal(false);
     }
+  };
+
+  const handleOpenAddColumnModal = () => {
+    setOpenAddColumnModal(true);
+  };
+
+  const handleCloseAddColumnModal = () => {
+    setOpenAddColumnModal(false);
+    setNewColumnName("");
+    setSelectedColumn("");
   };
 
   // Handle search
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setSearchTerm(term);
+  // const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const term = e.target.value;
+  //   setSearchTerm(term);
 
-    if (term.trim() === "") {
-      setData(originalData);
-      setSearchData([]);
-      setSearchIndex([]);
-    } else {
-      const lowerTerm = term.toLowerCase();
-      const states: number[] = [];
+  //   if (term.trim() === "") {
+  //     setData(originalData);
+  //     setSearchData([]);
+  //     setSearchIndex([]);
+  //   } else {
+  //     const lowerTerm = term.toLowerCase();
+  //     const states: number[] = [];
 
-      const filteredData = originalData.reduce((acc: any[], row, index) => {
-        const matchesSearchTerm = selectedSearchColumns.length
-          ? selectedSearchColumns.some((column) =>
-            String(row[column] ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          )
-          : Object.values(row).some((value) =>
-            String(value ?? "")
-              .toLowerCase()
-              .includes(lowerTerm)
-          );
+  //     const filteredData = originalData.reduce((acc: any[], row, index) => {
+  //       const matchesSearchTerm = selectedSearchColumns.length
+  //         ? selectedSearchColumns.some((column) =>
+  //             String(row[column] ?? "")
+  //               .toLowerCase()
+  //               .includes(lowerTerm)
+  //           )
+  //         : Object.values(row).some((value) =>
+  //             String(value ?? "")
+  //               .toLowerCase()
+  //               .includes(lowerTerm)
+  //           );
 
-        if (matchesSearchTerm) {
-          // acc.push({ ...row });
-          acc.push({ ...row, __originalIndex: index });
-          states.push(index);
-        }
-        return acc;
-      }, []);
-      setSearchIndex(states);
-      setSearchData(filteredData);
-    }
-  };
+  //       if (matchesSearchTerm) {
+  //         // acc.push({ ...row });
+  //         acc.push({ ...row, __originalIndex: index });
+  //         states.push(index);
+  //       }
+  //       return acc;
+  //     }, []);
+  //     setSearchIndex(states);
+  //     setSearchData(filteredData);
+  //   }
+  // };
 
   // Table Row component
   const Row = ({ index, style }: any) => {
@@ -485,38 +501,41 @@ const ExcelEditor = () => {
         style={style}
         className="flex border-b hover:bg-gray-50 overflow-x-hidden"
       >
-        {visibleHeaders.filter(k => k !== "__originalIndex").map((key) => {
-          const value = row[key];
-          const isDuplicate =
-            selectedValue === "current_inventory" &&
-            ["Product Code", "FBA SKU", "ASIN"].includes(key) &&
-            duplicateValues.has(`${key}::${value}`);
+        {visibleHeaders
+          .filter((k) => k !== "__originalIndex")
+          .map((key) => {
+            const value = row[key];
+            const isDuplicate =
+              selectedValue === "current_inventory" &&
+              ["Product Code", "FBA SKU", "ASIN"].includes(key) &&
+              duplicateValues.has(`${key}::${value}`);
 
-          return (
-            <div
-              key={key}
-              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+            return (
+              <div
+                key={key}
+                className={`px-4 py-2 flex-shrink-0 ${
+                  isDuplicate ? "text-red-600 font-semibold" : ""
                 }`}
-              style={{ width: columnWidth }}
-              title={isDuplicate ? "Duplicate value" : ""}
-            >
-              <InputComponent
-                originalData={originalData}
-                data={searchData.length > 0 ? searchData : data}
-                index={index}
-                keyData={key}
-                setData={setData}
-                setDirty={setDirty}
-                disabled={uploadOptions.isLoading}
-                isDuplicate={isDuplicate}
-                row={row}
-                setSearchData={setSearchData}
-                searchData={searchData}
-                setOriginalData={setOriginalData}
-              />
-            </div>
-          );
-        })}
+                style={{ width: columnWidth }}
+                title={isDuplicate ? "Duplicate value" : ""}
+              >
+                <InputComponent
+                  originalData={originalData}
+                  data={searchData.length > 0 ? searchData : data}
+                  index={index}
+                  keyData={key}
+                  setData={setData}
+                  setDirty={setDirty}
+                  disabled={uploadOptions.isLoading}
+                  isDuplicate={isDuplicate}
+                  row={row}
+                  setSearchData={setSearchData}
+                  searchData={searchData}
+                  setOriginalData={setOriginalData}
+                />
+              </div>
+            );
+          })}
       </div>
     );
   };
@@ -576,110 +595,113 @@ const ExcelEditor = () => {
     return (
       <thead className="bg-gray-100 text-sm font-semibold text-gray-700 sticky top-0 z-10">
         <tr>
-          {visibleHeaders.filter(k => k !== "__originalIndex").map((rawKey) => {
-            // console.log("rawKey", rawKey);
-            const key = rawKey.trim();
-            const isDate = isLooseDateKey(key);
-            const formattedKey = isDate ? formatDateKey(key) : key;
-            const isSelected = selectedDateColumns.includes(formattedKey);
+          {visibleHeaders
+            .filter((k) => k !== "__originalIndex")
+            .map((rawKey) => {
+              // console.log("rawKey", rawKey);
+              const key = rawKey.trim();
+              const isDate = isLooseDateKey(key);
+              const formattedKey = isDate ? formatDateKey(key) : key;
+              const isSelected = selectedDateColumns.includes(formattedKey);
 
-            return (
-              <th
-                key={formattedKey}
-                className="relative px-4 py-3 text-left"
-                style={{ width: columnWidth }}
-              >
-                <div className="flex justify-between items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    {isDate && (
-                      <input
-                        type="checkbox"
-                        value={formattedKey}
-                        checked={isSelected}
-                        onChange={(e) =>
-                          handleDateCheckboxChange(e, formattedKey)
-                        }
-                      />
-                    )}
+              return (
+                <th
+                  key={formattedKey}
+                  className="relative px-4 py-3 text-left"
+                  style={{ width: columnWidth }}
+                >
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      {isDate && (
+                        <input
+                          type="checkbox"
+                          value={formattedKey}
+                          checked={isSelected}
+                          onChange={(e) =>
+                            handleDateCheckboxChange(e, formattedKey)
+                          }
+                        />
+                      )}
 
-                    {/* Header text or input for editing */}
-                    {editingSupplierHeaderKey === formattedKey ? (
-                      <input
-                        type="text"
-                        value={
-                          supplierHeaderNames[formattedKey] || formattedKey
-                        }
-                        autoFocus
-                        onChange={(e) =>
-                          setSupplierHeaderNames((prev) => ({
-                            ...prev,
-                            [formattedKey]: e.target.value,
-                          }))
-                        }
-                        onBlur={() => {
-                          handleEditSupplierHeader(
-                            formattedKey,
+                      {/* Header text or input for editing */}
+                      {editingSupplierHeaderKey === formattedKey ? (
+                        <input
+                          type="text"
+                          value={
                             supplierHeaderNames[formattedKey] || formattedKey
-                          );
-                          setEditingSupplierHeaderKey(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
+                          }
+                          autoFocus
+                          onChange={(e) =>
+                            setSupplierHeaderNames((prev) => ({
+                              ...prev,
+                              [formattedKey]: e.target.value,
+                            }))
+                          }
+                          onBlur={() => {
                             handleEditSupplierHeader(
                               formattedKey,
                               supplierHeaderNames[formattedKey] || formattedKey
                             );
                             setEditingSupplierHeaderKey(null);
-                          }
-                        }}
-                        className="border px-1 py-0.5 text-sm"
-                        style={{ width: "100%" }}
-                      />
-                    ) : (
-                      <span>
-                        {supplierHeaderNames[formattedKey] || formattedKey}
-                      </span>
-                    )}
-                  </div>
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleEditSupplierHeader(
+                                formattedKey,
+                                supplierHeaderNames[formattedKey] ||
+                                  formattedKey
+                              );
+                              setEditingSupplierHeaderKey(null);
+                            }
+                          }}
+                          className="border px-1 py-0.5 text-sm"
+                          style={{ width: "100%" }}
+                        />
+                      ) : (
+                        <span>
+                          {supplierHeaderNames[formattedKey] || formattedKey}
+                        </span>
+                      )}
+                    </div>
 
-                  {key !== "Action" && (
-                    <div className="flex gap-1">
-                      {/* Edit button */}
-                      {editingSupplierHeaderKey !== formattedKey && (
+                    {key !== "Action" && (
+                      <div className="flex gap-1">
+                        {/* Edit button */}
+                        {editingSupplierHeaderKey !== formattedKey && (
+                          <button
+                            className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                            onClick={() =>
+                              setEditingSupplierHeaderKey(formattedKey)
+                            }
+                            title="Edit Header"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {/* Remove button */}
+                        <button
+                          disabled={uploadOptions.isLoading}
+                          className="text-red-500 hover:text-red-700 cursor-pointer"
+                          onClick={() => handleRemoveColumn(key)}
+                        >
+                          <span className="text-lg">×</span>
+                        </button>
+
+                        {/* Hide button */}
                         <button
                           className="text-blue-500 hover:text-blue-700 cursor-pointer"
-                          onClick={() =>
-                            setEditingSupplierHeaderKey(formattedKey)
-                          }
-                          title="Edit Header"
+                          onClick={() => handleToggleColumnVisibility(key)}
+                          title="Hide column"
                         >
-                          ✏️
+                          👁️
                         </button>
-                      )}
-
-                      {/* Remove button */}
-                      <button
-                        disabled={uploadOptions.isLoading}
-                        className="text-red-500 hover:text-red-700 cursor-pointer"
-                        onClick={() => handleRemoveColumn(key)}
-                      >
-                        <span className="text-lg">×</span>
-                      </button>
-
-                      {/* Hide button */}
-                      <button
-                        className="text-blue-500 hover:text-blue-700 cursor-pointer"
-                        onClick={() => handleToggleColumnVisibility(key)}
-                        title="Hide column"
-                      >
-                        👁️
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </th>
-            );
-          })}
+                      </div>
+                    )}
+                  </div>
+                </th>
+              );
+            })}
         </tr>
       </thead>
     );
@@ -1118,51 +1140,114 @@ const ExcelEditor = () => {
     XLSX.writeFile(workbook, fileName);
   };
 
-  const handleApplyFilter = () => {
-    if (!selectedFilterColumn) return;
+  const applyFilterAndSearch = (
+    baseData: any[],
+    filter: { column: string; value: string[] } | null,
+    term: string
+  ) => {
+    let result = [...baseData];
 
-    const filtered = originalData
-      .map((row, idx) => ({
-        ...row,
-        __originalIndex: row.__originalIndex ?? idx,
-      }))
-      .filter((row) => {
-        const cellValue = row[selectedFilterColumn];
+    // 1. Apply filter first
+    if (filter) {
+      result = result.filter((row) => {
+        const cellValue = row[filter.column];
 
-        // ✅ If "null" checkbox selected → remove rows where value is null/empty
         if (
-          filterColumnValue.includes("null") &&
+          filter.value.includes("null") &&
           (cellValue === null || cellValue === "")
         ) {
           return false;
         }
 
-        // ✅ If "zero" checkbox selected → remove rows where value is 0
         if (
-          filterColumnValue.includes("zero") &&
+          filter.value.includes("zero") &&
           (cellValue === 0 || cellValue === "0")
         ) {
           return false;
         }
 
-        return true; // keep everything else
+        return true;
       });
+    }
 
-    setData(filtered);
+    // 2. Apply search on top
+    if (term.trim() !== "") {
+      const lowerTerm = term.toLowerCase();
+      const states: number[] = [];
+
+      result = result.reduce((acc: any[], row, index) => {
+        const matchesSearchTerm = selectedSearchColumns.length
+          ? selectedSearchColumns.some((column) =>
+              String(row[column] ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            )
+          : Object.values(row).some((value) =>
+              String(value ?? "")
+                .toLowerCase()
+                .includes(lowerTerm)
+            );
+
+        if (matchesSearchTerm) {
+          acc.push({ ...row, __originalIndex: index });
+          states.push(index);
+        }
+        return acc;
+      }, []);
+
+      setSearchIndex(states);
+      setSearchData(result);
+    } else {
+      setSearchData([]);
+      setSearchIndex([]);
+    }
+
+    return result;
+  };
+
+  // Search
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+
+    const result = applyFilterAndSearch(originalData, activeFilter, term);
+    setData(result);
+  };
+
+  // Apply Filter
+  const handleApplyFilter = () => {
+    if (!selectedFilterColumn) return;
+
+    const newFilter = {
+      column: selectedFilterColumn,
+      value: filterColumnValue,
+    };
+
+    setActiveFilter(newFilter);
+
+    const result = applyFilterAndSearch(originalData, newFilter, searchTerm);
+    setData(result);
+
     setFilterModel(false);
   };
+
+  // Clear Filter
   const handleClearFilter = () => {
     setSelectedFilterColumn("");
     setFilterColumnValue([]);
+    setActiveFilter(null);
 
-    setData((prevData) => {
-      return originalData.map((row, idx) => {
-        const editedRow = prevData.find((d) => d.__originalIndex === idx);
-        return editedRow ? { ...row, ...editedRow } : row;
-      });
-    });
+    const result = applyFilterAndSearch(originalData, null, searchTerm);
+    setData(result);
 
     setFilterModel(false);
+  };
+
+  // Optional: Clear Search
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    const result = applyFilterAndSearch(originalData, activeFilter, "");
+    setData(result);
   };
 
   return (
@@ -1203,16 +1288,16 @@ const ExcelEditor = () => {
               Manage Hidden Columns
             </Button>
           )}
-          <Input
+          {/* <Input
             type="text"
             value={newColumnName}
             onChange={(e) => setNewColumnName(e.target.value)}
             placeholder="New Column Name"
             className="mr-2 w-2/5 p-3 border border-gray-300 rounded-md"
-          />
+          /> */}
 
           {/* Dropdown to select the column after which to insert the new column */}
-          <Select onValueChange={setSelectedColumn} value={selectedColumn}>
+          {/* <Select onValueChange={setSelectedColumn} value={selectedColumn}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select Column to Insert After" />
             </SelectTrigger>
@@ -1226,9 +1311,9 @@ const ExcelEditor = () => {
                 ))}
               </SelectGroup>
             </SelectContent>
-          </Select>
+          </Select> */}
 
-          <Button onClick={handleAddColumn} color="primary">
+          <Button onClick={handleOpenAddColumnModal} color="primary">
             Add Column
           </Button>
 
@@ -1345,7 +1430,10 @@ const ExcelEditor = () => {
                 itemSize={rowHeight}
                 width={
                   (searchData.length > 0 ? searchData.length : data.length > 0)
-                    ? columnWidth * Object.keys(data[0]).filter(key => key !== "__originalIndex").length
+                    ? columnWidth *
+                      Object.keys(data[0]).filter(
+                        (key) => key !== "__originalIndex"
+                      ).length
                     : 0
                 }
                 ref={listRef}
@@ -1532,9 +1620,9 @@ const ExcelEditor = () => {
                   value={
                     selectedFilterColumn
                       ? {
-                        value: selectedFilterColumn,
-                        label: selectedFilterColumn,
-                      }
+                          value: selectedFilterColumn,
+                          label: selectedFilterColumn,
+                        }
                       : null
                   }
                   onChange={(selected: any) => {
@@ -1634,6 +1722,60 @@ const ExcelEditor = () => {
                 Cancel
               </Button>
               <Button onClick={() => setSearchModel(!searchModel)}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Add Column Dialog */}
+        <Dialog open={openAddColumnModal} onOpenChange={setOpenAddColumnModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Column</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Dropdown */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Select Column to Insert After:
+                </label>
+                <Select
+                  onValueChange={setSelectedColumn}
+                  value={selectedColumn}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Columns</SelectLabel>
+                      {Object.keys(originalData[0] || {}).map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {key}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Input */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  New Column Name:
+                </label>
+                <Input
+                  type="text"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                  placeholder="Enter new column name"
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCloseAddColumnModal}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddColumn}>Add Column</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
