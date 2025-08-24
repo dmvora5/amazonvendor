@@ -304,7 +304,7 @@ const ExcelEditor = () => {
       setLoading(true);
 
       const response = await axios.get(url, {
-        responseType: "arraybuffer", // Important: tells axios to treat the response as binary
+        responseType: "arraybuffer",
         headers: {
           "Cache-Control": "no-cache",
           Pragma: "no-cache",
@@ -313,20 +313,27 @@ const ExcelEditor = () => {
       });
 
       const fileSizeInBytes = response.headers["content-length"];
-      const fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toFixed(2); // Convert to MB and round to 2 decimal places
+      const fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toFixed(2);
       console.log(`File size: ${fileSizeInMB} MB`);
 
       const arrayBuffer = response.data;
-
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      setOriginalData(JSON.parse(JSON.stringify(json)));
-      setData(JSON.parse(JSON.stringify(json)));
+      // 🔑 Add permanent index so rows are always identifiable
+      const withIndex = json.map((row: any, idx: number) => ({
+        ...row,
+        __originalIndex: idx,
+      }));
 
-      if (json.length) {
-        const key = Object.keys(json[0]);
+      setOriginalData(withIndex);
+      setData(withIndex);
+
+      if (withIndex.length) {
+        const key = Object.keys(withIndex[0]).filter(
+          (k) => k !== "__originalIndex"
+        );
         setSelectedColumn(key[0]);
       }
     } catch (error) {
@@ -844,6 +851,8 @@ const ExcelEditor = () => {
         toast.success("File uploaded successfully!");
         fetchCSVFromBackend(response?.file_url);
         setSearchData([]);
+        setSelectedFilterColumn("");
+        setFilterColumnValue([]);
         setSearchTerm("");
       }
     } catch (err: any) {
@@ -1147,7 +1156,7 @@ const ExcelEditor = () => {
   ) => {
     let result = [...baseData];
 
-    // 1. Apply filter first
+    // 1. Apply filter
     if (filter) {
       result = result.filter((row) => {
         const cellValue = row[filter.column];
@@ -1166,16 +1175,16 @@ const ExcelEditor = () => {
           return false;
         }
 
-        return true;
+        return true; // keep this row
       });
     }
 
-    // 2. Apply search on top
+    // 2. Apply search
     if (term.trim() !== "") {
       const lowerTerm = term.toLowerCase();
       const states: number[] = [];
 
-      result = result.reduce((acc: any[], row, index) => {
+      result = result.reduce((acc: any[], row) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
               String(row[column] ?? "")
@@ -1189,8 +1198,9 @@ const ExcelEditor = () => {
             );
 
         if (matchesSearchTerm) {
-          acc.push({ ...row, __originalIndex: index });
-          states.push(index);
+          // keep permanent index, don't overwrite
+          acc.push({ ...row, __originalIndex: row.__originalIndex });
+          states.push(row.__originalIndex);
         }
         return acc;
       }, []);
