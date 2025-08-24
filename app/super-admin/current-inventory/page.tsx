@@ -285,10 +285,12 @@ const ExcelEditor = () => {
     label: key,
   }));
 
-  const filterColumnOptions = Object.keys(originalData[0] || {}).map((key) => ({
-    value: key,
-    label: key,
-  }));
+  const filterColumnOptions = Object.keys(data[0] || {})
+    .filter((col) => col !== "__originalIndex") // remove unwanted column
+    .map((col) => ({
+      value: col,
+      label: col,
+    }));
 
   const {
     data: queryData,
