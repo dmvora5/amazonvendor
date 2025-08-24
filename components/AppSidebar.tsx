@@ -163,9 +163,21 @@ const menu = [
         ]
     },
     {
+        title: "Upload report",
+        Icon: PackageIcon,
+        access: "has_current_inventory_access",
+        subMenus: [
+            {
+                title: "Upload Report",
+                url: "/super-admin/upload-report",
+                Icon: PackageIcon
+            }
+        ]
+    },
+    {
         title: "Cookies",
         Icon: PackageIcon,
-        access: "has_current_inventory_cookies",
+        access: null,
         subMenus: [
             {
                 title: "Cookies",
@@ -174,6 +186,7 @@ const menu = [
             }
         ]
     },
+    
 
 ]
 
