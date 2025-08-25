@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ApiState from "@/components/ApiState";
 import RolesChecks from "@/components/RolesChecks";
@@ -16,10 +15,11 @@ const UploadPage = () => {
 
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<any[]>([]);
-  const [originalData, setOriginalData] = useState<any[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
   const [fileChange, setFileChange] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Handle file select
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -28,6 +28,7 @@ const UploadPage = () => {
     }
   };
 
+  // ✅ Read Excel file and preserve column order
   const readExcelFile = (file: File) => {
     setLoading(true);
     const reader = new FileReader();
@@ -36,9 +37,18 @@ const UploadPage = () => {
       const binaryString = event.target?.result as ArrayBuffer;
       const workbook = XLSX.read(binaryString, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+      // Extract headers (first row of the sheet)
+      const headerRow: string[] = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        blankrows: false,
+      })[0] as string[];
+
+      // Get data rows as objects
+      const jsonData: any[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+      setHeaders(headerRow); // keep original column order
       setData(jsonData);
-      setOriginalData(jsonData);
       setFileChange(true);
       setLoading(false);
     };
@@ -46,11 +56,23 @@ const UploadPage = () => {
     reader.readAsArrayBuffer(file);
   };
 
+  // ✅ Ensure upload uses original header order
+  const prepareDataForExport = () => {
+    return data.map((row) => {
+      const newRow: Record<string, any> = {};
+      headers.forEach((col) => {
+        newRow[col] = row[col];
+      });
+      return newRow;
+    });
+  };
+
+  // ✅ Upload CSV to backend
   const handleUploadNewCSV = async () => {
     setLoading(true);
     try {
-      const updatedData = [...data];
-      const sheet = XLSX.utils.json_to_sheet(updatedData);
+      const updatedData = prepareDataForExport();
+      const sheet = XLSX.utils.json_to_sheet(updatedData, { header: headers });
       const csvData = XLSX.utils.sheet_to_csv(sheet, { FS: "\t" });
 
       const formData = new FormData();
@@ -59,7 +81,6 @@ const UploadPage = () => {
       formData.append("report_type", "current_inventory"); // Change as needed
 
       const session: any = await getSession();
-
       const { data: response } = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/report/`,
         formData,
