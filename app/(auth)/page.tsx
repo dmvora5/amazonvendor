@@ -27,7 +27,7 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const [mfa, setMfa] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -44,6 +44,10 @@ export default function LoginPage() {
     password: z.string({ message: "password must be a string" }).min(8, { message: "password must be at least 8 characters long" }),
   })
 
+  const mfaFormSchema = z.object({
+    otp: z.string({ message: "otp must be a string" }).min(6, { message: "opt must be at least 6 characters long" }),
+  })
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,13 +56,98 @@ export default function LoginPage() {
     }
   })
 
+  const mfaForm = useForm<z.infer<typeof mfaFormSchema>>({
+    resolver: zodResolver(mfaFormSchema),
+    defaultValues: {
+      otp: "",
+    }
+  })
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
     setLoading(true)
     try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...values })
+    })
+
+    const data = await response.json()
+      if (data?.user?.two_factor_enabled) {
+        setMfa(true)
+        return
+      }
+      if (!data)  return;
+      
       const res: any = await signIn('credentials', {
-        email: values?.email,
-        password: values?.password,
+        user: JSON.stringify(data?.user),
+        tokens: JSON.stringify(data?.tokens),
+        redirect: false
+      })
+
+      if (!res?.ok) {
+        return showErrorInToast(res);
+      }
+
+      if (res && res.ok) {
+        const session: any = await getSession();
+        toast.success("Login sussfully!");
+        //change in future
+        if (session?.user?.is_superuser) {
+          dispatch(userApi.util.invalidateTags(["Auth"] as any));
+          router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS)
+        }
+
+        if (!session?.user?.is_superuser) {
+          if (session?.user?.has_reports_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.REPORT)
+          }
+          if (session?.user?.has_category_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ALLCATEGORIES)
+          }
+          if (session?.user?.has_cm_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CHENNELMAX)
+          }
+          if (session?.user?.has_order_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ORDER)
+          }
+          if (session?.user?.has_product_db_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.PRODUCTDATABASE)
+          }
+          if (session?.user?.has_scraped_data_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.SCREPPEDDATA)
+          }
+        }
+      }
+
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onSubmitOtp(values: z.infer<typeof mfaFormSchema>) {
+    console.log(values)
+    setLoading(true)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/verify-2fa/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...values, email: form.getValues().email })
+    })
+
+    const data = await response.json()
+      if (!data)  return;
+      
+      const res: any = await signIn('credentials', {
+        user: JSON.stringify(data?.user),
+        tokens: JSON.stringify(data?.tokens),
         redirect: false
       })
 
@@ -117,7 +206,7 @@ export default function LoginPage() {
       <div className="flex flex-col justify-center w-full h-full md:col-span-2 max-w-lg mx-auto bg-white rounded-xl">
         <h2 className="text-4xl font-extrabold text-center text-blue-500">Welcome</h2>
         <p className="text-center text-gray-600 mb-6 text-lg">Login to Your Account</p>
-        <Form {...form}>
+        {!mfa && <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="h-24">
               <FormField
@@ -176,7 +265,37 @@ export default function LoginPage() {
               ) : "Log In"}
             </Button>
           </form>
-        </Form>
+        </Form>}
+        {mfa && <Form {...mfaForm}>
+          <form onSubmit={mfaForm.handleSubmit(onSubmitOtp)} className="space-y-6">
+            <div className="h-24">
+              <FormField
+                control={mfaForm.control}
+                name="otp"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-lg font-light">Enter OTP</FormLabel>
+                    <FormControl>
+                      <Input {...field} id="otp" type="otp" placeholder="Enter otp" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <Button disabled={loading} type="submit" className="w-full h-14 bg-gradient-to-r from-blue-500 to-indigo-500 hover:bg-brand-100 text-xl font-semibold rounded-lg shadow-md">
+              {loading ? (
+                <Image
+                  src="/assets/icons/loader.svg"
+                  alt="loader"
+                  width={24}
+                  height={24}
+                  className="ml-2 animate-spin"
+                />
+              ) : "Log In"}
+            </Button>
+          </form>
+        </Form>}
 
 
       </div>

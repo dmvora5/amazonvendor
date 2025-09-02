@@ -10,32 +10,34 @@ export const authOptions: AuthOptions = {
             type: "credentials",
             credentials: {},
             async authorize(credentials: any) {
-                const { email, password } = credentials
+                // const { email, password } = credentials
+                const user = JSON.parse(credentials.user);
+                const tokens = JSON.parse(credentials.tokens || "{}");
 
                 try {
                     // ** Login API Call to match the user credentials and receive user data in response along with his role
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ email, password })
-                    })
+                    // const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/`, {
+                    //     method: 'POST',
+                    //     headers: {
+                    //         'Content-Type': 'application/json',
+                    //     },
+                    //     body: JSON.stringify({ email, password })
+                    // })
 
-                    const data = await res.json()
+                    // const data = await res.json()
 
-                    if (![200, 201].includes(res.status)) {
-                        throw new Error(JSON.stringify(data))
-                    }
-
-                    // if ([200, 201].includes(res.status) && data?.response?.userData?.isEmailVerified === false) {
+                    // if (![200, 201].includes(res.status)) {
                     //     throw new Error(JSON.stringify(data))
                     // }
 
-                    console.log('data?.user', data?.user)
+                    // // if ([200, 201].includes(res.status) && data?.response?.userData?.isEmailVerified === false) {
+                    // //     throw new Error(JSON.stringify(data))
+                    // // }
 
-                    if (data?.user && data?.tokens) {
-                        return { ...data?.user, access_token: data?.tokens?.access }
+                    // console.log('data?.user', data?.user)
+
+                    if (user && tokens) {
+                        return { ...user, access_token: tokens?.access }
                     }
 
                     return null
@@ -118,6 +120,7 @@ export const authOptions: AuthOptions = {
                     "has_all_inventory_access",
                     "has_order_history_access",
                     "has_shipped_history_access",
+                    "two_factor_enabled"
                 ]
 
                 token.user = Object.fromEntries(Object.entries(token?.user)?.filter(([key]) => userKeysToKeep?.includes(key)))

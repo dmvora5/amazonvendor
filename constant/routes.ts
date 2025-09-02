@@ -48,8 +48,13 @@ export const API_ROUTES = {
         DELETECATEGORY: "/category/category-re-order/",
 
         //cookies
-        CREATECOOKIES: "/update-cookie/"
+        CREATECOOKIES: "/update-cookie/",
+
+        //2FA
+        SETUP2FA: "/users/setup-2fa/",
+        VERIFY2FA: "/users/setup-2fa-verify/",
     },
+    
     AUTH: {
         FORGETPASSWORD: '/users/send-password-reset-code-mail/',
         RESETPASSWORD: "/users/reset-password/",

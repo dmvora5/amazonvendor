@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report", "Cookies"],
+    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report", "Cookies", "2FA"],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -286,6 +286,30 @@ export const userApi = createApi({
             }),
             invalidatesTags: [{ type: 'Cookies'}]
         }),
+
+        //2FA
+        setUp2fa: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.SETUP2FA,
+                method: "POST",
+            }),
+            invalidatesTags: [{ type: '2FA'}]
+        }),
+        delete2fa: build.mutation({
+            query: (id: any) => ({
+                url: API_ROUTES.SUPERADMIN.SETUP2FA,
+                method: "DELETE",
+            }),
+            invalidatesTags: [{ type: '2FA'}]
+        }),
+        verify2fa: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.VERIFY2FA,
+                method: "POST",
+                body: payload,
+            }),
+            invalidatesTags: [{ type: '2FA'}]
+        }),
     })
 });
 
@@ -317,5 +341,9 @@ export const {
     useUpdateCategoryMutation,
     useDeletecategoryMutation,
     //cookies
-    useAddCookiesMutation
+    useAddCookiesMutation,
+    //2FA
+    useSetUp2faMutation,
+    useVerify2faMutation,
+    useDelete2faMutation
 } = userApi;
