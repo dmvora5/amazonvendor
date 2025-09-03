@@ -15,6 +15,8 @@ const reportMenu = [
     "has_fba_access",
     "has_order_history_access",
     "has_shipped_history_access",
+    "has_cookies_access",
+    "has_upload_report_access",
 ]
 
 const menu = [
@@ -165,7 +167,7 @@ const menu = [
     {
         title: "Upload report",
         Icon: PackageIcon,
-        access: "has_current_inventory_access",
+        access: "has_upload_report_access",
         subMenus: [
             {
                 title: "Upload Report",
@@ -177,7 +179,7 @@ const menu = [
     {
         title: "Cookies",
         Icon: PackageIcon,
-        access: null,
+        access: "has_cookies_access",
         subMenus: [
             {
                 title: "Cookies",
