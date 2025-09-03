@@ -40,6 +40,8 @@ const userFormSchema = z.object({
   has_all_inventory_access: z.boolean().default(false),
   has_order_history_access: z.boolean().default(false),
   has_shipped_history_access: z.boolean().default(false),
+  has_cookies_access: z.boolean().default(false),
+  has_upload_report_access: z.boolean().default(false),
 });
 
 export default function CreateUserForm() {
@@ -76,7 +78,8 @@ export default function CreateUserForm() {
       has_all_inventory_access: false,
       has_order_history_access: false,
       has_shipped_history_access: false,
-
+      has_cookies_access: false,
+      has_upload_report_access: false
     },
   });
 
@@ -220,6 +223,8 @@ export default function CreateUserForm() {
                   { name: "has_all_inventory_access", label: "All Inventory Access" },
                   { name: "has_order_history_access", label: "Order History Access" },
                   { name: "has_shipped_history_access", label: "Shipped History Access" },
+                  { name: "has_cookies_access", label: "Cookies Access" },
+                  { name: "has_upload_report_access", label: "Upload Report Access" },
                 ].map(({ name, label }) => (
                   <FormField
                     key={name}

@@ -42,6 +42,8 @@ const userFormSchema = z.object({
   has_all_inventory_access: z.boolean().default(false),
   has_order_history_access: z.boolean().default(false),
   has_shipped_history_access: z.boolean().default(false),
+  has_cookies_access: z.boolean().default(false),
+  has_upload_report_access: z.boolean().default(false),
 });
 
 export default function EditUserForm() {
@@ -80,6 +82,8 @@ export default function EditUserForm() {
       has_all_inventory_access: false,
       has_order_history_access: false,
       has_shipped_history_access: false,
+      has_cookies_access: false,
+      has_upload_report_access: false
     },
   });
 
@@ -106,6 +110,8 @@ export default function EditUserForm() {
     setValue("has_all_inventory_access", Boolean((data as any).has_all_inventory_access));
     setValue("has_order_history_access", Boolean((data as any).has_order_history_access));
     setValue("has_shipped_history_access", Boolean((data as any).has_shipped_history_access));
+    setValue("has_cookies_access", Boolean((data as any).has_cookies_access));
+    setValue("has_upload_report_access", Boolean((data as any).has_upload_report_access));
   }, [data, setValue]);
 
   // On successful update, show toast and redirect
@@ -216,6 +222,8 @@ export default function EditUserForm() {
                   { name: "has_all_inventory_access", label: "All Inventory Access" },
                   { name: "has_order_history_access", label: "Order History Access" },
                   { name: "has_shipped_history_access", label: "Shipped History Access" },
+                  { name: "has_cookies_access", label: "Cookies Access" },
+                  { name: "has_upload_report_access", label: "Upload Report Access" },
                 ].map(({ name, label }) => (
                   <FormField
                     key={name}
