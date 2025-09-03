@@ -10,8 +10,11 @@ import {
   useVerify2faMutation,
   useDelete2faMutation,
 } from "@/redux/apis/usersApis";
+import { useRouter } from "next/navigation"; // ✅ import router
+import { PAGE_ROUTES } from "@/constant/routes";
 
 const ManageMfaPage = () => {
+  const router = useRouter(); // ✅ initialize router
   const [qrImage, setQrImage] = useState<string | null>(null);
   const [qrImageMsg, setQrImageMsg] = useState<string | null>(null);
   const [twoFACode, setTwoFACode] = useState("");
@@ -44,6 +47,7 @@ const ManageMfaPage = () => {
       setTwoFACode("");
       setQrImage(null);
       setQrImageMsg(null); // clear message after success
+      router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
     } catch (err) {
       toast.error("Invalid Code, try again");
     }
@@ -57,64 +61,77 @@ const ManageMfaPage = () => {
       setTwoFACode("");
       setQrImage(null);
       setQrImageMsg(null); // clear message after disabling
+      router.push(PAGE_ROUTES.SUPERADMIN.ALLUSERS);
     } catch (err) {
       toast.error("Failed to disable MFA");
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-24 p-6 bg-white shadow rounded-lg">
-      <h1 className="text-xl font-bold mb-4">Manage MFA</h1>
+    <>
+      {/* Back Button */}
+      {/* <div className="mb-4">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="mb-2"
+        >
+          ⬅ Back
+        </Button>
+      </div> */}
+      <div className="max-w-lg mx-auto mt-24 p-6 bg-white shadow rounded-lg">
+        <h1 className="text-xl font-bold mb-4">Manage MFA</h1>
 
-      {qrImageMsg && <p className="mb-2">{qrImageMsg}</p>}
+        {qrImageMsg && <p className="mb-2">{qrImageMsg}</p>}
 
-      {qrImage ? (
-        <div className="flex justify-center mb-4">
-          <div className="p-6 bg-gray-50 rounded-lg flex items-center justify-center">
-            <Image src={qrImage} alt="QR Code" width={200} height={200} />
+        {qrImage ? (
+          <div className="flex justify-center mb-4">
+            <div className="p-6 bg-gray-50 rounded-lg flex items-center justify-center">
+              <Image src={qrImage} alt="QR Code" width={200} height={200} />
+            </div>
           </div>
+        ) : (
+          <p className="text-center text-sm text-gray-500 mb-4">
+            {isLoadingQr ? "Loading QR..." : "No QR available"}
+          </p>
+        )}
+
+        {/* OTP Input */}
+        <div className="grid grid-cols-4 items-center gap-4 mb-4">
+          <Label htmlFor="twoFACode" className="text-right">
+            Code
+          </Label>
+          <Input
+            id="twoFACode"
+            value={twoFACode}
+            onChange={(e) => setTwoFACode(e.target.value)}
+            className="col-span-3"
+            placeholder="Enter 6-digit code"
+          />
         </div>
-      ) : (
-        <p className="text-center text-sm text-gray-500 mb-4">
-          {isLoadingQr ? "Loading QR..." : "No QR available"}
-        </p>
-      )}
 
-      {/* OTP Input */}
-      <div className="grid grid-cols-4 items-center gap-4 mb-4">
-        <Label htmlFor="twoFACode" className="text-right">
-          Code
-        </Label>
-        <Input
-          id="twoFACode"
-          value={twoFACode}
-          onChange={(e) => setTwoFACode(e.target.value)}
-          className="col-span-3"
-          placeholder="Enter 6-digit code"
-        />
+        {/* Action Buttons */}
+        <div className="flex justify-between">
+          <Button
+            type="button"
+            className="bg-green-600"
+            onClick={handleVerify2FA}
+            disabled={isVerifying}
+          >
+            {isVerifying ? "Verifying..." : "Verify & Enable"}
+          </Button>
+
+          <Button
+            type="button"
+            className="bg-red-600"
+            onClick={handleDelete2FA}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Disabling..." : "Disable MFA"}
+          </Button>
+        </div>
       </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-between">
-        <Button
-          type="button"
-          className="bg-green-600"
-          onClick={handleVerify2FA}
-          disabled={isVerifying}
-        >
-          {isVerifying ? "Verifying..." : "Verify & Enable"}
-        </Button>
-
-        <Button
-          type="button"
-          className="bg-red-600"
-          onClick={handleDelete2FA}
-          disabled={isDeleting}
-        >
-          {isDeleting ? "Disabling..." : "Disable MFA"}
-        </Button>
-      </div>
-    </div>
+    </>
   );
 };
 

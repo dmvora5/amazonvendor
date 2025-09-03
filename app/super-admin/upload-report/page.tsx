@@ -118,7 +118,7 @@ const UploadPage = () => {
 
 
             <div className="w-full flex justify-center items-center min-h-[90%]">
-                <RolesChecks access="has_cm_access" />
+                <RolesChecks access="has_upload_report_access" />
                 <div className="space-y-10">
                     <Select onValueChange={handleChange} value={selected}>
                         <SelectTrigger className="bg-white w-full">

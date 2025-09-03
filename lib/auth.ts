@@ -120,6 +120,8 @@ export const authOptions: AuthOptions = {
                     "has_all_inventory_access",
                     "has_order_history_access",
                     "has_shipped_history_access",
+                    "has_cookies_access",
+                    "has_upload_report_access",
                     "two_factor_enabled"
                 ]
 

@@ -36,7 +36,7 @@ const CookiesPage = () => {
 
   return (
     <div className="w-full flex justify-center items-center min-h-[90%]">
-      <RolesChecks access="has_cm_access" />
+      <RolesChecks access="has_cookies_access" />
 
       <div className="flex flex-col space-y-6 w-[500px]">
         <ApiState error={null} isSuccess={false}>
