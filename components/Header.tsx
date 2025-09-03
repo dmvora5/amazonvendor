@@ -23,6 +23,12 @@ import {
 } from "@/redux/apis/usersApis";
 import { SidebarTrigger } from "./ui/sidebar";
 import Image from "next/image";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Header = () => {
   // State to store user data
@@ -38,6 +44,7 @@ const Header = () => {
 
   // 2FA States
   const [qrImage, setQrImage] = useState<string | null>(null);
+  const [qrImageMsg, setQrImageMsg] = useState<string | null>(null);
   const [twoFACode, setTwoFACode] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -88,6 +95,7 @@ const Header = () => {
       const res: any = await setUp2fa({}).unwrap();
       if (res?.qr_code) {
         setQrImage(`data:image/png;base64,${res.qr_code}`);
+        setQrImageMsg(res.message);
       }
     } catch (err) {
       console.log("🚀 ~ handleEnable2FA ~ err:", err);
@@ -99,7 +107,7 @@ const Header = () => {
   const handleVerify2FA = async () => {
     try {
       await verify2fa({ otp: twoFACode }).unwrap();
-      toast.success("2FA Enabled Successfully!");
+      toast.success("MFA Enabled Successfully!");
 
       setTwoFACode("");
       setQrImage(null);
@@ -112,12 +120,12 @@ const Header = () => {
   const handleDelete2FA = async () => {
     try {
       await delete2fa({}).unwrap();
-      toast.success("2FA Disabled Successfully!");
+      toast.success("MFA Disabled Successfully!");
       setTwoFACode("");
       setQrImage(null);
       setOpen(false);
     } catch (err) {
-      toast.error("Failed to disable 2FA");
+      toast.error("Failed to disable MFA");
     }
   };
 
@@ -182,16 +190,30 @@ const Header = () => {
             if (val) handleEnable2FA();
           }}
         >
-          <DialogTrigger asChild>
-            <Button variant="outline" type="button" className="sign-out-button">
-              <Shield width={22} height={22} />
-            </Button>
-          </DialogTrigger>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="sign-out-button"
+                  >
+                    <Shield width={22} height={22} />
+                  </Button>
+                </DialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Manage MFA</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Manage 2FA</DialogTitle>
+              <DialogTitle>Manage MFA</DialogTitle>
             </DialogHeader>
+            <>{qrImageMsg}</>
 
             <div className="grid gap-4 py-4">
               {qrImage ? (
@@ -234,21 +256,30 @@ const Header = () => {
                 onClick={handleDelete2FA}
                 disabled={isDeleting}
               >
-                {isDeleting ? "Deleting..." : "Delete 2FA"}
+                {isDeleting ? "Disable..." : "Disable MFA"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Logout Button */}
-        <Button
-          variant="outline"
-          type="button"
-          className="sign-out-button"
-          onClick={handleSignOut}
-        >
-          <LogOut width={24} height={24} />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                type="button"
+                className="sign-out-button"
+                onClick={handleSignOut}
+              >
+                <LogOut width={24} height={24} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Sign Out</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </header>
   );
