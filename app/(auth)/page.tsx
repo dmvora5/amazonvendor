@@ -94,7 +94,7 @@ export default function LoginPage() {
 
       if (res && res.ok) {
         const session: any = await getSession();
-        toast.success("Login sussfully!");
+        toast.success("Login successful");
         //change in future
         if (session?.user?.is_superuser) {
           dispatch(userApi.util.invalidateTags(["Auth"] as any));
@@ -157,7 +157,7 @@ export default function LoginPage() {
 
       if (res && res.ok) {
         const session: any = await getSession();
-        toast.success("Login sussfully!");
+        toast.success("Login successful");
         //change in future
         if (session?.user?.is_superuser) {
           dispatch(userApi.util.invalidateTags(["Auth"] as any));

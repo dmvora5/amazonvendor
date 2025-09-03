@@ -11,7 +11,8 @@ export const PAGE_ROUTES = {
         CHENNELMAX: "/super-admin/channelmax/upload-report",
         ORDER: "/super-admin/Order",
         PRODUCTDATABASE: "/super-admin/product-database",
-        SCREPPEDDATA: "/super-admin/scraped-data"
+        SCREPPEDDATA: "/super-admin/scraped-data",
+        MFA: "/super-admin/mfa",
     },
     AUTH: {
         LOGIN: "/"
