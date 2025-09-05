@@ -64,7 +64,6 @@ export default function LoginPage() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
     setLoading(true)
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/`, {
@@ -98,8 +97,6 @@ export default function LoginPage() {
         tokens: JSON.stringify(data?.tokens),
         redirect: false
       })
-
-      console.log('res', res)
 
       if (!res?.ok) {
         return showErrorInToast(res);
@@ -168,7 +165,6 @@ export default function LoginPage() {
   }
 
   async function onSubmitOtp(values: z.infer<typeof mfaFormSchema>) {
-    console.log(values)
     setLoading(true)
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/verify-2fa/`, {
@@ -195,8 +191,6 @@ export default function LoginPage() {
         tokens: JSON.stringify(data?.tokens),
         redirect: false
       })
-
-      console.log('res', res)
 
       if (!res?.ok) {
         return showErrorInToast(res);
