@@ -70,23 +70,36 @@ export default function LoginPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ ...values })
-    })
+      })
 
-    const data = await response.json()
+      const data = await response.json()
+
+      if (!response?.ok) {
+        if (data?.details) {
+          return toast.error(Array.isArray(data?.details) ? data?.details[0] : data?.details)
+        }
+
+
+        return showErrorInToast(response);
+      }
+
       if (data?.user?.two_factor_enabled) {
         setMfa(true)
         return
       }
-      if (!data)  return;
-      
+
+      if (!data) return;
+
       const res: any = await signIn('credentials', {
         user: JSON.stringify(data?.user),
         tokens: JSON.stringify(data?.tokens),
         redirect: false
       })
+
+      console.log('res', res)
 
       if (!res?.ok) {
         return showErrorInToast(res);
@@ -137,19 +150,29 @@ export default function LoginPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/login/verify-2fa/`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ ...values, email: form.getValues().email })
-    })
+      })
 
-    const data = await response.json()
-      if (!data)  return;
-      
+      const data = await response.json()
+      if (!response?.ok) {
+        if (data?.details) {
+          return toast.error(Array.isArray(data?.details) ? data?.details[0] : data?.details)
+        }
+
+        return showErrorInToast(response);
+      }
+
+      if (!data) return;
+
       const res: any = await signIn('credentials', {
         user: JSON.stringify(data?.user),
         tokens: JSON.stringify(data?.tokens),
         redirect: false
       })
+
+      console.log('res', res)
 
       if (!res?.ok) {
         return showErrorInToast(res);
