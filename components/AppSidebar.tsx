@@ -11,12 +11,16 @@ import { usePathname } from "next/navigation";
 const reportMenu = [
     "has_all_inventory_access",
     "has_cm_access",
+    "has_category_access",
     "has_current_inventory_access",
     "has_fba_access",
     "has_order_history_access",
     "has_shipped_history_access",
-    "has_cookies_access",
+    "has_order_access",
+    "has_product_db_access",
+    "has_scraped_data_access",
     "has_upload_report_access",
+    "has_cookies_access",
 ]
 
 const menu = [

@@ -115,6 +115,30 @@ export default function LoginPage() {
         }
 
         if (!session?.user?.is_superuser) {
+          if (session?.user?.has_all_inventory_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ALLINVENTORY)
+          }
+          if (session?.user?.has_current_inventory_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
+          }
+          if (session?.user?.has_current_inventory_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
+          }
+          if (session?.user?.has_fba_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.FBAINVENTORY)
+          }
+          if (session?.user?.has_order_history_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ORDERHISTORY)
+          }
+          if (session?.user?.has_shipped_history_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.SHIPPEDHISTORY)
+          }
+          if (session?.user?.has_upload_report_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.UPLOADREPORT)
+          }
+          if (session?.user?.has_cookies_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.COOKIES)
+          }
           if (session?.user?.has_reports_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.REPORT)
           }
@@ -132,6 +156,9 @@ export default function LoginPage() {
           }
           if (session?.user?.has_scraped_data_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.SCREPPEDDATA)
+          }
+          if (session?.user?.two_factor_enabled) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.MFA)
           }
         }
       }
@@ -188,6 +215,30 @@ export default function LoginPage() {
         }
 
         if (!session?.user?.is_superuser) {
+          if (session?.user?.has_all_inventory_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ALLINVENTORY)
+          }
+          if (session?.user?.has_current_inventory_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
+          }
+          if (session?.user?.has_current_inventory_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
+          }
+          if (session?.user?.has_fba_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.FBAINVENTORY)
+          }
+          if (session?.user?.has_order_history_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.ORDERHISTORY)
+          }
+          if (session?.user?.has_shipped_history_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.SHIPPEDHISTORY)
+          }
+          if (session?.user?.has_upload_report_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.UPLOADREPORT)
+          }
+          if (session?.user?.has_cookies_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.COOKIES)
+          }
           if (session?.user?.has_reports_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.REPORT)
           }
@@ -205,6 +256,9 @@ export default function LoginPage() {
           }
           if (session?.user?.has_scraped_data_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.SCREPPEDDATA)
+          }
+          if (session?.user?.two_factor_enabled) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.MFA)
           }
         }
       }
