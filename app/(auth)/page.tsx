@@ -121,9 +121,6 @@ export default function LoginPage() {
           if (session?.user?.has_current_inventory_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
           }
-          if (session?.user?.has_current_inventory_access) {
-            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
-          }
           if (session?.user?.has_fba_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.FBAINVENTORY)
           }
@@ -217,9 +214,6 @@ export default function LoginPage() {
         if (!session?.user?.is_superuser) {
           if (session?.user?.has_all_inventory_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.ALLINVENTORY)
-          }
-          if (session?.user?.has_current_inventory_access) {
-            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
           }
           if (session?.user?.has_current_inventory_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORY)
