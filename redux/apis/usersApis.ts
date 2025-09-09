@@ -344,6 +344,5 @@ export const {
     useAddCookiesMutation,
     //2FA
     useSetUp2faMutation,
-    useVerify2faMutation,
     useDelete2faMutation
 } = userApi;

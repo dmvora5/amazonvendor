@@ -17,6 +17,7 @@ import { PAGE_ROUTES } from "@/constant/routes";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { userApi } from "@/redux/apis/usersApis";
+import Mfa from "@/components/Mfa";
 
 
 export default function LoginPage() {
@@ -28,6 +29,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mfa, setMfa] = useState(false);
+  const [enableMfa, setEnableMfa] = useState(false);
+  const [qr_code, setQrCode] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -76,6 +79,8 @@ export default function LoginPage() {
 
       const data = await response.json()
 
+      console.log('response', response)
+
       if (!response?.ok) {
         if (data?.details) {
           return toast.error(Array.isArray(data?.details) ? data?.details[0] : data?.details)
@@ -85,10 +90,16 @@ export default function LoginPage() {
         return showErrorInToast(response);
       }
 
-      if (data?.user?.two_factor_enabled) {
-        setMfa(true)
-        return
+      if(!data?.user?.two_factor_enabled) {
+        setQrCode(data?.qr_code)
+        return setEnableMfa(true);
       }
+
+      if (data?.user?.two_factor_enabled) {
+        return setMfa(true)
+      }
+
+      console.log('data', data)
 
       if (!data) return;
 
@@ -258,6 +269,10 @@ export default function LoginPage() {
     }
   }
 
+  const callback = () => {
+    setMfa(true)
+    setEnableMfa(false)
+  }
   return (
     // <div className="flex h-screen w-screen items-center justify-center bg-gray-100 p-4">
     <div className="grid w-full h-screen grid-cols-1 md:grid-cols-5 bg-white shadow-lg overflow-hidden rounded-xl">
@@ -271,7 +286,7 @@ export default function LoginPage() {
       <div className="flex flex-col justify-center w-full h-full md:col-span-2 max-w-lg mx-auto bg-white rounded-xl">
         <h2 className="text-4xl font-extrabold text-center text-blue-500">Welcome</h2>
         <p className="text-center text-gray-600 mb-6 text-lg">Login to Your Account</p>
-        {!mfa && <Form {...form}>
+        {(!mfa && !enableMfa) && <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="h-24">
               <FormField
@@ -331,6 +346,7 @@ export default function LoginPage() {
             </Button>
           </form>
         </Form>}
+        {(enableMfa && qr_code) && <Mfa qr_code={qr_code} cb={callback} email={form.getValues().email}/>}
         {mfa && <Form {...mfaForm}>
           <form onSubmit={mfaForm.handleSubmit(onSubmitOtp)} className="space-y-6">
             <div className="h-24">
