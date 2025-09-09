@@ -11,7 +11,7 @@ import {
   useGetAllUsersQuery,
 } from "@/redux/apis/usersApis";
 import { parseAndShowErrorInToast } from "@/utils";
-import { Edit, Trash } from "lucide-react";
+import { Check, Cross, Edit, Trash, X } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -83,6 +83,9 @@ function UserTables() {
                   <th className="px-6 py-4 text-left font-semibold min-w-52">
                     Email
                   </th>
+                  <th className="px-6 py-4 text-left font-semibold min-w-52">
+                    2FA-Enable
+                  </th>
                   <th className="px-6 py-4 text-left font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -96,6 +99,7 @@ function UserTables() {
                     <td className="px-6 py-4">{row.first_name}</td>
                     <td className="px-6 py-4">{row.last_name}</td>
                     <td className="px-6 py-4">{row.email}</td>
+                    <td className="px-6 py-4">{row?.two_factor_enabled ?<Check color="green" />: <X color="red" />}</td>
                     <td className="px-6 py-4 flex space-x-2">
                       <Button
                         onClick={() => gotoDetailsPage(row?.id)}
