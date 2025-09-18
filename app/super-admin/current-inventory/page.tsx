@@ -32,7 +32,7 @@ import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios";
 import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast } from "@/utils";
-import { getSession, signOut } from "next-auth/react";
+import { getSession, signOut, useSession } from "next-auth/react";
 import RolesChecks from "@/components/RolesChecks";
 import { toast } from "react-toastify";
 
@@ -272,6 +272,7 @@ const ExcelEditor = () => {
   const columnWidth = 250;
 
   const listRef = useRef<any>(null);
+  const { data: session }: any = useSession();
 
   const columnOptions = Object.keys(originalData[0] || {})
     .filter((key) => key.startsWith("Supplier"))
@@ -1394,32 +1395,35 @@ const ExcelEditor = () => {
               )}
             </Button>
           )}
-          <div className="relative group">
-            <button
-              onClick={handleDownloadExcel}
-              className="p-2 rounded-full bg-green-600 hover:bg-green-700 text-white focus:outline-none"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+          {session?.user?.has_current_inventory_upload_download_access && (
+            <div className="relative group">
+              <button
+                onClick={handleDownloadExcel}
+                className="p-2 rounded-full bg-green-600 hover:bg-green-700 text-white focus:outline-none"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-                />
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                  />
+                </svg>
+              </button>
 
-            {/* Tooltip */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-              Download Excel
+              {/* Tooltip */}
+
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                Download Excel
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {isLoading || loading || isFetching ? (

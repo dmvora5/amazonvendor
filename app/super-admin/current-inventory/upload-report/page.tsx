@@ -117,7 +117,7 @@ const UploadPage = () => {
 
   return (
     <div className="w-full flex justify-center items-center min-h-[90%]">
-      <RolesChecks access="has_current_inventory_access" />
+      <RolesChecks access="has_current_inventory_upload_download_access" />
 
       <div className="flex flex-col space-y-6">
         <ApiState error={null} isSuccess={false}>

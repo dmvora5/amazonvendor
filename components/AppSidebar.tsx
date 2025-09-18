@@ -42,6 +42,8 @@ const reportMenu = [
   "has_scraped_data_access",
   "has_upload_report_access",
   "has_cookies_access",
+  "has_current_inventory_upload_download_access",
+  "has_product_db_upload_download_access",
 ];
 
 // const menu = [
@@ -276,7 +278,8 @@ const menu = [
   {
     title: "Current Inventory",
     Icon: PackageIcon,
-    access: "has_current_inventory_access",
+    access: "pass",
+    // access: "has_current_inventory_access",
     subMenus: [
       {
         title: "Current Inventory",
@@ -288,6 +291,7 @@ const menu = [
         title: "Upload Report",
         url: "/super-admin/current-inventory/upload-report",
         Icon: PackageIcon,
+        access: "has_current_inventory_upload_download_access",
       },
     ],
   },
@@ -337,17 +341,20 @@ const menu = [
   {
     title: "Product Database",
     Icon: PackageIcon,
-    access: "has_product_db_access",
+    access: "pass",
+    // access: "has_product_db_access",
     subMenus: [
       {
         title: "Product Database",
         url: "/super-admin/product-database",
         Icon: PackageIcon,
+        access: "has_product_db_access",
       },
       {
         title: "Upload Report",
         url: "/super-admin/productdatabase/upload-report",
         Icon: PackageIcon,
+        access: "has_product_db_upload_download_access",
       },
     ],
   },
@@ -394,10 +401,10 @@ const menu = [
   },
 ];
 
-const isShowReportMenu = (session: any) => {
+const isShowReportMenu = (session: any, subMenu = reportMenu) => {
   const keys = Object.keys(session?.user);
 
-  for (const key of reportMenu) {
+  for (const key of subMenu) {
     if (session?.user[key]) {
       return true;
     }
@@ -502,7 +509,13 @@ const AppSidebar = ({ session }: any) => {
       );
     }
 
-    if (item?.access == "pass" && isShowReportMenu(session)) {
+    if (
+      item?.access == "pass" &&
+      isShowReportMenu(
+        session,
+        item?.subMenus.map((ele: any) => ele?.access)
+      )
+    ) {
       return (
         <Collapsible
           key={item.title}

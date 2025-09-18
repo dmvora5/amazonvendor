@@ -20,6 +20,8 @@ export const PAGE_ROUTES = {
         UPLOADREPORT:"/super-admin/upload-report/",
         COOKIES:"/super-admin/cookies/",
         MFA: "/super-admin/mfa",
+        CURRENTINVENTORYUPLOAD: "/super-admin/current-inventory/upload-report",
+        PRODUCTDATABASEUPLOAD: "/super-admin/productdatabase/upload-report",
     },
     AUTH: {
         LOGIN: "/"

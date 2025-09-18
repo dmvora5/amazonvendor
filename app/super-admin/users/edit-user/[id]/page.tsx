@@ -44,6 +44,8 @@ const userFormSchema = z.object({
   has_shipped_history_access: z.boolean().default(false),
   has_cookies_access: z.boolean().default(false),
   has_upload_report_access: z.boolean().default(false),
+  has_current_inventory_upload_download_access: z.boolean().default(false),
+  has_product_db_upload_download_access: z.boolean().default(false),
 });
 
 export default function EditUserForm() {
@@ -83,7 +85,9 @@ export default function EditUserForm() {
       has_order_history_access: false,
       has_shipped_history_access: false,
       has_cookies_access: false,
-      has_upload_report_access: false
+      has_upload_report_access: false,
+      has_current_inventory_upload_download_access: false,
+      has_product_db_upload_download_access: false
     },
   });
 
@@ -112,6 +116,8 @@ export default function EditUserForm() {
     setValue("has_shipped_history_access", Boolean((data as any).has_shipped_history_access));
     setValue("has_cookies_access", Boolean((data as any).has_cookies_access));
     setValue("has_upload_report_access", Boolean((data as any).has_upload_report_access));
+    setValue("has_current_inventory_upload_download_access", Boolean((data as any).has_current_inventory_upload_download_access));
+    setValue("has_product_db_upload_download_access", Boolean((data as any).has_product_db_upload_download_access));
   }, [data, setValue]);
 
   // On successful update, show toast and redirect
@@ -213,7 +219,7 @@ export default function EditUserForm() {
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { name: "has_category_access", label: "Category Access" },
-                  { name: "has_cm_access", label: "CM Access" },
+                  { name: "has_cm_access", label: "Channel Max Access" },
                   { name: "has_order_access", label: "Order Access" },
                   { name: "has_product_db_access", label: "Product DB Access" },
                   { name: "has_scraped_data_access", label: "Scraped Data Access" },
@@ -224,6 +230,8 @@ export default function EditUserForm() {
                   { name: "has_shipped_history_access", label: "Shipped History Access" },
                   { name: "has_cookies_access", label: "Cookies Access" },
                   { name: "has_upload_report_access", label: "Upload Report Access" },
+                  { name: "has_current_inventory_upload_download_access", label: "Current Inventory Download & Upload Access" },
+                  { name: "has_product_db_upload_download_access", label: "Product Database Download & Upload Access" },
                 ].map(({ name, label }) => (
                   <FormField
                     key={name}

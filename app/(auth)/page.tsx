@@ -165,6 +165,12 @@ export default function LoginPage() {
           if (session?.user?.two_factor_enabled) {
             return router.push(PAGE_ROUTES.SUPERADMIN.MFA)
           }
+          if (session?.user?.has_current_inventory_upload_download_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORYUPLOAD)
+          }
+          if (session?.user?.has_product_db_upload_download_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.PRODUCTDATABASEUPLOAD)
+          }
         }
       }
 
@@ -258,6 +264,12 @@ export default function LoginPage() {
           }
           if (session?.user?.two_factor_enabled) {
             return router.push(PAGE_ROUTES.SUPERADMIN.MFA)
+          }
+          if (session?.user?.has_current_inventory_upload_download_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.CURRENTINVENTORYUPLOAD)
+          }
+          if (session?.user?.has_product_db_upload_download_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.PRODUCTDATABASEUPLOAD)
           }
         }
       }

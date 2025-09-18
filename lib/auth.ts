@@ -122,7 +122,9 @@ export const authOptions: AuthOptions = {
                     "has_scraped_data_access",
                     "has_upload_report_access",
                     "has_cookies_access",
-                    "two_factor_enabled"
+                    "two_factor_enabled",
+                    "has_current_inventory_upload_download_access",
+                    "has_product_db_upload_download_access",
                 ]
 
                 token.user = Object.fromEntries(Object.entries(token?.user)?.filter(([key]) => userKeysToKeep?.includes(key)))
