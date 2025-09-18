@@ -369,7 +369,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel className="text-lg font-light">Enter OTP</FormLabel>
                     <FormControl>
-                      <Input {...field} id="otp" type="otp" placeholder="Enter otp" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" />
+                      <Input {...field} id="otp" type="otp" placeholder="Enter OTP" className="w-full h-14 px-5 border rounded-lg text-lg shadow-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
