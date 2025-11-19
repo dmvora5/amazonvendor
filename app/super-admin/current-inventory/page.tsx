@@ -239,9 +239,11 @@ const ExcelEditor = () => {
   const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
   const [newSumColumnName, setSumNewColumnName] = useState("");
   const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
+  const [headers, setHeaders] = useState<any[]>([]);
   const [hiddenHeaders, setHiddenHeaders] = useState<string[]>([]);
-  const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
+  const [visibleHeaders, setVisibleHeaders] = useState<any[]>([])
+  // const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
+  // console.log("🚀 ~ ExcelEditor ~ visibleHeaders:", visibleHeaders)
   const [showHiddenColumnModal, setShowHiddenColumnModal] = useState(false);
   const [fileChange, setFileChange] = useState(false);
   const [selectedSearchColumns, setSelectedSearchColumns] = useState<string[]>(
@@ -253,7 +255,7 @@ const ExcelEditor = () => {
   const [supplierHeaderNames, setSupplierHeaderNames] = useState<{
     [key: string]: string;
   }>({});
-
+  
   const [searchModel, setSearchModel] = useState(false);
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
@@ -345,6 +347,10 @@ const ExcelEditor = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(()=>{
+    setVisibleHeaders(headers?.filter((h) => !hiddenHeaders.includes(h)))
+  },[headers,hiddenHeaders])
 
   useEffect(() => {
     if (originalData.length > 0) {
@@ -590,16 +596,20 @@ const ExcelEditor = () => {
 
     // Detect slash or dot date strings like 4/8/25 or 04.08.25
     const isLooseDateKey = (key: string) =>
-      /^(\d{1,2})[./](\d{1,2})[./](\d{2})$/.test(key.trim());
+      /^(\d{1,2})[./](\d{1,2})[./](\d{2})(.*)$/i.test(key.trim());
 
     // Convert "4/8/25" or "4.8.25" to "04.08.25"
     const formatDateKey = (key: string) => {
-      const match = key.trim().match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})$/);
+      const match = key
+        .trim()
+        .match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})(.*)$/i);
       if (!match) return key;
-      const [, d, m, y] = match;
+
+      const [, d, m, y, rest] = match;
       const dd = d.padStart(2, "0");
       const mm = m.padStart(2, "0");
-      return `${dd}.${mm}.${y}`;
+
+      return `${dd}.${mm}.${y}${rest}`; // keep extra text
     };
 
     return (
@@ -647,17 +657,18 @@ const ExcelEditor = () => {
                               [formattedKey]: e.target.value,
                             }))
                           }
-                          onBlur={() => {
+                          onBlur={(e) => {
                             handleEditSupplierHeader(
-                              formattedKey,
-                              supplierHeaderNames[formattedKey] || formattedKey
+                              key,
+                              // supplierHeaderNames[formattedKey] || formattedKey
+                              e.target.value
                             );
                             setEditingSupplierHeaderKey(null);
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               handleEditSupplierHeader(
-                                formattedKey,
+                                key,
                                 supplierHeaderNames[formattedKey] ||
                                   formattedKey
                               );
@@ -787,12 +798,17 @@ const ExcelEditor = () => {
   };
 
   const handleEditSupplierHeader = (oldKey: string, newKey: string) => {
+    // console.log("🚀 ~ handleEditSupplierHeader ~ oldKey:", oldKey)
+    // console.log("🚀 ~ handleEditSupplierHeader ~ newKey:", newKey)
     if (!newKey || oldKey === newKey) return;
-
     setSupplierHeaderNames((prev) => ({
       ...prev,
       [oldKey]: newKey,
     }));
+    // Replace key in visibleHeaders
+  setVisibleHeaders((prev) =>
+    prev.map((h) => (h.trim() === oldKey.trim() ? newKey : h))
+  );
 
     setDirty(true); // optional, if you want to track that the header was edited
   };
