@@ -9,15 +9,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
-import { getSession, signIn } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
-import { showErrorInToast } from "@/utils";
+import { isLastLogin12HoursOld, showErrorInToast } from "@/utils";
 import { useRouter } from "next/navigation";
 import { PAGE_ROUTES } from "@/constant/routes";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { userApi } from "@/redux/apis/usersApis";
 import Mfa from "@/components/Mfa";
+
+
+
 
 
 export default function LoginPage() {
@@ -90,7 +93,7 @@ export default function LoginPage() {
         return showErrorInToast(response);
       }
 
-      if(!data?.user?.two_factor_enabled) {
+      if (!data?.user?.two_factor_enabled) {
         setQrCode(data?.qr_code)
         return setEnableMfa(true);
       }
@@ -115,6 +118,7 @@ export default function LoginPage() {
 
       if (res && res.ok) {
         const session: any = await getSession();
+        localStorage.setItem("time", String(Date.now()))
         toast.success("Login successful");
         //change in future
         if (session?.user?.is_superuser) {
@@ -215,6 +219,7 @@ export default function LoginPage() {
 
       if (res && res.ok) {
         const session: any = await getSession();
+        localStorage.setItem("time", String(Date.now()))
         toast.success("Login successful");
         //change in future
         if (session?.user?.is_superuser) {
@@ -358,7 +363,7 @@ export default function LoginPage() {
             </Button>
           </form>
         </Form>}
-        {(enableMfa && qr_code) && <Mfa qr_code={qr_code} cb={callback} email={form.getValues().email}/>}
+        {(enableMfa && qr_code) && <Mfa qr_code={qr_code} cb={callback} email={form.getValues().email} />}
         {mfa && <Form {...mfaForm}>
           <form onSubmit={mfaForm.handleSubmit(onSubmitOtp)} className="space-y-6">
             <div className="h-24">

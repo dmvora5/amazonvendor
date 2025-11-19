@@ -70,3 +70,12 @@ function findFirstStringError(value: any): string | undefined {
     console.log("parseAndShowErrorInToast -> error:", error);
   }
   
+
+  export function isLastLogin12HoursOld(lastLogin: any) {
+  const now = Date.now();
+  const last = lastLogin;
+
+  const diffHours = (now - last) / (1000 * 60 * 60);
+
+  return diffHours >= 12; // true = 12 hours old or more
+}
