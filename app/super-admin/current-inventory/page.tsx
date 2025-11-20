@@ -1535,7 +1535,7 @@ const ExcelEditor = () => {
                   onChange={(e) => {
                     const val = e.target.value;
                     // Allow only numbers and dots, and limit to format like 02.01.25
-                    if (/^(\d{1,2})[./](\d{1,2})[./](\d{2})(.*)$/i.test(val)) {
+                    if (/^[\d.]{0,8}\s*[A-Za-z]*$/.test(val)) {
                       setSumNewColumnName(val);
                     }
                   }}
