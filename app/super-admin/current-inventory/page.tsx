@@ -215,11 +215,10 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
-          isDuplicate
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
             ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
             : "focus:ring-blue-500"
-        }`}
+          }`}
       />
     );
   }
@@ -255,7 +254,7 @@ const ExcelEditor = () => {
   const [supplierHeaderNames, setSupplierHeaderNames] = useState<{
     [key: string]: string;
   }>({});
-  
+
   const [searchModel, setSearchModel] = useState(false);
 
   const [searchData, setSearchData] = useState<any[]>([]); // Holds filtered data
@@ -348,9 +347,9 @@ const ExcelEditor = () => {
     }
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     setVisibleHeaders(headers?.filter((h) => !hiddenHeaders.includes(h)))
-  },[headers,hiddenHeaders])
+  }, [headers, hiddenHeaders])
 
   useEffect(() => {
     if (originalData.length > 0) {
@@ -529,9 +528,8 @@ const ExcelEditor = () => {
             return (
               <div
                 key={key}
-                className={`px-4 py-2 flex-shrink-0 ${
-                  isDuplicate ? "text-red-600 font-semibold" : ""
-                }`}
+                className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+                  }`}
                 style={{ width: columnWidth }}
                 title={isDuplicate ? "Duplicate value" : ""}
               >
@@ -670,7 +668,7 @@ const ExcelEditor = () => {
                               handleEditSupplierHeader(
                                 key,
                                 supplierHeaderNames[formattedKey] ||
-                                  formattedKey
+                                formattedKey
                               );
                               setEditingSupplierHeaderKey(null);
                             }
@@ -806,9 +804,9 @@ const ExcelEditor = () => {
       [oldKey]: newKey,
     }));
     // Replace key in visibleHeaders
-  setVisibleHeaders((prev) =>
-    prev.map((h) => (h.trim() === oldKey.trim() ? newKey : h))
-  );
+    setVisibleHeaders((prev) =>
+      prev.map((h) => (h.trim() === oldKey.trim() ? newKey : h))
+    );
 
     setDirty(true); // optional, if you want to track that the header was edited
   };
@@ -1206,15 +1204,15 @@ const ExcelEditor = () => {
       result = result.reduce((acc: any[], row) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-              String(row[column] ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            )
+            String(row[column] ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          )
           : Object.values(row).some((value) =>
-              String(value ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            );
+            String(value ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          );
 
         if (matchesSearchTerm) {
           // keep permanent index, don't overwrite
@@ -1463,9 +1461,9 @@ const ExcelEditor = () => {
                 width={
                   (searchData.length > 0 ? searchData.length : data.length > 0)
                     ? columnWidth *
-                      Object.keys(data[0]).filter(
-                        (key) => key !== "__originalIndex"
-                      ).length
+                    Object.keys(data[0]).filter(
+                      (key) => key !== "__originalIndex"
+                    ).length
                     : 0
                 }
                 ref={listRef}
@@ -1537,7 +1535,7 @@ const ExcelEditor = () => {
                   onChange={(e) => {
                     const val = e.target.value;
                     // Allow only numbers and dots, and limit to format like 02.01.25
-                    if (/^[\d.]{0,8}$/.test(val)) {
+                    if (/^(\d{1,2})[./](\d{1,2})[./](\d{2})(.*)$/i.test(val)) {
                       setSumNewColumnName(val);
                     }
                   }}
@@ -1652,9 +1650,9 @@ const ExcelEditor = () => {
                   value={
                     selectedFilterColumn
                       ? {
-                          value: selectedFilterColumn,
-                          label: selectedFilterColumn,
-                        }
+                        value: selectedFilterColumn,
+                        label: selectedFilterColumn,
+                      }
                       : null
                   }
                   onChange={(selected: any) => {
