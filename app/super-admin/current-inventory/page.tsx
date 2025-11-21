@@ -216,8 +216,8 @@ const InputComponent = memo(
         onBlur={handleBlur}
         disabled={disabled}
         className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
-            ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
-            : "focus:ring-blue-500"
+          ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
+          : "focus:ring-blue-500"
           }`}
       />
     );
@@ -1535,9 +1535,13 @@ const ExcelEditor = () => {
                   onChange={(e) => {
                     const val = e.target.value;
                     // Allow only numbers and dots, and limit to format like 02.01.25
-                    if (/^[\d.]{0,8}\s*[A-Za-z]*$/.test(val)) {
+                    if (/^(\d[\d.]*)?(\s*[A-Za-z\s]*)?$/.test(val)) {
                       setSumNewColumnName(val);
                     }
+
+
+
+
                   }}
                   className="w-full border px-2 py-1 rounded-md"
                   placeholder="e.g., 19.12.24"
@@ -1591,9 +1595,11 @@ const ExcelEditor = () => {
                   onChange={(e) => {
                     const val = e.target.value;
                     // Allow only numbers and dots, and limit to format like 02.01.25
-                    if (/^[\d.]{0,8}$/.test(val)) {
+                    if (/^(\d[\d.]*)?(\s*[A-Za-z\s]*)?$/.test(val)) {
                       setSumNewColumnName(val);
                     }
+
+
                   }}
                   className="w-full border px-2 py-1 rounded-md"
                   placeholder="e.g., 19.12.24"
