@@ -33,10 +33,56 @@ const UploadPage = () => {
     const reader = new FileReader();
 
     reader.onload = (event) => {
-      const binaryString = event.target?.result as ArrayBuffer;
-      const workbook = XLSX.read(binaryString, { type: "array" });
+      const binary = event.target?.result as ArrayBuffer;
+      const workbook = XLSX.read(binary, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+      const rows = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        defval: "",
+      }) as (string | number)[][];
+
+      if (!rows.length) {
+        toast.error("Excel file is empty");
+        setLoading(false);
+        return;
+      }
+
+      const [headerRow, ...dataRows] = rows;
+
+      // 1️⃣ Find last valid header index
+      let lastHeaderIndex = -1;
+      headerRow.forEach((h, i) => {
+        if (String(h ?? "").trim() !== "") {
+          lastHeaderIndex = i;
+        }
+      });
+
+      if (lastHeaderIndex === -1) {
+        toast.error("No valid headers found");
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Extract only valid headers
+      const headers: string[] = headerRow
+        .slice(0, lastHeaderIndex + 1)
+        .map((h) => String(h).trim())
+        .filter((h) => h !== "");
+
+      // 3️⃣ Build data objects
+      const jsonData: Record<string, string | number>[] = dataRows.map(
+        (row) => {
+          const obj: Record<string, string | number> = {};
+
+          headers.forEach((key, index) => {
+            obj[key] = row[index] ?? "";
+          });
+
+          return obj;
+        }
+      );
+
       setData(jsonData);
       setOriginalData(jsonData);
       setFileChange(true);
