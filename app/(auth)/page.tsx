@@ -117,9 +117,33 @@ export default function LoginPage() {
       }
 
       if (res && res.ok) {
-        const session: any = await getSession();
+        // Wait for session to be fully established with retry mechanism
+        let session: any = null;
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (!session && retries < maxRetries) {
+          session = await getSession();
+          if (!session) {
+            await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms before retry
+            retries++;
+          }
+        }
+        
+        if (!session?.user) {
+          toast.error("Session not established. Please try again.");
+          return;
+        }
+        
         localStorage.setItem("time", String(Date.now()))
         toast.success("Login successful");
+        
+        // Refresh router to ensure server-side session is updated
+        router.refresh();
+        
+        // Small delay to ensure session propagation
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         //change in future
         if (session?.user?.is_superuser) {
           dispatch(userApi.util.invalidateTags(["Auth"] as any));
@@ -218,9 +242,33 @@ export default function LoginPage() {
       }
 
       if (res && res.ok) {
-        const session: any = await getSession();
+        // Wait for session to be fully established with retry mechanism
+        let session: any = null;
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (!session && retries < maxRetries) {
+          session = await getSession();
+          if (!session) {
+            await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms before retry
+            retries++;
+          }
+        }
+        
+        if (!session?.user) {
+          toast.error("Session not established. Please try again.");
+          return;
+        }
+        
         localStorage.setItem("time", String(Date.now()))
         toast.success("Login successful");
+        
+        // Refresh router to ensure server-side session is updated
+        router.refresh();
+        
+        // Small delay to ensure session propagation
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         //change in future
         if (session?.user?.is_superuser) {
           dispatch(userApi.util.invalidateTags(["Auth"] as any));

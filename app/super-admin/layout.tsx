@@ -15,7 +15,6 @@ const SuperAdminLayout = async ({ children }: { children: React.ReactNode }) => 
 
     console.log('session', session)
 
-
     if (!session?.user) {
         redirect(`${process.env.NEXT_PUBLIC_APP_URL}`)
     }
