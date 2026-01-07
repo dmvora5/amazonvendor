@@ -275,11 +275,19 @@ const menu = [
       },
     ],
   },
+
+  /* 🔹 NEW: Cost Database */
+  // {
+  //   title: "Cost Database",
+  //   Icon: PackageIcon,
+  //   access: "pass",
+  //   subMenus: [],
+  // },
+
   {
     title: "Current Inventory",
     Icon: PackageIcon,
     access: "pass",
-    // access: "has_current_inventory_access",
     subMenus: [
       {
         title: "Current Inventory",
@@ -338,11 +346,19 @@ const menu = [
       },
     ],
   },
+
+  /* 🔹 NEW: Pricing */
+  // {
+  //   title: "Pricing",
+  //   Icon: PackageIcon,
+  //   access: "pass",
+  //   subMenus: [],
+  // },
+
   {
     title: "Product Database",
     Icon: PackageIcon,
     access: "pass",
-    // access: "has_product_db_access",
     subMenus: [
       {
         title: "Product Database",
