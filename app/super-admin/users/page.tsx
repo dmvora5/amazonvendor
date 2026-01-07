@@ -22,6 +22,7 @@ import { useAddUserMutation } from "@/redux/apis/usersApis";
 import { parseAndShowErrorInToast } from "@/utils";
 import ApiState from "@/components/ApiState";
 import SuperAdminCheck from "@/components/SuperAdminCheck";
+import { PERMISSIONS } from "@/constant";
 
 const userFormSchema = z.object({
   first_name: z.string().min(1, { message: "First Name is required" }),
@@ -216,22 +217,7 @@ export default function CreateUserForm() {
               {/* Permissions Checkboxes */}
               <h3 className="text-lg font-semibold mt-6 mb-2">Permissions</h3>
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { name: "has_category_access", label: "Category Access" },
-                  { name: "has_cm_access", label: "Channel Max Access" },
-                  { name: "has_order_access", label: "Order Access" },
-                  { name: "has_product_db_access", label: "Product DB Access" },
-                  { name: "has_scraped_data_access", label: "Scraped Data Access" },
-                  { name: "has_fba_access", label: "Fba Inventory Access" },
-                  { name: "has_current_inventory_access", label: "Current Inventory Access" },
-                  { name: "has_all_inventory_access", label: "All Inventory Access" },
-                  { name: "has_order_history_access", label: "Order History Access" },
-                  { name: "has_shipped_history_access", label: "Shipped History Access" },
-                  { name: "has_cookies_access", label: "Cookies Access" },
-                  { name: "has_upload_report_access", label: "Upload Report Access" },
-                  { name: "has_current_inventory_upload_download_access", label: "Current Inventory Download & Upload Access" },
-                  { name: "has_product_db_upload_download_access", label: "Product Database Download & Upload Access" },
-                ].map(({ name, label }) => (
+                {PERMISSIONS.map(({ name, label }) => (
                   <FormField
                     key={name}
                     control={control}

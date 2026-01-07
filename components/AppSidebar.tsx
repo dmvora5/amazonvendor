@@ -280,8 +280,15 @@ const menu = [
   // {
   //   title: "Cost Database",
   //   Icon: PackageIcon,
-  //   access: "pass",
-  //   subMenus: [],
+  //   access: "has_cost_db_access",
+  //   subMenus: [
+  //     {
+  //       title: "Cost Database Upload",
+  //       url: "/", //TO Do add route
+  //       Icon: PackageIcon,
+  //       access: "has_cost_db_upload_download_access",
+  //     },
+  //   ],
   // },
 
   {
@@ -351,8 +358,15 @@ const menu = [
   // {
   //   title: "Pricing",
   //   Icon: PackageIcon,
-  //   access: "pass",
-  //   subMenus: [],
+  //   access: "has_pricing_calculation_report_access",
+  //   subMenus: [
+  //     {
+  //       title: "Fee Preview`",
+  //       url: "/", //TO Do add route
+  //       Icon: PackageIcon,
+  //       access: "has_fee_preview_access",
+  //     },
+  // ],
   // },
 
   {

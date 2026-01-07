@@ -121,7 +121,7 @@ export default function LoginPage() {
         let session: any = null;
         let retries = 0;
         const maxRetries = 5;
-        
+
         while (!session && retries < maxRetries) {
           session = await getSession();
           if (!session) {
@@ -129,21 +129,21 @@ export default function LoginPage() {
             retries++;
           }
         }
-        
+
         if (!session?.user) {
           toast.error("Session not established. Please try again.");
           return;
         }
-        
+
         localStorage.setItem("time", String(Date.now()))
         toast.success("Login successful");
-        
+
         // Refresh router to ensure server-side session is updated
         router.refresh();
-        
+
         // Small delay to ensure session propagation
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         //change in future
         if (session?.user?.is_superuser) {
           dispatch(userApi.util.invalidateTags(["Auth"] as any));
@@ -199,6 +199,29 @@ export default function LoginPage() {
           if (session?.user?.has_product_db_upload_download_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.PRODUCTDATABASEUPLOAD)
           }
+
+          //TO DO: Add route here
+
+          if (session?.user?.has_fba_inventory_access) {
+            
+          }
+          if (session?.user?.has_fee_preview_access) {
+
+          }
+          if (session?.user?.has_referral_fee_preview_access) {
+            
+          }
+          if (session?.user?.has_cost_db_access) {
+
+          }
+          if (session?.user?.has_cost_db_upload_download_access) {
+
+          }
+          if (session?.user?.has_pricing_calculation_report_access) {
+
+          }
+
+
         }
       }
 
@@ -246,7 +269,7 @@ export default function LoginPage() {
         let session: any = null;
         let retries = 0;
         const maxRetries = 5;
-        
+
         while (!session && retries < maxRetries) {
           session = await getSession();
           if (!session) {
@@ -254,21 +277,21 @@ export default function LoginPage() {
             retries++;
           }
         }
-        
+
         if (!session?.user) {
           toast.error("Session not established. Please try again.");
           return;
         }
-        
+
         localStorage.setItem("time", String(Date.now()))
         toast.success("Login successful");
-        
+
         // Refresh router to ensure server-side session is updated
         router.refresh();
-        
+
         // Small delay to ensure session propagation
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         //change in future
         if (session?.user?.is_superuser) {
           dispatch(userApi.util.invalidateTags(["Auth"] as any));
