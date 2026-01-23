@@ -44,6 +44,11 @@ const reportMenu = [
   "has_cookies_access",
   "has_current_inventory_upload_download_access",
   "has_product_db_upload_download_access",
+  "has_fee_preview_access",
+  "has_referral_fee_preview_access",
+  "has_cost_db_access",
+  "has_cost_db_upload_download_access",
+  "has_pricing_calculation_report_access",
 ];
 
 // const menu = [
@@ -322,6 +327,12 @@ const menu = [
         access: "has_all_inventory_access",
       },
       {
+        title: "Inventory Age",
+        url: "/super-admin/inventory-reports",
+        Icon: Table,
+        access: "has_fba_inventory_access",
+      },
+      {
         title: "FBA Inventory",
         url: "/super-admin/fba-inventory",
         Icon: Table,
@@ -355,19 +366,25 @@ const menu = [
   },
 
   /* 🔹 NEW: Pricing */
-  // {
-  //   title: "Pricing",
-  //   Icon: PackageIcon,
-  //   access: "has_pricing_calculation_report_access",
-  //   subMenus: [
-  //     {
-  //       title: "Fee Preview`",
-  //       url: "/", //TO Do add route
-  //       Icon: PackageIcon,
-  //       access: "has_fee_preview_access",
-  //     },
-  // ],
-  // },
+  {
+    title: "Pricing",
+    Icon: PackageIcon,
+    access: "has_pricing_calculation_report_access",
+    subMenus: [
+      {
+        title: "Fee Preview`",
+        url: "/super-admin/fee-preview", //TO Do add route
+        Icon: PackageIcon,
+        access: "has_fee_preview_access",
+      },
+      {
+        title: "Referral Fee Preview`",
+        url: "/super-admin/referral-fee-preview", //TO Do add route
+        Icon: PackageIcon,
+        access: "has_referral_fee_preview_access",
+      },
+  ],
+  },
 
   {
     title: "Product Database",
