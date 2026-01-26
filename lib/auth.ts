@@ -125,6 +125,12 @@ export const authOptions: AuthOptions = {
                     "two_factor_enabled",
                     "has_current_inventory_upload_download_access",
                     "has_product_db_upload_download_access",
+                    "has_fba_inventory_access",
+                    "has_fee_preview_access",
+                    "has_referral_fee_preview_access",
+                    "has_cost_db_access",
+                    "has_cost_db_upload_download_access",
+                    "has_pricing_calculation_report_access",
                 ]
 
                 token.user = Object.fromEntries(Object.entries(token?.user)?.filter(([key]) => userKeysToKeep?.includes(key)))

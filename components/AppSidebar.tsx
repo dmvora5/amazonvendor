@@ -44,6 +44,7 @@ const reportMenu = [
   "has_cookies_access",
   "has_current_inventory_upload_download_access",
   "has_product_db_upload_download_access",
+  "has_fba_inventory_access",
   "has_fee_preview_access",
   "has_referral_fee_preview_access",
   "has_cost_db_access",
@@ -282,19 +283,25 @@ const menu = [
   },
 
   /* 🔹 NEW: Cost Database */
-  // {
-  //   title: "Cost Database",
-  //   Icon: PackageIcon,
-  //   access: "has_cost_db_access",
-  //   subMenus: [
-  //     {
-  //       title: "Cost Database Upload",
-  //       url: "/", //TO Do add route
-  //       Icon: PackageIcon,
-  //       access: "has_cost_db_upload_download_access",
-  //     },
-  //   ],
-  // },
+  {
+    title: "Cost Database",
+    Icon: PackageIcon,
+    access: "pass",
+    subMenus: [
+      {
+        title: "Cost Database",
+        url: "/super-admin/cost-database",
+        Icon: PackageIcon,
+        access: "has_cost_db_access",
+      },
+      {
+        title: "Upload Report",
+        url: "/super-admin/cost-database/upload-report",
+        Icon: PackageIcon,
+        access: "has_cost_db_upload_download_access",
+      },
+    ],
+  },
 
   {
     title: "Current Inventory",
@@ -372,18 +379,24 @@ const menu = [
     access: "has_pricing_calculation_report_access",
     subMenus: [
       {
-        title: "Fee Preview`",
+        title: "Fee Preview",
         url: "/super-admin/fee-preview", //TO Do add route
         Icon: PackageIcon,
         access: "has_fee_preview_access",
       },
       {
-        title: "Referral Fee Preview`",
+        title: "Referral Fee Preview",
         url: "/super-admin/referral-fee-preview", //TO Do add route
         Icon: PackageIcon,
         access: "has_referral_fee_preview_access",
       },
-  ],
+      {
+        title: "Price Calculation",
+        url: "/super-admin/pricing-calculation", //TO Do add route
+        Icon: PackageIcon,
+        access: "has_referral_fee_preview_access",
+      },
+    ],
   },
 
   {

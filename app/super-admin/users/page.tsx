@@ -45,6 +45,12 @@ const userFormSchema = z.object({
   has_upload_report_access: z.boolean().default(false),
   has_current_inventory_upload_download_access: z.boolean().default(false),
   has_product_db_upload_download_access: z.boolean().default(false),
+  has_fba_inventory_access: z.boolean().default(false),
+  has_fee_preview_access: z.boolean().default(false),
+  has_referral_fee_preview_access: z.boolean().default(false),
+  has_cost_db_access: z.boolean().default(false),
+  has_cost_db_upload_download_access: z.boolean().default(false),
+  has_pricing_calculation_report_access: z.boolean().default(false),
 });
 
 export default function CreateUserForm() {
@@ -84,7 +90,13 @@ export default function CreateUserForm() {
       has_cookies_access: false,
       has_upload_report_access: false,
       has_current_inventory_upload_download_access: false,
-      has_product_db_upload_download_access: false
+      has_product_db_upload_download_access: false,
+      has_fba_inventory_access: false,
+      has_fee_preview_access: false,
+      has_referral_fee_preview_access: false,
+      has_cost_db_access: false,
+      has_cost_db_upload_download_access: false,
+      has_pricing_calculation_report_access: false,
     },
   });
 

@@ -22,6 +22,13 @@ export const PAGE_ROUTES = {
         MFA: "/super-admin/mfa",
         CURRENTINVENTORYUPLOAD: "/super-admin/current-inventory/upload-report",
         PRODUCTDATABASEUPLOAD: "/super-admin/productdatabase/upload-report",
+        INVENTORYAGE: "/super-admin/inventory-reports",
+        FREEPREVIEW:"/super-admin/fee-preview",
+        REFERRALFREEPREVIEW:"/super-admin/referral-fee-preview",
+        COSTDATABASE:"/super-admin/cost-database",
+        COSTDATABASEUPLOAD:"/super-admin/cost-database/upload-report",
+        PRICECALCULATION:"/super-admin/pricing-calculation"
+
     },
     AUTH: {
         LOGIN: "/"

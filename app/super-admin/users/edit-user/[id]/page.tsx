@@ -47,6 +47,12 @@ const userFormSchema = z.object({
   has_upload_report_access: z.boolean().default(false),
   has_current_inventory_upload_download_access: z.boolean().default(false),
   has_product_db_upload_download_access: z.boolean().default(false),
+  has_fba_inventory_access: z.boolean().default(false),
+  has_fee_preview_access: z.boolean().default(false),
+  has_referral_fee_preview_access: z.boolean().default(false),
+  has_cost_db_access: z.boolean().default(false),
+  has_cost_db_upload_download_access: z.boolean().default(false),
+  has_pricing_calculation_report_access: z.boolean().default(false),
 });
 
 export default function EditUserForm() {
@@ -88,7 +94,13 @@ export default function EditUserForm() {
       has_cookies_access: false,
       has_upload_report_access: false,
       has_current_inventory_upload_download_access: false,
-      has_product_db_upload_download_access: false
+      has_product_db_upload_download_access: false,
+      has_fba_inventory_access: false,
+      has_fee_preview_access: false,
+      has_referral_fee_preview_access: false,
+      has_cost_db_access: false,
+      has_cost_db_upload_download_access: false,
+      has_pricing_calculation_report_access: false,
     },
   });
 
@@ -119,6 +131,12 @@ export default function EditUserForm() {
     setValue("has_upload_report_access", Boolean((data as any).has_upload_report_access));
     setValue("has_current_inventory_upload_download_access", Boolean((data as any).has_current_inventory_upload_download_access));
     setValue("has_product_db_upload_download_access", Boolean((data as any).has_product_db_upload_download_access));
+    setValue("has_fba_inventory_access", Boolean((data as any).has_fba_inventory_access));
+    setValue("has_fee_preview_access", Boolean((data as any).has_fee_preview_access));
+    setValue("has_referral_fee_preview_access", Boolean((data as any).has_referral_fee_preview_access));
+    setValue("has_cost_db_access", Boolean((data as any).has_cost_db_access));
+    setValue("has_cost_db_upload_download_access", Boolean((data as any).has_cost_db_upload_download_access));
+    setValue("has_pricing_calculation_report_access", Boolean((data as any).has_pricing_calculation_report_access));
   }, [data, setValue]);
 
   // On successful update, show toast and redirect

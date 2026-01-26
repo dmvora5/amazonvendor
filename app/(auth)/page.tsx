@@ -203,25 +203,23 @@ export default function LoginPage() {
           //TO DO: Add route here
 
           if (session?.user?.has_fba_inventory_access) {
-            
+            return router.push(PAGE_ROUTES.SUPERADMIN.INVENTORYAGE)
           }
           if (session?.user?.has_fee_preview_access) {
-
+            return router.push(PAGE_ROUTES.SUPERADMIN.FREEPREVIEW)
           }
           if (session?.user?.has_referral_fee_preview_access) {
-            
+            return router.push(PAGE_ROUTES.SUPERADMIN.REFERRALFREEPREVIEW)
           }
           if (session?.user?.has_cost_db_access) {
-
+            return router.push(PAGE_ROUTES.SUPERADMIN.COSTDATABASE)
           }
           if (session?.user?.has_cost_db_upload_download_access) {
-
+            return router.push(PAGE_ROUTES.SUPERADMIN.COSTDATABASEUPLOAD)
           }
           if (session?.user?.has_pricing_calculation_report_access) {
-
+            return router.push(PAGE_ROUTES.SUPERADMIN.PRICECALCULATION)
           }
-
-
         }
       }
 
@@ -346,6 +344,25 @@ export default function LoginPage() {
           }
           if (session?.user?.has_product_db_upload_download_access) {
             return router.push(PAGE_ROUTES.SUPERADMIN.PRODUCTDATABASEUPLOAD)
+          }
+
+          if (session?.user?.has_fba_inventory_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.INVENTORYAGE)
+          }
+          if (session?.user?.has_fee_preview_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.FREEPREVIEW)
+          }
+          if (session?.user?.has_referral_fee_preview_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.REFERRALFREEPREVIEW)
+          }
+          if (session?.user?.has_cost_db_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.COSTDATABASE)
+          }
+          if (session?.user?.has_cost_db_upload_download_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.COSTDATABASEUPLOAD)
+          }
+          if (session?.user?.has_pricing_calculation_report_access) {
+            return router.push(PAGE_ROUTES.SUPERADMIN.PRICECALCULATION)
           }
         }
       }
