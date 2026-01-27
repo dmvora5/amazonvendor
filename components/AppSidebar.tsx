@@ -334,16 +334,16 @@ const menu = [
         access: "has_all_inventory_access",
       },
       {
-        title: "Inventory Age",
-        url: "/super-admin/inventory-reports",
-        Icon: Table,
-        access: "has_fba_inventory_access",
-      },
-      {
         title: "FBA Inventory",
         url: "/super-admin/fba-inventory",
         Icon: Table,
         access: "has_fba_access",
+      },
+      {
+        title: "Inventory Age",
+        url: "/super-admin/inventory-reports",
+        Icon: Table,
+        access: "has_fba_inventory_access",
       },
       {
         title: "Order History",
@@ -385,17 +385,18 @@ const menu = [
         access: "has_fee_preview_access",
       },
       {
-        title: "Referral Fee Preview",
-        url: "/super-admin/referral-fee-preview", //TO Do add route
-        Icon: PackageIcon,
-        access: "has_referral_fee_preview_access",
-      },
-      {
         title: "Price Calculation",
         url: "/super-admin/pricing-calculation", //TO Do add route
         Icon: PackageIcon,
         access: "has_referral_fee_preview_access",
       },
+      {
+        title: "Referral Fee Preview",
+        url: "/super-admin/referral-fee-preview", //TO Do add route
+        Icon: PackageIcon,
+        access: "has_referral_fee_preview_access",
+      },
+      
     ],
   },
 
