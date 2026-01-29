@@ -239,6 +239,18 @@ export const userApi = createApi({
                 url: `${API_ROUTES.SUPERADMIN.REPORT}${type}/`,
                 method: "GET",
             }),
+            transformResponse: (response: any) => {
+                let file_url = response?.file_url;
+
+                if (file_url && file_url.startsWith("http://")) {
+                    file_url = file_url.replace("http://", "https://");
+                }
+            
+                return {
+                    ...response,
+                    file_url,
+                };
+            },
             providesTags: ["Report"]
         }),
         uploadReport: build.mutation({
