@@ -396,7 +396,7 @@ const menu = [
         Icon: PackageIcon,
         access: "has_referral_fee_preview_access",
       },
-      
+    
     ],
   },
 
