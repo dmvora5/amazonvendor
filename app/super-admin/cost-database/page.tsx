@@ -39,13 +39,22 @@ import { toast } from "react-toastify";
 const LAST_UPDATED_COLUMN_NAME = "last updated";
 
 // Helper function to get current date in a readable format
+// const getCurrentDate = (): string => {
+//   const now = new Date();
+//   return now.toLocaleDateString("en-US", {
+//     year: "numeric",
+//     month: "2-digit",
+//     day: "2-digit",
+//   });
+// };
 const getCurrentDate = (): string => {
   const now = new Date();
-  return now.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = now.getFullYear();
+
+  return `${day}-${month}-${year}`;
 };
 
 // Helper function to find "last updated" column (case-insensitive)
@@ -111,7 +120,12 @@ const InputComponent = memo(
 
           // Update "last updated" column if it exists
           const lastUpdatedColumn = findLastUpdatedColumn(updatedData[globalIndex]);
+          // console.log("🚀 ~ handleBlur ~ lastUpdatedColumn:", lastUpdatedColumn)
+          const today = getCurrentDate();
+          // console.log("🚀 ~ handleBlur ~ today:", today)
+          // return
           if (lastUpdatedColumn) {
+            // console.log('updatedData[globalIndex][lastUpdatedColumn] :>> ', updatedData[globalIndex][lastUpdatedColumn]);
             updatedData[globalIndex][lastUpdatedColumn] = getCurrentDate();
           }
 
@@ -160,7 +174,6 @@ const InputComponent = memo(
           return updatedSearchData;
         });
       }
-
       setState(newValue); // update visible value
       setDirty(true);
     };
@@ -638,6 +651,7 @@ const ExcelEditor = () => {
       const sheet = XLSX.utils.json_to_sheet(data);
 
       let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
+      // console.log("🚀 ~ handleUploadCSV ~ csvData:", csvData)
       if (delimiter === "\t") {
         csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
       }
@@ -653,7 +667,7 @@ const ExcelEditor = () => {
       // Append the file to the FormData object
       formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
       formData.append("report_type", selectedValue);
-      formData.append("selected_date", selectedDateColumns.join(","));
+      // formData.append("selected_date", selectedDateColumns.join(","));
 
       const session: any = await getSession();
 
@@ -670,7 +684,7 @@ const ExcelEditor = () => {
 
       setDirty(false);
       if (response?.file_url) {
-        console.log("response?.file_url :>> ", response?.file_url);
+        // console.log("response?.file_url :>> ", response?.file_url);
         await new Promise((resolve) => {
           setTimeout(resolve, 5000); // wait for the data to be loaded
         });
@@ -728,7 +742,7 @@ const ExcelEditor = () => {
 
       // Append the file to the FormData object
       formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
-      formData.append("report_type", "product_database");
+      formData.append("report_type", "cost_database");
 
       const session: any = await getSession();
 
@@ -865,7 +879,7 @@ const ExcelEditor = () => {
       .replace(" ", "_")
       .replace(":", "-");
 
-    const fileName = `Product Database ${formattedDate}.xlsx`;
+    const fileName = `Cost Database ${formattedDate}.xlsx`;
 
     // Trigger download
     XLSX.writeFile(workbook, fileName);
