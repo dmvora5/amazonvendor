@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report", "Cookies", "2FA"],
+    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report", "Cookies", "2FA", "Formulas"],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -322,6 +322,32 @@ export const userApi = createApi({
             }),
             invalidatesTags: [{ type: '2FA'}]
         }),
+        getAllFormulas: build.query({
+            query: () => ({
+                url: API_ROUTES.SUPERADMIN.FORMULAS,
+                method: "GET",
+            }),
+            providesTags: ['Formulas']
+        }),
+
+        getSpacificFormulaFormulas: build.query({
+            query: (id: any) => ({
+                url: API_ROUTES.SUPERADMIN.FORMULAS + "/" + id,
+                method: "GET",
+            }),
+            providesTags: (result: any) => [
+                { type: 'Formulas', id: 'LIST' },
+                { type: 'Formulas', id: +result?.id },
+            ]
+        }),
+        updateFormula: build.mutation({
+            query: (payload: any) => ({
+                url: API_ROUTES.SUPERADMIN.FORMULAS + "/" + payload?.id + "/update/",
+                method: "PATCH",
+                body: payload,
+            }),
+            invalidatesTags: [{ type: 'Formulas', id: 'LIST' }]
+        }),
     })
 });
 
@@ -356,5 +382,10 @@ export const {
     useAddCookiesMutation,
     //2FA
     useSetUp2faMutation,
-    useDelete2faMutation
+    useDelete2faMutation,
+    
+    //Formulas
+    useGetAllFormulasQuery,
+    useGetSpacificFormulaFormulasQuery,
+    useUpdateFormulaMutation
 } = userApi;

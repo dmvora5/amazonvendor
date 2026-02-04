@@ -18,11 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useGetAllFormulasQuery, useGetSpacificFormulaFormulasQuery, useUpdateFormulaMutation } from "@/redux/apis/usersApis";
+import ProcessLoader from "@/components/ProcessLoader";
+import { parseAndShowErrorInToast } from "@/utils";
 
-const optionsSelecte = [
-  { value: "7days", label: "7 Days" },
-  { value: "14days", label: "14 Days" },
-];
 
 // Default formulas
 const defaultFormulas: any = {
@@ -31,115 +30,117 @@ const defaultFormulas: any = {
 };
 
 const FormulaPage = () => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [file, setFile] = useState<File | null>(null);
-  const [data, setData] = useState<any[]>([]);
-  const [originalData, setOriginalData] = useState<any[]>([]);
-  const [fileChange, setFileChange] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+
+  const { data, isLoading, isError, isSuccess } = useGetAllFormulasQuery({}) as any
+
+  console.log('data', data)
 
   // default selection 7days
-  const [selected, setSelected] = useState<string>("7days");
+  const [selected, setSelected] = useState<any>("");
 
+  const { data: formulaDetails, isLoading: detailsLoading, isSuccess: formulaSuccess } = useGetSpacificFormulaFormulasQuery(selected, {
+    skip: !isFinite(selected)
+  }) as any
+  console.log('formulaDetails', formulaDetails)
   // formula states
-  const [formulaMap, setFormulaMap] = useState<any>(defaultFormulas);
-  const [formulaText, setFormulaText] = useState<string>(
-    defaultFormulas["7days"]
-  );
+  const [formulaText, setFormulaText] = useState<any>();
+
+  const [submit, {isLoading: subMitLoading, error, isSuccess: submitSuccess}] = useUpdateFormulaMutation() as any;
+
+  useEffect(() => {
+    if(!error) return;
+    parseAndShowErrorInToast(error?.response)
+  },[error])
+
+  useEffect(() => {
+    if(!submitSuccess) return;
+    toast.success('formula updated successfully!')
+  },[submitSuccess])
+
+  useEffect(() => {
+    if (!isSuccess || !data || !Array.isArray(data)) return;
+    setSelected(data[0]?.id)
+  }, [data, isSuccess])
 
   // when dropdown changes, update textarea formula
   useEffect(() => {
-    setFormulaText(formulaMap[selected] || "");
-  }, [selected]);
+    if (!formulaSuccess || !formulaDetails) return;
+
+    setFormulaText(formulaDetails?.code);
+  }, [formulaDetails, formulaSuccess]);
 
   const handleChange = (value: string) => {
     setSelected(value);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      readExcelFile(selectedFile);
-    }
-  };
-
-  const readExcelFile = (file: File) => {
-    setLoading(true);
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const binaryString = event.target?.result as ArrayBuffer;
-      const workbook = XLSX.read(binaryString, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-
-      setData(jsonData);
-      setOriginalData(jsonData);
-      setFileChange(true);
-      setLoading(false);
-    };
-
-    reader.readAsArrayBuffer(file);
-  };
-
   // Save formula changes
-  const handleSaveFormula = () => {
-    setFormulaMap((prev: any) => ({
-      ...prev,
-      [selected]: formulaText,
-    }));
+  const handleSaveFormula = async () => {
+    try {
+      await submit({
+        id: selected,
+        code: formulaText
+      });
+    } catch (error: any) {
+      parseAndShowErrorInToast(error?.response)
+    }
 
-    toast.success(`${selected} formula saved successfully`);
   };
 
   return (
     <>
-      <div className="w-full flex justify-center items-center min-h-[90%]">
-        <RolesChecks access="has_upload_report_access" />
+      {isLoading ?
+        <div className="h-[700px] w-full flex items-center justify-center">
+          <ProcessLoader />
+        </div>
+        :
+        <div className="w-full flex justify-center items-center min-h-[90%]">
+          <RolesChecks access="has_upload_report_access" />
 
-        <div className="space-y-10 w-[500px]">
-          {/* Dropdown */}
-          <Select onValueChange={handleChange} value={selected}>
-            <SelectTrigger className="bg-white w-full">
-              <SelectValue placeholder="Select an order" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Select Report Type</SelectLabel>
-                {optionsSelecte.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <div className="space-y-10 w-[500px]">
+            {/* Dropdown */}
+            <Select onValueChange={handleChange} value={selected}>
+              <SelectTrigger className="bg-white w-full">
+                <SelectValue placeholder="Select an order" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Select Report Type</SelectLabel>
+                  {(data as any || []).map((option: any) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-          {/* Textarea for Formula */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Formula ({selected})
-            </label>
+            {/* Textarea for Formula */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Formula ({selected})
+              </label>
 
-            <textarea
-              value={formulaText}
-              onChange={(e) => setFormulaText(e.target.value)}
-              className="w-full min-h-[150px] border border-gray-300 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Write your formula here..."
-            />
+              <textarea
+                disabled={detailsLoading}
+                value={formulaText}
+                onChange={(e) => setFormulaText(e.target.value)}
+                className="w-full min-h-[150px] border border-gray-300 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Write your formula here..."
+              />
 
-            <Button
-              onClick={handleSaveFormula}
-              className="bg-green-600 hover:bg-green-700 w-[140px]"
-              disabled={loading}
-            >
-              Save Formula
-            </Button>
+              <Button
+                onClick={handleSaveFormula}
+                className="bg-green-600 hover:bg-green-700 w-[140px]"
+                disabled={isLoading || subMitLoading || detailsLoading}
+              >
+                Save Formula
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      }
     </>
   );
 };

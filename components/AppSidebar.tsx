@@ -466,7 +466,7 @@ const menu = [
     access: "",
     subMenus: [
       {
-        title: "Basic",
+        title: "Formulas",
         url: "/super-admin/formula",
         Icon: PackageIcon,
       },
