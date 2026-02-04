@@ -36,7 +36,7 @@ import RolesChecks from "@/components/RolesChecks";
 import { toast } from "react-toastify";
 
 // Constant for last updated column name - change here to update column name everywhere
-const LAST_UPDATED_COLUMN_NAME = "last updated";
+const LAST_UPDATED_COLUMN_NAME = "Last Updated Date";
 
 // Helper function to get current date in a readable format
 // const getCurrentDate = (): string => {
@@ -121,9 +121,7 @@ const InputComponent = memo(
           // Update "last updated" column if it exists
           const lastUpdatedColumn = findLastUpdatedColumn(updatedData[globalIndex]);
           // console.log("🚀 ~ handleBlur ~ lastUpdatedColumn:", lastUpdatedColumn)
-          const today = getCurrentDate();
-          // console.log("🚀 ~ handleBlur ~ today:", today)
-          // return
+
           if (lastUpdatedColumn) {
             // console.log('updatedData[globalIndex][lastUpdatedColumn] :>> ', updatedData[globalIndex][lastUpdatedColumn]);
             updatedData[globalIndex][lastUpdatedColumn] = getCurrentDate();
@@ -281,17 +279,54 @@ const ExcelEditor = () => {
 
       const arrayBuffer = response.data;
 
-      const wb = XLSX.read(arrayBuffer, { type: "array" });
+      const wb = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      const json: any = XLSX.utils.sheet_to_json(sheet, {
+        defval: null,
+        raw: false, // format dates/nums instead of Excel serials
+        dateNF: "dd-mm-yyyy",
+      });
 
-      console.log("json", json);
+      const normalizeDateValue = (value: any) => {
+        if (value instanceof Date || typeof value === "number") {
+          return XLSX.SSF.format("dd-mm-yyyy", value);
+        }
+        if (typeof value === "string") {
+          const match = value.match(/^(\d{1,4})[/-](\d{1,2})[/-](\d{1,4})$/);
+          if (!match) return value;
+          const [, a, b, c] = match;
+          // If the first part is 4 digits, assume YYYY-MM-DD.
+          if (a.length === 4) {
+            return `${b.padStart(2, "0")}-${c.padStart(2, "0")}-${a}`;
+          }
+          // If the last part is 4 digits and separator is "-", assume DD-MM-YYYY.
+          if (c.length === 4 && value.includes("-")) {
+            return `${a.padStart(2, "0")}-${b.padStart(2, "0")}-${c}`;
+          }
+          // Default Excel-style string: MM/DD/YY or MM/DD/YYYY.
+          const year = c.length === 2 ? `20${c}` : c;
+          return `${b.padStart(2, "0")}-${a.padStart(2, "0")}-${year}`;
+        }
+        return value;
+      };
 
-      setOriginalData(JSON.parse(JSON.stringify(json)));
-      setData(JSON.parse(JSON.stringify(json)));
+      const normalizedJson = json.map((row: any) => {
+        const updatedRow = { ...row };
+        Object.keys(updatedRow).forEach((key) => {
+          if (/date/i.test(key)) {
+            updatedRow[key] = normalizeDateValue(updatedRow[key]);
+          }
+        });
+        return updatedRow;
+      });
 
-      if (json.length) {
-        const key = Object.keys(json[0]);
+      console.log("json", normalizedJson);
+
+      setOriginalData(JSON.parse(JSON.stringify(normalizedJson)));
+      setData(JSON.parse(JSON.stringify(normalizedJson)));
+
+      if (normalizedJson.length) {
+        const key = Object.keys(normalizedJson[0]);
         setSelectedColumn(key[0]);
       }
 
