@@ -31,7 +31,7 @@ import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios";
 import { API_ROUTES } from "@/constant/routes";
-import { parseAndShowErrorInToast } from "@/utils";
+import { parseAndShowErrorInToast, parseUrl } from "@/utils";
 import { getSession, signOut, useSession } from "next-auth/react";
 import RolesChecks from "@/components/RolesChecks";
 import { toast } from "react-toastify";
@@ -306,7 +306,7 @@ const ExcelEditor = () => {
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
       setLoading(true);
-
+      url = parseUrl(url);
       const response = await axios.get(url, {
         responseType: "arraybuffer",
         headers: {

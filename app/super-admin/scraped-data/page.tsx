@@ -31,6 +31,7 @@ import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
 import RolesChecks from "@/components/RolesChecks";
 import axios from "axios";
+import { parseUrl } from "@/utils";
 
 const options = [
   { value: "fba_inventory", label: "FBA Inventory" },
@@ -200,7 +201,7 @@ const ExcelEditor = () => {
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
       setLoading(true);
-
+      url = parseUrl(url);
       const response = await axios.get(url, {
         responseType: "arraybuffer", // Important: tells axios to treat the response as binary
       });

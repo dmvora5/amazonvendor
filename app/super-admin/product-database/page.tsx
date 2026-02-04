@@ -31,7 +31,7 @@ import ReactSelect from "react-select";
 import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios";
 import { getSession, signOut, useSession } from "next-auth/react";
-import { parseAndShowErrorInToast } from "@/utils";
+import { parseAndShowErrorInToast, parseUrl } from "@/utils";
 import RolesChecks from "@/components/RolesChecks";
 import { toast } from "react-toastify";
 
@@ -214,7 +214,7 @@ const ExcelEditor = () => {
   const fetchCSVFromBackend = useCallback(async (url: string) => {
     try {
       setLoading(true);
-
+      url = parseUrl(url);
       const response = await axios.get(url, {
         responseType: "arraybuffer", // Important: tells axios to treat the response as binary
         headers: {
@@ -952,7 +952,7 @@ const ExcelEditor = () => {
               )}
             </Button>
           )}
-          {session?.user?.has_current_inventory_upload_download_access && (
+          {session?.user?.has_product_db_upload_download_access && (
             <div className="relative group">
               <button
                 onClick={handleDownloadExcel}

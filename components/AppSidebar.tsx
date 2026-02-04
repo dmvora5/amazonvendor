@@ -460,6 +460,18 @@ const menu = [
       },
     ],
   },
+  {
+    title: "Formula Changes",
+    Icon: PackageIcon,
+    access: "",
+    subMenus: [
+      {
+        title: "Basic",
+        url: "/super-admin/formula",
+        Icon: PackageIcon,
+      },
+    ],
+  },
 ];
 
 const isShowReportMenu = (session: any, subMenu = reportMenu) => {

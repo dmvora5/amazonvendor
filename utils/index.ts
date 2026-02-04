@@ -79,3 +79,10 @@ function findFirstStringError(value: any): string | undefined {
 
   return diffHours >= 12; // true = 12 hours old or more
 }
+
+export function parseUrl(url: any) {
+  if (url && url.startsWith("http://")) {
+    url = url.replace("http://", "https://");
+  }
+  return url;
+}
