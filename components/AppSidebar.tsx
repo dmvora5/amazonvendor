@@ -323,6 +323,19 @@ const menu = [
     ],
   },
   {
+    title: "Formula Changes",
+    Icon: PackageIcon,
+    access: "pass",
+    subMenus: [
+      {
+        title: "Formulas",
+        url: "/super-admin/formula",
+        Icon: PackageIcon,
+        access: "is_superuser"
+      },
+    ],
+  },
+  {
     title: "Inventory Reports",
     access: "pass",
     Icon: Users,
@@ -459,20 +472,7 @@ const menu = [
         Icon: Users,
       },
     ],
-  },
-  {
-    title: "Formula Changes",
-    Icon: PackageIcon,
-    access: "pass",
-    subMenus: [
-      {
-        title: "Formulas",
-        url: "/super-admin/formula",
-        Icon: PackageIcon,
-        access: "is_superuser"
-      },
-    ],
-  },
+  }
 ];
 
 const isShowReportMenu = (session: any, subMenu = reportMenu) => {
