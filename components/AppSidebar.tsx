@@ -379,7 +379,7 @@ const menu = [
     access: "has_pricing_calculation_report_access",
     subMenus: [
       {
-        title: "Fee Preview",
+        title: "Fee Preview Report GBP Only",
         url: "/super-admin/fee-preview", //TO Do add route
         Icon: PackageIcon,
         access: "has_fee_preview_access",
@@ -463,20 +463,23 @@ const menu = [
   {
     title: "Formula Changes",
     Icon: PackageIcon,
-    access: "",
+    access: "pass",
     subMenus: [
       {
         title: "Formulas",
         url: "/super-admin/formula",
         Icon: PackageIcon,
+        access: "is_superuser"
       },
     ],
   },
 ];
 
 const isShowReportMenu = (session: any, subMenu = reportMenu) => {
-  const keys = Object.keys(session?.user);
-
+  // const keys = Object.keys(session?.user);
+  if(subMenu.includes("is_superuser")){
+    return true;
+  }
   for (const key of subMenu) {
     if (session?.user[key]) {
       return true;

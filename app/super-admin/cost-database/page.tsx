@@ -1043,7 +1043,7 @@ const ExcelEditor = () => {
               )}
             </Button>
           )}
-          {session?.user?.has_cost_db_upload_download_access && (
+          {(session?.user?.has_cost_db_upload_download_access || session?.user?.is_superuser) && (
             <div className="relative group">
               <button
                 onClick={handleDownloadExcel}
