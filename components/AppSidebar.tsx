@@ -501,17 +501,17 @@ const AppSidebar = ({ session }: any) => {
       if (session?.user[subItem?.access]) {
         return (
           <SidebarMenuItem key={subItem.title} className="p-2">
-            <SidebarMenuButton asChild className="pl-5">
+            <SidebarMenuButton asChild className="pl-6">
               <Link
                 href={subItem.url}
                 className={cn(
-                  "sidebar-nav-item p-5",
+                  "sidebar-nav-item w-full",
                   pathname == subItem.url &&
                     "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:text-white"
                 )}
               >
                 <subItem.Icon />
-                <span className="p-3">{subItem.title}</span>
+                <span>{subItem.title}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -522,17 +522,17 @@ const AppSidebar = ({ session }: any) => {
     } else {
       return (
         <SidebarMenuItem key={subItem.title} className="p-2">
-          <SidebarMenuButton asChild className="pl-5">
+          <SidebarMenuButton asChild className="pl-6">
             <Link
               href={subItem.url}
               className={cn(
-                "sidebar-nav-item p-5",
+                "sidebar-nav-item w-full",
                 pathname == subItem.url &&
                   "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:text-white"
               )}
             >
               <subItem.Icon />
-              <span className="p-3">{subItem.title}</span>
+              <span>{subItem.title}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -550,9 +550,11 @@ const AppSidebar = ({ session }: any) => {
         >
           <SidebarGroup>
             <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                <div className="flex gap-4 items-center">
-                  <p className="text-[16px] font-semibold p-5">{item.title}</p>
+              <CollapsibleTrigger className="h-auto items-start py-1">
+                <div className="flex gap-4 items-start">
+                  <p className="text-[15px] font-semibold px-3 py-2 whitespace-normal leading-tight">
+                    {item.title}
+                  </p>
                 </div>
                 <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </CollapsibleTrigger>
@@ -562,17 +564,17 @@ const AppSidebar = ({ session }: any) => {
                 <SidebarMenu>
                   {item.subMenus.map((subItem: any) => (
                     <SidebarMenuItem key={subItem.title} className="p-2">
-                      <SidebarMenuButton asChild className="pl-5">
+                      <SidebarMenuButton asChild className="pl-6">
                         <Link
                           href={subItem.url}
                           className={cn(
-                            "sidebar-nav-item p-5",
+                            "sidebar-nav-item w-full",
                             pathname == subItem.url &&
                               "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:text-white"
                           )}
                         >
                           <subItem.Icon />
-                          <span className="p-3">{subItem.title}</span>
+                          <span>{subItem.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -599,9 +601,11 @@ const AppSidebar = ({ session }: any) => {
         >
           <SidebarGroup>
             <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                <div className="flex gap-4 items-center">
-                  <p className="text-[16px] font-semibold p-5">{item.title}</p>
+              <CollapsibleTrigger className="h-auto items-start py-1">
+                <div className="flex gap-4 items-start">
+                  <p className="text-[15px] font-semibold px-3 py-2 whitespace-normal leading-tight">
+                    {item.title}
+                  </p>
                 </div>
                 <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </CollapsibleTrigger>
@@ -611,7 +615,7 @@ const AppSidebar = ({ session }: any) => {
                 <SidebarMenu>
                   {console.log("item", item)}
                   {item.subMenus.map((subItem: any) => (
-                    <SubMenu subItem={subItem} />
+                    <SubMenu key={subItem.title} subItem={subItem} />
                   ))}
                 </SidebarMenu>
               </SidebarGroupContent>
@@ -629,9 +633,11 @@ const AppSidebar = ({ session }: any) => {
         >
           <SidebarGroup>
             <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                <div className="flex gap-4 items-center">
-                  <p className="text-[16px] font-semibold p-5">{item.title}</p>
+              <CollapsibleTrigger className="h-auto items-start py-1">
+                <div className="flex gap-4 items-start">
+                  <p className="text-[15px] font-semibold px-3 py-2 whitespace-normal leading-tight">
+                    {item.title}
+                  </p>
                 </div>
                 <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </CollapsibleTrigger>
@@ -641,7 +647,7 @@ const AppSidebar = ({ session }: any) => {
                 <SidebarMenu>
                   {console.log("item", item)}
                   {item.subMenus.map((subItem: any) => (
-                    <SubMenu subItem={subItem} />
+                    <SubMenu key={subItem.title} subItem={subItem} />
                   ))}
                 </SidebarMenu>
               </SidebarGroupContent>
