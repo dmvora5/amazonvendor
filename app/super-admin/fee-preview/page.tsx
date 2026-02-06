@@ -229,11 +229,28 @@ const ExcelEditor = () => {
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      const updatedJson = json.map((row: any) => {
+        const value = row?.["Calculated Referral Rate"];
+        if (value === null || value === undefined || value === "") {
+          return row;
+        }
 
-      console.log("json", json);
+        const stringValue =
+          typeof value === "number" ? String(value) : String(value).trim();
+        if (stringValue.endsWith("%")) {
+          return row;
+        }
 
-      setOriginalData(JSON.parse(JSON.stringify(json)));
-      setData(JSON.parse(JSON.stringify(json)));
+        return {
+          ...row,
+          ["Calculated Referral Rate"]: `${stringValue}%`,
+        };
+      });
+
+      console.log("json", updatedJson);
+
+      setOriginalData(JSON.parse(JSON.stringify(updatedJson)));
+      setData(JSON.parse(JSON.stringify(updatedJson)));
 
       if (json.length) {
         const key = Object.keys(json[0]);
@@ -314,36 +331,6 @@ const ExcelEditor = () => {
   //     setDirty(true); // Mark as dirty after making changes
   //   }
   // };
-
-  const handleAddColumn = () => {
-    if (newColumnName.trim() && selectedColumn) {
-      const headerKeys = Object.keys(originalData[0] || {});
-      const selectedIndex = headerKeys.indexOf(selectedColumn);
-
-      if (selectedIndex === -1) return;
-
-      // Insert new column key after the selected column
-      headerKeys.splice(selectedIndex + 1, 0, newColumnName);
-
-      // Update each row with the new column at the correct position
-      const updatedData = originalData.map((row) => {
-        const updatedRow = { ...row, [newColumnName]: "" };
-
-        const reorderedRow: any = {};
-        headerKeys.forEach((key) => {
-          reorderedRow[key] = updatedRow[key] || "";
-        });
-
-        return reorderedRow;
-      });
-
-      // Update the data (only once, no duplication of first row)
-      setOriginalData(updatedData); // update your full source data
-      setData(updatedData); // update visible data (filtered, if applicable)
-      setNewColumnName("");
-      setDirty(true);
-    }
-  };
 
   // Handle search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -589,89 +576,6 @@ const ExcelEditor = () => {
     setDirty(true);
   };
 
-  // Upload the CSV data
-  const handleUploadCSV = async () => {
-    try {
-      setLoading(true);
-
-      const updatedData = [...data];
-
-      if (searchData.length > 0 && searchIndex.length > 0) {
-        // Loop through each index in the 'searchIndex'
-        searchIndex.forEach((index) => {
-          // Find the corresponding element in 'searchData' (same index as searchIndex)
-          const newItem = searchData[index];
-
-          // Replace the element in 'data' at the specified index with the item from 'searchData'
-          if (newItem) {
-            updatedData[index] = newItem;
-          }
-        });
-      }
-
-      const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
-      const sheet = XLSX.utils.json_to_sheet(updatedData);
-      // Convert JSON data to CSV or TSV format
-
-      let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
-      if (delimiter === "\t") {
-        csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
-      }
-
-      // Create a FormData object
-      const formData = new FormData();
-
-      // Create a Blob from CSV or TSV data
-      const csvBlob = new Blob([csvData], { type: "text/csv" });
-
-      // Append the file to the FormData object
-      formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
-      formData.append("report_type", selectedValue);
-      formData.append("selected_date", selectedDateColumns.join(","));
-
-      const session: any = await getSession();
-
-      const { data: response } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/update-report/`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
-      setDirty(false);
-      if (response?.file_url) {
-        fetchCSVFromBackend(response?.file_url);
-        setSearchData([]);
-        setSearchIndex([]);
-        setSearchTerm("");
-      }
-    } catch (err: any) {
-      if (err instanceof AxiosError) {
-        if (err.status === 401) {
-          signOut({
-            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
-          });
-          return;
-        }
-        parseAndShowErrorInToast(err?.response);
-      } else {
-        parseAndShowErrorInToast(err);
-      }
-    } finally {
-      setLoading(false);
-    }
-
-    // await submit(formData);
-    // await fetchCSVFromBackend()
-  };
-
-  const handleSumColumnModel = () => {
-    setOpenSumModel(true); // open the modal
-  };
 
   const handleSearchModel = () => {
     setSearchModel(true);
@@ -779,62 +683,7 @@ const ExcelEditor = () => {
     }
   };
 
-  const handleUploadNewCSV = async () => {
-    setLoading(true);
-    try {
-      // Convert JSON data to CSV or TSV format
-      const delimiter = "\t"; // We assume TSV for now, you can change this dynamically
-      const sheet = XLSX.utils.json_to_sheet(data);
 
-      let csvData = XLSX.utils.sheet_to_csv(sheet); // Default is CSV
-      if (delimiter === "\t") {
-        csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
-      }
-
-      // Create a FormData object
-      const formData = new FormData();
-
-      // Create a Blob from CSV or TSV data
-      const csvBlob = new Blob([csvData], { type: "text/csv" });
-
-      // Append the file to the FormData object
-      formData.append("file", csvBlob, "data.csv"); // Use appropriate file extension based on format
-      formData.append("report_type", "product_database");
-
-      const session: any = await getSession();
-
-      const { data: response } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}report/upload/report/`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
-      if (response?.file_url) {
-        fetchCSVFromBackend(response?.file_url);
-        setDirty(false);
-        setFileChange(false);
-      }
-    } catch (err: any) {
-      if (err instanceof AxiosError) {
-        if (err.status === 401) {
-          signOut({
-            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}`,
-          });
-          return;
-        }
-        parseAndShowErrorInToast(err?.response);
-      } else {
-        parseAndShowErrorInToast(err);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDownloadExcel = () => {
     if (!data || data.length === 0) return;
