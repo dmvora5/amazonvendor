@@ -54,7 +54,7 @@ const getCurrentDate = (): string => {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const year = now.getFullYear();
 
-  return `${day}-${month}-${year}`;
+  return `${month}-${day}-${year}`;
 };
 
 // Helper function to find "last updated" column (case-insensitive)
@@ -284,12 +284,12 @@ const ExcelEditor = () => {
       const json: any = XLSX.utils.sheet_to_json(sheet, {
         defval: null,
         raw: false, // format dates/nums instead of Excel serials
-        dateNF: "dd-mm-yyyy",
+        dateNF: "mm-dd-yyyy",
       });
 
       const normalizeDateValue = (value: any) => {
         if (value instanceof Date || typeof value === "number") {
-          return XLSX.SSF.format("dd-mm-yyyy", value);
+          return XLSX.SSF.format("mm-dd-yyyy", value);
         }
         if (typeof value === "string") {
           const match = value.match(/^(\d{1,4})[/-](\d{1,2})[/-](\d{1,4})$/);
