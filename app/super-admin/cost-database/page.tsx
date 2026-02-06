@@ -54,7 +54,7 @@ const getCurrentDate = (): string => {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const year = now.getFullYear();
 
-  return `${month}-${day}-${year}`;
+  return `${day}-${month}-${year}`;
 };
 
 // Helper function to find "last updated" column (case-insensitive)
@@ -279,17 +279,34 @@ const ExcelEditor = () => {
 
       const arrayBuffer = response.data;
 
-      const wb = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
+      // Keep CSV date strings as-is so we can normalize DD-MM-YYYY reliably.
+      const wb = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, {
         defval: null,
-        raw: false, // format dates/nums instead of Excel serials
-        dateNF: "mm-dd-yyyy",
+        raw: true, // preserve raw strings (avoid locale date parsing)
+        dateNF: "dd-mm-yyyy",
       });
 
+      console.log('json', json)
       const normalizeDateValue = (value: any) => {
-        if (value instanceof Date || typeof value === "number") {
-          return XLSX.SSF.format("mm-dd-yyyy", value);
+        if (value instanceof Date) {
+          const day = value.getDate();
+          const month = value.getMonth() + 1;
+          const year = value.getFullYear();
+          return `${String(day).padStart(2, "0")}-${String(month).padStart(2, "0")}-${year}`;
+        }
+        if (typeof value === "number") {
+          const parsed = XLSX.SSF.parse_date_code(value);
+          if (parsed) {
+            const day = parsed.d;
+            const month = parsed.m;
+            const year = parsed.y;
+            // If both day/month are <=12, assume source was DD-MM but parsed as MM-DD.
+            const [d, m] = day <= 12 && month <= 12 ? [month, day] : [day, month];
+            return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${year}`;
+          }
+          return XLSX.SSF.format("dd-mm-yyyy", value);
         }
         if (typeof value === "string") {
           const match = value.match(/^(\d{1,4})[/-](\d{1,2})[/-](\d{1,4})$/);
@@ -297,13 +314,13 @@ const ExcelEditor = () => {
           const [, a, b, c] = match;
           // If the first part is 4 digits, assume YYYY-MM-DD.
           if (a.length === 4) {
-            return `${b.padStart(2, "0")}-${c.padStart(2, "0")}-${a}`;
+            return `${c.padStart(2, "0")}-${b.padStart(2, "0")}-${a}`;
           }
-          // If the last part is 4 digits and separator is "-", assume DD-MM-YYYY.
-          if (c.length === 4 && value.includes("-")) {
-            return `${b.padStart(2, "0")}-${a.padStart(2, "0")}-${c}`;
+          // If the last part is 4 digits and separator is "-" or "/", assume DD-MM-YYYY.
+          if (c.length === 4 && (value.includes("-") || value.includes("/"))) {
+            return `${a.padStart(2, "0")}-${b.padStart(2, "0")}-${c}`;
           }
-          // Default Excel-style string: MM/DD/YY or MM/DD/YYYY.
+          // Default: treat as DD/MM/YY or DD/MM/YYYY to keep dd-mm display.
           const year = c.length === 2 ? `20${c}` : c;
           return `${a.padStart(2, "0")}-${b.padStart(2, "0")}-${year}`;
         }
@@ -320,7 +337,6 @@ const ExcelEditor = () => {
         return updatedRow;
       });
 
-      console.log("json", normalizedJson);
 
       setOriginalData(JSON.parse(JSON.stringify(normalizedJson)));
       setData(JSON.parse(JSON.stringify(normalizedJson)));
