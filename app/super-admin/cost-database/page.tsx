@@ -301,11 +301,11 @@ const ExcelEditor = () => {
           }
           // If the last part is 4 digits and separator is "-", assume DD-MM-YYYY.
           if (c.length === 4 && value.includes("-")) {
-            return `${a.padStart(2, "0")}-${b.padStart(2, "0")}-${c}`;
+            return `${b.padStart(2, "0")}-${a.padStart(2, "0")}-${c}`;
           }
           // Default Excel-style string: MM/DD/YY or MM/DD/YYYY.
           const year = c.length === 2 ? `20${c}` : c;
-          return `${b.padStart(2, "0")}-${a.padStart(2, "0")}-${year}`;
+          return `${a.padStart(2, "0")}-${b.padStart(2, "0")}-${year}`;
         }
         return value;
       };
