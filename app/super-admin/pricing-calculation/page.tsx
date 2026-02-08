@@ -229,30 +229,32 @@ const ExcelEditor = () => {
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
-      const percentageColumns = ["VAT", "Referal Rate"];
-      const updatedJson = json.map((row: any) => {
-        const updatedRow = { ...row };
-        percentageColumns.forEach((column) => {
-          const value = updatedRow?.[column];
-          if (value === null || value === undefined || value === "") {
-            return;
-          }
+      // const percentageColumns = ["VAT", "Referal Rate"];
+      // const updatedJson = json.map((row: any) => {
+      //   const updatedRow = { ...row };
+      //   percentageColumns.forEach((column) => {
+      //     const value = updatedRow?.[column];
+      //     if (value === null || value === undefined || value === "") {
+      //       return;
+      //     }
 
-          const stringValue =
-            typeof value === "number" ? String(value) : String(value).trim();
-          if (stringValue.endsWith("%")) {
-            return;
-          }
+      //     const stringValue =
+      //       typeof value === "number" ? String(value) : String(value).trim();
+      //     if (stringValue.endsWith("%")) {
+      //       return;
+      //     }
 
-          updatedRow[column] = `${stringValue}%`;
-        });
-        return updatedRow;
-      });
+      //     updatedRow[column] = `${stringValue}%`;
+      //   });
+      //   return updatedRow;
+      // });
 
-      console.log("json", updatedJson);
+      // console.log("json", updatedJson);
 
-      setOriginalData(JSON.parse(JSON.stringify(updatedJson)));
-      setData(JSON.parse(JSON.stringify(updatedJson)));
+      // setOriginalData(JSON.parse(JSON.stringify(updatedJson)));
+      // setData(JSON.parse(JSON.stringify(updatedJson)));
+      setOriginalData(JSON.parse(JSON.stringify(json)));
+      setData(JSON.parse(JSON.stringify(json)));
 
       if (json.length) {
         const key = Object.keys(json[0]);
