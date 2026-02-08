@@ -229,11 +229,30 @@ const ExcelEditor = () => {
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      const percentageColumns = ["VAT", "Referal Rate"];
+      const updatedJson = json.map((row: any) => {
+        const updatedRow = { ...row };
+        percentageColumns.forEach((column) => {
+          const value = updatedRow?.[column];
+          if (value === null || value === undefined || value === "") {
+            return;
+          }
 
-      console.log("json", json);
+          const stringValue =
+            typeof value === "number" ? String(value) : String(value).trim();
+          if (stringValue.endsWith("%")) {
+            return;
+          }
 
-      setOriginalData(JSON.parse(JSON.stringify(json)));
-      setData(JSON.parse(JSON.stringify(json)));
+          updatedRow[column] = `${stringValue}%`;
+        });
+        return updatedRow;
+      });
+
+      console.log("json", updatedJson);
+
+      setOriginalData(JSON.parse(JSON.stringify(updatedJson)));
+      setData(JSON.parse(JSON.stringify(updatedJson)));
 
       if (json.length) {
         const key = Object.keys(json[0]);
