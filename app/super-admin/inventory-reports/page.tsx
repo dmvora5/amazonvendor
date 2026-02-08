@@ -874,11 +874,51 @@ const ExcelEditor = () => {
   const handleDownloadExcel = () => {
     if (!data || data.length === 0) return;
 
+    const isNumericLike = (value: any) => {
+      if (value === null || value === undefined || value === "") return true;
+      if (typeof value === "number" && !Number.isNaN(value)) return true;
+      if (typeof value !== "string") return false;
+
+      const trimmed = value.trim();
+      if (!trimmed) return true;
+
+      const normalized = trimmed.replace(/,/g, "");
+      if (!/^[-+]?\d*\.?\d+$/.test(normalized)) return false;
+
+      // Avoid converting IDs/SKUs with leading zeros
+      if (/^0\d+/.test(normalized)) return false;
+
+      return true;
+    };
+
+    const numericColumns = new Set(
+      visibleHeaders.filter((key) => {
+        let hasNumeric = false;
+        for (const row of data) {
+          const value = row[key];
+          if (value === null || value === undefined || value === "") continue;
+          if (typeof value === "number" && !Number.isNaN(value)) {
+            hasNumeric = true;
+            continue;
+          }
+          if (!isNumericLike(value)) return false;
+          hasNumeric = true;
+        }
+        return hasNumeric;
+      })
+    );
+
     // Filter only visible columns
     const filteredData = data.map((row) => {
       const filteredRow: { [key: string]: any } = {};
       visibleHeaders.forEach((key) => {
-        filteredRow[key] = row[key];
+        const rawValue = row[key];
+        if (numericColumns.has(key) && typeof rawValue === "string") {
+          const normalized = rawValue.trim().replace(/,/g, "");
+          filteredRow[key] = normalized ? Number(normalized) : "";
+        } else {
+          filteredRow[key] = rawValue;
+        }
       });
       return filteredRow;
     });

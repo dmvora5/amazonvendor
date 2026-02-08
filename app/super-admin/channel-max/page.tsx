@@ -833,11 +833,51 @@ const ExcelEditor = () => {
   const handleDownloadExcel = () => {
     if (!data || data.length === 0) return;
 
+    const isNumericLike = (value: any) => {
+      if (value === null || value === undefined || value === "") return true;
+      if (typeof value === "number" && !Number.isNaN(value)) return true;
+      if (typeof value !== "string") return false;
+
+      const trimmed = value.trim();
+      if (!trimmed) return true;
+
+      const normalized = trimmed.replace(/,/g, "");
+      if (!/^[-+]?\d*\.?\d+$/.test(normalized)) return false;
+
+      // Avoid converting IDs/SKUs with leading zeros
+      if (/^0\d+/.test(normalized)) return false;
+
+      return true;
+    };
+
+    const numericColumns = new Set(
+      visibleHeaders.filter((key) => {
+        let hasNumeric = false;
+        for (const row of data) {
+          const value = row[key];
+          if (value === null || value === undefined || value === "") continue;
+          if (typeof value === "number" && !Number.isNaN(value)) {
+            hasNumeric = true;
+            continue;
+          }
+          if (!isNumericLike(value)) return false;
+          hasNumeric = true;
+        }
+        return hasNumeric;
+      })
+    );
+
     // Filter only visible columns
     const filteredData = data.map((row) => {
       const filteredRow: { [key: string]: any } = {};
       visibleHeaders.forEach((key) => {
-        let value = row[key];
+        const rawValue = row[key];
+        let value = rawValue;
+
+        if (numericColumns.has(key) && typeof rawValue === "string") {
+          const normalized = rawValue.trim().replace(/,/g, "");
+          value = normalized ? Number(normalized) : "";
+        }
 
         // ✅ Truncate long text to 32,767 characters
         if (typeof value === "string" && value.length > 32767) {
