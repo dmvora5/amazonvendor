@@ -15,7 +15,7 @@ export const PERMISSIONS = [
     { name: "has_upload_report_access", label: "Upload Report Access" },
     { name: "has_current_inventory_upload_download_access", label: "Current Inventory Download & Upload Access" },
     { name: "has_product_db_upload_download_access", label: "Product Database Download & Upload Access" },
-    { name: "has_fba_inventory_access", label: "Fba Inventory Access" },
+    { name: "has_fba_inventory_access", label: "Inventory Age Access" },
     { name: "has_fee_preview_access", label: "Fee Preview Access" },
     { name: "has_referral_fee_preview_access", label: "Referral Fee Preview Access" },
     { name: "has_cost_db_access", label: "Cost Database Access" },
