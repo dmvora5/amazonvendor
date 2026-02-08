@@ -392,7 +392,7 @@ const menu = [
     access: "has_pricing_calculation_report_access",
     subMenus: [
       {
-        title: "Fee Preview Report GBP Only",
+        title: "Fee Preview Report",
         url: "/super-admin/fee-preview", //TO Do add route
         Icon: PackageIcon,
         access: "has_fee_preview_access",
