@@ -152,11 +152,10 @@ const InputComponent = memo(
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
-          isDuplicate
+        className={`w-full p-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${isDuplicate
             ? "bg-red-100 border-red-500 text-red-700 focus:ring-red-500"
             : "focus:ring-blue-500"
-        }`}
+          }`}
       />
     );
   }
@@ -193,7 +192,7 @@ const ExcelEditor = () => {
   const columnWidth = 250;
 
   const listRef = useRef<any>(null);
-  
+
 
   const columnOptions = Object.keys(originalData[0] || {})
     .filter((key) => key.startsWith("Supplier"))
@@ -229,28 +228,31 @@ const ExcelEditor = () => {
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
-      const updatedJson = json.map((row: any) => {
-        const value = row?.["Calculated Referral Rate"];
-        if (value === null || value === undefined || value === "") {
-          return row;
-        }
+      // const updatedJson = json.map((row: any) => {
+      //   const value = row?.["Calculated Referral Rate"];
+      //   if (value === null || value === undefined || value === "") {
+      //     return row;
+      //   }
 
-        const stringValue =
-          typeof value === "number" ? String(value) : String(value).trim();
-        if (stringValue.endsWith("%")) {
-          return row;
-        }
+      //   const stringValue =
+      //     typeof value === "number" ? String(value) : String(value).trim();
+      //   if (stringValue.endsWith("%")) {
+      //     return row;
+      //   }
 
-        return {
-          ...row,
-          ["Calculated Referral Rate"]: `${stringValue}%`,
-        };
-      });
+      //   return {
+      //     ...row,
+      //     ["Calculated Referral Rate"]: `${stringValue}%`,
+      //   };
+      // });
 
-      console.log("json", updatedJson);
+      // console.log("json", updatedJson);
 
-      setOriginalData(JSON.parse(JSON.stringify(updatedJson)));
-      setData(JSON.parse(JSON.stringify(updatedJson)));
+      // setOriginalData(JSON.parse(JSON.stringify(updatedJson)));
+      // setData(JSON.parse(JSON.stringify(updatedJson)));
+
+      setOriginalData(JSON.parse(JSON.stringify(json)));
+      setData(JSON.parse(JSON.stringify(json)));
 
       if (json.length) {
         const key = Object.keys(json[0]);
@@ -348,15 +350,15 @@ const ExcelEditor = () => {
       const filteredData = originalData.reduce((acc: any[], row, index) => {
         const matchesSearchTerm = selectedSearchColumns.length
           ? selectedSearchColumns.some((column) =>
-              String(row[column] ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            )
+            String(row[column] ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          )
           : Object.values(row).some((value) =>
-              String(value ?? "")
-                .toLowerCase()
-                .includes(lowerTerm)
-            );
+            String(value ?? "")
+              .toLowerCase()
+              .includes(lowerTerm)
+          );
 
         if (matchesSearchTerm) {
           acc.push({ ...row });
@@ -392,9 +394,8 @@ const ExcelEditor = () => {
           return (
             <div
               key={key}
-              className={`px-4 py-2 flex-shrink-0 ${
-                isDuplicate ? "text-red-600 font-semibold" : ""
-              }`}
+              className={`px-4 py-2 flex-shrink-0 ${isDuplicate ? "text-red-600 font-semibold" : ""
+                }`}
               style={{ width: columnWidth }}
               title={isDuplicate ? "Duplicate value" : ""}
             >
