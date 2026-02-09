@@ -228,6 +228,27 @@ const ExcelEditor = () => {
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+      const normalizePercentValue = (value: any) => {
+        if (value === null || value === undefined) return value;
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          if (trimmed.endsWith("%")) return value;
+          const numeric = Number(trimmed);
+          if (!Number.isNaN(numeric)) {
+            return normalizePercentValue(numeric);
+          }
+          return value;
+        }
+        if (typeof value === "number") {
+          if (value > 0 && value < 1) {
+            const percentValue = value * 100;
+            return `${Number(percentValue.toFixed(4))}%`;
+          }
+          return value;
+        }
+        return value;
+      };
       // const updatedJson = json.map((row: any) => {
       //   const value = row?.["Calculated Referral Rate"];
       //   if (value === null || value === undefined || value === "") {
@@ -248,14 +269,24 @@ const ExcelEditor = () => {
 
       // console.log("json", updatedJson);
 
+      const normalizedJson = json.map((row: any) => {
+        const updatedRow = { ...row };
+        Object.keys(updatedRow).forEach((key) => {
+          if (/%|percent|rate/i.test(key)) {
+            updatedRow[key] = normalizePercentValue(updatedRow[key]);
+          }
+        });
+        return updatedRow;
+      });
+
       // setOriginalData(JSON.parse(JSON.stringify(updatedJson)));
       // setData(JSON.parse(JSON.stringify(updatedJson)));
 
-      setOriginalData(JSON.parse(JSON.stringify(json)));
-      setData(JSON.parse(JSON.stringify(json)));
+      setOriginalData(JSON.parse(JSON.stringify(normalizedJson)));
+      setData(JSON.parse(JSON.stringify(normalizedJson)));
 
-      if (json.length) {
-        const key = Object.keys(json[0]);
+      if (normalizedJson.length) {
+        const key = Object.keys(normalizedJson[0]);
         setSelectedColumn(key[0]);
       }
     } catch (error) {

@@ -67,15 +67,7 @@ const findLastUpdatedColumn = (row: any): string | undefined => {
   );
 };
 
-const options = [
-  { value: "fba_inventory", label: "FBA Inventory" },
-  { value: "all_inventory", label: "All Inventory" },
-  { value: "channel_max", label: "Channel Max" },
-  { value: "order_history", label: "Order History" },
-  { value: "current_inventory", label: "Current Inventory" },
-  // { value: "project_database", label: "Project Database" },
-  { value: "shipped_history", label: "Shipped History" },
-];
+
 
 const InputComponent = memo(
   ({
@@ -205,7 +197,6 @@ const ExcelEditor = () => {
   const [openSumModel, setOpenSumModel] = useState(false);
   const [selectedSumColumns, setSelectedSumColumns] = useState<string[]>([]);
   const [newSumColumnName, setSumNewColumnName] = useState("");
-  const [selectedDateColumns, setSelectedDateColumns] = useState<string[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [hiddenHeaders, setHiddenHeaders] = useState<string[]>([]);
   const visibleHeaders = headers.filter((h) => !hiddenHeaders.includes(h));
@@ -327,11 +318,34 @@ const ExcelEditor = () => {
         return value;
       };
 
+      const normalizePercentValue = (value: any) => {
+        if (value === null || value === undefined) return value;
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          if (trimmed.endsWith("%")) return value;
+          const numeric = Number(trimmed);
+          if (!Number.isNaN(numeric)) {
+            return normalizePercentValue(numeric);
+          }
+          return value;
+        }
+        if (typeof value === "number") {
+          if (value > 0 && value < 1) {
+            const percentValue = value * 100;
+            return `${Number(percentValue.toFixed(4))}%`;
+          }
+          return value;
+        }
+        return value;
+      };
+
       const normalizedJson = json.map((row: any) => {
         const updatedRow = { ...row };
         Object.keys(updatedRow).forEach((key) => {
           if (/date/i.test(key)) {
             updatedRow[key] = normalizeDateValue(updatedRow[key]);
+          } else if (/%|percent|rate/i.test(key)) {
+            updatedRow[key] = normalizePercentValue(updatedRow[key]);
           }
         });
         return updatedRow;
