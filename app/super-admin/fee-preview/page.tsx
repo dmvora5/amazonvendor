@@ -272,7 +272,7 @@ const ExcelEditor = () => {
       const normalizedJson = json.map((row: any) => {
         const updatedRow = { ...row };
         Object.keys(updatedRow).forEach((key) => {
-          if (/%|percent|rate/i.test(key)) {
+          if (/%|percent|rate|vat/i.test(key)) {
             updatedRow[key] = normalizePercentValue(updatedRow[key]);
           }
         });

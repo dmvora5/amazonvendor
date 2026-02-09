@@ -344,7 +344,7 @@ const ExcelEditor = () => {
         Object.keys(updatedRow).forEach((key) => {
           if (/date/i.test(key)) {
             updatedRow[key] = normalizeDateValue(updatedRow[key]);
-          } else if (/%|percent|rate/i.test(key)) {
+          } else if (/%|percent|rate|vat/i.test(key)) {
             updatedRow[key] = normalizePercentValue(updatedRow[key]);
           }
         });
