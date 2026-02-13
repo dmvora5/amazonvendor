@@ -228,7 +228,10 @@ const ExcelEditor = () => {
 
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      const json: any = XLSX.utils.sheet_to_json(sheet, {
+        defval: null,
+        raw: false,
+      });
 
       console.log("json", json);
 
