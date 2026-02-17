@@ -242,6 +242,9 @@ const ExcelEditor = () => {
           return value;
         }
         if (typeof value === "number") {
+          if (value === 0) {
+            return "0%";
+          }
           if (value > 0 && value < 1) {
             const percentValue = value * 100;
             return `${Number(percentValue.toFixed(4))}%`;
