@@ -339,14 +339,21 @@ const ExcelEditor = () => {
         return value;
       };
 
+      const normalizeCurrencyEncoding = (value: any) => {
+        if (typeof value !== "string") return value;
+        return value.replace(/Â£/g, "£");
+      };
+
       const normalizedJson = json.map((row: any) => {
         const updatedRow = { ...row };
         Object.keys(updatedRow).forEach((key) => {
+          let value = normalizeCurrencyEncoding(updatedRow[key]);
           if (/date/i.test(key)) {
-            updatedRow[key] = normalizeDateValue(updatedRow[key]);
+            value = normalizeDateValue(value);
           } else if (/%|percent|rate|vat/i.test(key)) {
-            updatedRow[key] = normalizePercentValue(updatedRow[key]);
+            value = normalizePercentValue(value);
           }
+          updatedRow[key] = value;
         });
         return updatedRow;
       });
@@ -721,12 +728,16 @@ const ExcelEditor = () => {
         csvData = XLSX.utils.sheet_to_csv(sheet, { FS: delimiter }); // Convert to TSV if needed
       }
 
-      csvData = csvData?.replace(/[^\x00-\x7F]/g, "");
+      // csvData = csvData?.replace(/[^\x00-\x7F]/g, "");
+
+      const sanitizedCsvData = csvData?.replace(/[^\x00-\x7F£]/g, "");
 
       // Create a FormData object
 
       // Create a Blob from CSV or TSV data
-      const csvBlob = new Blob([csvData], { type: "text/csv;charset=utf-8" });
+      const csvBlob = new Blob([sanitizedCsvData], {
+        type: "text/csv;charset=utf-8",
+      });
       const formData = new FormData();
 
       // Append the file to the FormData object
