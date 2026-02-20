@@ -228,13 +228,30 @@ const ExcelEditor = () => {
 
       const wb = XLSX.read(arrayBuffer, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      const jsonRaw: any = XLSX.utils.sheet_to_json(sheet, {
+        defval: null,
+        raw: true,
+      });
+      const jsonFormatted: any = XLSX.utils.sheet_to_json(sheet, {
+        defval: null,
+        raw: false,
+      });
 
       const normalizePercentValue = (value: any) => {
         if (value === null || value === undefined) return value;
+        const formatPercentNumber = (num: number) => {
+          if (Number.isNaN(num)) return value;
+          return Number.isInteger(num) ? `${num}%` : `${num.toFixed(2)}%`;
+        };
         if (typeof value === "string") {
           const trimmed = value.trim();
-          if (trimmed.endsWith("%")) return value;
+          if (trimmed.endsWith("%")) {
+            const numeric = Number(trimmed.replace("%", ""));
+            if (!Number.isNaN(numeric)) {
+              return formatPercentNumber(numeric);
+            }
+            return value;
+          }
           const numeric = Number(trimmed);
           if (!Number.isNaN(numeric)) {
             return normalizePercentValue(numeric);
@@ -242,16 +259,18 @@ const ExcelEditor = () => {
           return value;
         }
         if (typeof value === "number") {
-          if (value === 0) {
-            return "0%";
-          }
-          if (value > 0 && value < 1) {
+          if (value >= 0 && value < 1) {
             const percentValue = value * 100;
-            return `${Number(percentValue.toFixed(4))}%`;
+            return formatPercentNumber(percentValue);
           }
-          return value;
+          return formatPercentNumber(value);
         }
         return value;
+      };
+
+      const normalizeCurrencyEncoding = (value: any) => {
+        if (typeof value !== "string") return value;
+        return value.replace(/\u00C2(?=[\u00A0-\u00BF])/g, "");
       };
       // const percentageColumns = ["VAT", "Referal Rate"];
       // const updatedJson = json.map((row: any) => {
@@ -275,12 +294,19 @@ const ExcelEditor = () => {
 
       // console.log("json", updatedJson);
 
-      const normalizedJson = json.map((row: any) => {
+      const normalizedJson = jsonRaw.map((row: any, rowIndex: number) => {
         const updatedRow = { ...row };
         Object.keys(updatedRow).forEach((key) => {
-          if (/%|percent|rate|vat/i.test(key)) {
-            updatedRow[key] = normalizePercentValue(updatedRow[key]);
+          let value = normalizeCurrencyEncoding(updatedRow[key]);
+          if (/(£|gbp|pound)/i.test(key)) {
+            const formattedValue = jsonFormatted?.[rowIndex]?.[key];
+            if (formattedValue !== undefined && formattedValue !== null) {
+              value = normalizeCurrencyEncoding(formattedValue);
+            }
+          } else if (/%|percent|rate|vat/i.test(key)) {
+            value = normalizePercentValue(value);
           }
+          updatedRow[key] = value;
         });
         return updatedRow;
       });
