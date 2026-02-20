@@ -273,13 +273,18 @@ const ExcelEditor = () => {
       // Keep CSV date strings as-is so we can normalize DD-MM-YYYY reliably.
       const wb = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json: any = XLSX.utils.sheet_to_json(sheet, {
+      const jsonRaw: any = XLSX.utils.sheet_to_json(sheet, {
         defval: null,
         raw: true, // preserve raw strings (avoid locale date parsing)
         dateNF: "dd-mm-yyyy",
       });
+      const jsonFormatted: any = XLSX.utils.sheet_to_json(sheet, {
+        defval: null,
+        raw: false, // get formatted text (e.g., currency)
+        dateNF: "dd-mm-yyyy",
+      });
 
-      console.log('json', json)
+      console.log("json", jsonRaw);
       const normalizeDateValue = (value: any) => {
         if (value instanceof Date) {
           const day = value.getDate();
@@ -320,9 +325,19 @@ const ExcelEditor = () => {
 
       const normalizePercentValue = (value: any) => {
         if (value === null || value === undefined) return value;
+        const formatPercentNumber = (num: number) => {
+          if (Number.isNaN(num)) return value;
+          return Number.isInteger(num) ? `${num}%` : `${num.toFixed(2)}%`;
+        };
         if (typeof value === "string") {
           const trimmed = value.trim();
-          if (trimmed.endsWith("%")) return value;
+          if (trimmed.endsWith("%")) {
+            const numeric = Number(trimmed.replace("%", ""));
+            if (!Number.isNaN(numeric)) {
+              return formatPercentNumber(numeric);
+            }
+            return value;
+          }
           const numeric = Number(trimmed);
           if (!Number.isNaN(numeric)) {
             return normalizePercentValue(numeric);
@@ -330,25 +345,30 @@ const ExcelEditor = () => {
           return value;
         }
         if (typeof value === "number") {
-          if (value > 0 && value < 1) {
+          if (value >= 0 && value < 1) {
             const percentValue = value * 100;
-            return `${Number(percentValue.toFixed(4))}%`;
+            return formatPercentNumber(percentValue);
           }
-          return value;
+          return formatPercentNumber(value);
         }
         return value;
       };
 
       const normalizeCurrencyEncoding = (value: any) => {
         if (typeof value !== "string") return value;
-        return value.replace(/Â£/g, "£");
+        return value.replace(/\u00C2(?=[\u00A0-\u00BF])/g, "");
       };
 
-      const normalizedJson = json.map((row: any) => {
+      const normalizedJson = jsonRaw.map((row: any, rowIndex: number) => {
         const updatedRow = { ...row };
         Object.keys(updatedRow).forEach((key) => {
           let value = normalizeCurrencyEncoding(updatedRow[key]);
-          if (/date/i.test(key)) {
+          if (/(£|gbp|pound)/i.test(key)) {
+            const formattedValue = jsonFormatted?.[rowIndex]?.[key];
+            if (formattedValue !== undefined && formattedValue !== null) {
+              value = normalizeCurrencyEncoding(formattedValue);
+            }
+          } else if (/date/i.test(key)) {
             value = normalizeDateValue(value);
           } else if (/%|percent|rate|vat/i.test(key)) {
             value = normalizePercentValue(value);
