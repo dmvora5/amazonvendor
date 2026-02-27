@@ -54,8 +54,16 @@ const InputComponent = memo(
     disabled,
   }: any) => {
     const row = data[index];
-    const [state, setState] = useState<string>(row[keyData]);
+    // Always coerce to string so date ranges like "9 - 12 March" are not
+    // interpreted as numbers in Firefox (which can show Excel serials e.g. 38414)
+    const cellValue = row?.[keyData] != null ? String(row[keyData]) : "";
+    const [state, setState] = useState<string>(cellValue);
     const [initialOrder] = useState(originalData[index]?.Order || 0);
+
+    // Keep state in sync when row data changes (e.g. after fetch)
+    useEffect(() => {
+      setState(cellValue);
+    }, [cellValue]);
 
     const handleChange = (e: any) => {
       const { name, value } = e.target;
@@ -139,6 +147,7 @@ const InputComponent = memo(
 
     return (
       <Input
+        type="text"
         value={state}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -214,8 +223,9 @@ const ExcelEditor = () => {
       // Manually remove the BOM (if it exists)
       const cleanText = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 
-      // Convert the cleaned text to an array buffer for XLSX processing
-      const wb = XLSX.read(cleanText, { type: "string" });
+      // raw: true keeps all cells as strings and prevents "9 - 12 March" etc.
+      // from being parsed as dates (which become numbers like 38414 in Firefox)
+      const wb = XLSX.read(cleanText, { type: "string", raw: true });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json: any = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
