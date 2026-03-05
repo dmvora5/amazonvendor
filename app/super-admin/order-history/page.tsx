@@ -32,6 +32,7 @@ import ProcessLoader from "@/components/ProcessLoader";
 import axios, { AxiosError } from "axios";
 import { API_ROUTES } from "@/constant/routes";
 import { parseAndShowErrorInToast, parseUrl } from "@/utils";
+import { toast } from "react-toastify";
 import { getSession, signOut } from "next-auth/react";
 import RolesChecks from "@/components/RolesChecks";
 
@@ -807,81 +808,100 @@ const ExcelEditor = () => {
   };
 
   const handleDownloadExcel = () => {
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0) {
+      toast.warning("No data to download");
+      return;
+    }
 
-    const isNumericLike = (value: any) => {
-      if (value === null || value === undefined || value === "") return true;
-      if (typeof value === "number" && !Number.isNaN(value)) return true;
-      if (typeof value !== "string") return false;
+    try {
+      // Use visible headers, or fall back to data keys so export always has columns
+      const columnsToExport =
+        visibleHeaders.length > 0
+          ? visibleHeaders
+          : (data[0] ? Object.keys(data[0]) : []);
 
-      const trimmed = value.trim();
-      if (!trimmed) return true;
+      if (columnsToExport.length === 0) {
+        toast.warning("No columns to export");
+        return;
+      }
 
-      const normalized = trimmed.replace(/,/g, "");
-      if (!/^[-+]?\d*\.?\d+$/.test(normalized)) return false;
+      const isNumericLike = (value: any) => {
+        if (value === null || value === undefined || value === "") return true;
+        if (typeof value === "number" && !Number.isNaN(value)) return true;
+        if (typeof value !== "string") return false;
 
-      // Avoid converting IDs/SKUs with leading zeros
-      if (/^0\d+/.test(normalized)) return false;
+        const trimmed = value.trim();
+        if (!trimmed) return true;
 
-      return true;
-    };
+        const normalized = trimmed.replace(/,/g, "");
+        if (!/^[-+]?\d*\.?\d+$/.test(normalized)) return false;
 
-    const numericColumns = new Set(
-      visibleHeaders.filter((key) => {
-        let hasNumeric = false;
-        for (const row of data) {
-          const value = row[key];
-          if (value === null || value === undefined || value === "") continue;
-          if (typeof value === "number" && !Number.isNaN(value)) {
+        // Avoid converting IDs/SKUs with leading zeros
+        if (/^0\d+/.test(normalized)) return false;
+
+        return true;
+      };
+
+      const numericColumns = new Set(
+        columnsToExport.filter((key) => {
+          let hasNumeric = false;
+          for (const row of data) {
+            const value = row[key];
+            if (value === null || value === undefined || value === "") continue;
+            if (typeof value === "number" && !Number.isNaN(value)) {
+              hasNumeric = true;
+              continue;
+            }
+            if (!isNumericLike(value)) return false;
             hasNumeric = true;
-            continue;
           }
-          if (!isNumericLike(value)) return false;
-          hasNumeric = true;
-        }
-        return hasNumeric;
-      })
-    );
+          return hasNumeric;
+        })
+      );
 
-    // Filter only visible columns
-    const filteredData = data.map((row) => {
-      const filteredRow: { [key: string]: any } = {};
-      visibleHeaders.forEach((key) => {
-        const rawValue = row[key];
-        if (numericColumns.has(key) && typeof rawValue === "string") {
-          const normalized = rawValue.trim().replace(/,/g, "");
-          filteredRow[key] = normalized ? Number(normalized) : "";
-        } else {
-          filteredRow[key] = rawValue;
-        }
+      // Filter only visible columns (full content; no truncation)
+      const filteredData = data.map((row) => {
+        const filteredRow: { [key: string]: any } = {};
+        columnsToExport.forEach((key) => {
+          const rawValue = row[key];
+          if (numericColumns.has(key) && typeof rawValue === "string") {
+            const normalized = rawValue.trim().replace(/,/g, "");
+            filteredRow[key] = normalized ? Number(normalized) : "";
+          } else {
+            filteredRow[key] = rawValue;
+          }
+        });
+        return filteredRow;
       });
-      return filteredRow;
-    });
 
-    // Convert to worksheet
-    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+      // Use CSV so full cell content is preserved (Excel .xlsx has a 32,767 char/cell limit)
+      const worksheet = XLSX.utils.json_to_sheet(filteredData);
+      const csv = XLSX.utils.sheet_to_csv(worksheet);
 
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+      const now = new Date();
+      const formattedDate = now
+        .toLocaleString("sv-SE", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+        .replace(" ", "_")
+        .replace(":", "-");
 
-    // Format: "Product Database 2025-05-29_14-30.xlsx"
-    const now = new Date();
-    const formattedDate = now
-      .toLocaleString("sv-SE", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-      .replace(" ", "_")
-      .replace(":", "-");
+      const fileName = `${selectedValue} ${formattedDate}.csv`;
 
-    const fileName = `${selectedValue} ${formattedDate}.xlsx`;
-
-    // Trigger download
-    XLSX.writeFile(workbook, fileName);
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      parseAndShowErrorInToast(err);
+    }
   };
 
   return (
@@ -1038,7 +1058,7 @@ const ExcelEditor = () => {
 
             {/* Tooltip */}
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-              Download Excel
+              Download CSV (full data)
             </div>
           </div>
         </div>
