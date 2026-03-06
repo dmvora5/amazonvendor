@@ -71,7 +71,8 @@ export const API_ROUTES = {
         SETUP2FA: "/users/setup-2fa/",
         VERIFY2FA: "/users/setup-2fa-verify/",
 
-        FORMULAS: "/report/formulas"
+        FORMULAS: "/report/formulas",
+        NOTIFICATIONS: "/report/notifications"
     },
     
     AUTH: {

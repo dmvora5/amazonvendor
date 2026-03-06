@@ -5,7 +5,7 @@ import { createApi } from "@reduxjs/toolkit/query/react"
 export const userApi = createApi({
     baseQuery: baseQueryWithAuth,
     reducerPath: "users" as any,
-    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report", "Cookies", "2FA", "Formulas"],
+    tagTypes: ["Auth" as never, "UserProfile" as never, "Inventory" as never, "Category" as never, "Report", "Cookies", "2FA", "Formulas", "Notification"],
     endpoints: (build: any) => ({
         getAllUsers: build.query({
             query: () => ({
@@ -348,6 +348,13 @@ export const userApi = createApi({
             }),
             invalidatesTags: [{ type: 'Formulas', id: 'LIST' }]
         }),
+        getNotifications: build.query({
+            query: (page = 1) => ({
+              url: `${API_ROUTES.SUPERADMIN.NOTIFICATIONS}?page=${page}`,
+              method: "GET",
+            }),
+            providesTags: ["Notification"],
+          }),          
     })
 });
 
@@ -387,5 +394,8 @@ export const {
     //Formulas
     useGetAllFormulasQuery,
     useGetSpacificFormulaFormulasQuery,
-    useUpdateFormulaMutation
+    useUpdateFormulaMutation,
+
+    // Notification
+    useGetNotificationsQuery
 } = userApi;
