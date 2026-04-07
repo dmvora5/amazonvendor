@@ -24,6 +24,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+const NOTIFICATIONS_POLL_MS = 5 * 60 * 1000;
+
 const Header = () => {
   const [userData, setUserData] = useState({ firstName: "", lastName: "" });
   const [page, setPage] = useState(1);
@@ -39,7 +41,9 @@ const Header = () => {
     isError,
     isFetching,
     isSuccess: isNotificationSuccess,
-  } = useGetNotificationsQuery(page) as any;
+  } = useGetNotificationsQuery(page, {
+    pollingInterval: NOTIFICATIONS_POLL_MS,
+  }) as any;
   const router = useRouter();
 
   useEffect(() => {
@@ -86,7 +90,13 @@ const Header = () => {
 
       <div className="header-wrapper ml-auto text-end flex gap-2 p-4 max-w-screen-lg">
         {/* Notifications */}
-        <Popover>
+        <Popover
+          onOpenChange={(open) => {
+            if (open) {
+              setPage(1);
+            }
+          }}
+        >
           <PopoverTrigger asChild>
             <Button
               variant="outline"

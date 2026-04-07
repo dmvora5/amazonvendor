@@ -22,7 +22,9 @@ import { cn } from "@/lib/utils";
 import {
   ALargeSmall,
   ChevronDown,
+  Key,
   PackageIcon,
+  ScrollText,
   Table,
   Users,
 } from "lucide-react";
@@ -240,6 +242,20 @@ const reportMenu = [
 
 const menu = [
   {
+    title: "Scrapping APi Key",
+    Icon: ScrollText,
+    access: "pass",
+    subMenus: [
+      
+      {
+        title: "Scrapped API key",
+        url: "/super-admin/scraper-log/api-key",
+        Icon: Key,
+        access: "has_scraped_data_access",
+      },
+    ],
+  },
+  {
     title: "Category",
     Icon: Users,
     access: "has_category_access",
@@ -442,8 +458,15 @@ const menu = [
         url: "/super-admin/scraped-data",
         Icon: PackageIcon,
       },
+      {
+        title: "Scrapped logs",
+        url: "/super-admin/scraper-log/logs",
+        Icon: Table,
+        access: "has_scraped_data_access",
+      },
     ],
   },
+  
   {
     title: "Upload Inventory Reports",
     Icon: PackageIcon,

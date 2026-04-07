@@ -27,7 +27,9 @@ export const PAGE_ROUTES = {
         REFERRALFREEPREVIEW:"/super-admin/referral-fee-preview",
         COSTDATABASE:"/super-admin/cost-database",
         COSTDATABASEUPLOAD:"/super-admin/cost-database/upload-report",
-        PRICECALCULATION:"/super-admin/pricing-calculation"
+        PRICECALCULATION:"/super-admin/pricing-calculation",
+        SCRAPERLOGLOGS: "/super-admin/scraper-log/logs",
+        SCRAPERLOGAPIKEY: "/super-admin/scraper-log/api-key",
 
     },
     AUTH: {
@@ -72,7 +74,11 @@ export const API_ROUTES = {
         VERIFY2FA: "/users/setup-2fa-verify/",
 
         FORMULAS: "/report/formulas",
-        NOTIFICATIONS: "/report/notifications"
+        NOTIFICATIONS: "/report/notifications",
+
+        SCRAPPED_LOGS: "/report/scrapped-logs",
+        SCRAPPED_API_KEY: "/scrapped-api-key/scrapped-api-key",
+        SCRAPPED_API_KEY_UPDATE: "/scrapped-api-key/scrapped-api-key/update/",
     },
     
     AUTH: {
