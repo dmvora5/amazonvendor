@@ -241,20 +241,7 @@ const reportMenu = [
 // ]
 
 const menu = [
-  {
-    title: "Scrapping APi Key",
-    Icon: ScrollText,
-    access: "pass",
-    subMenus: [
-      
-      {
-        title: "Scrapped API key",
-        url: "/super-admin/scraper-log/api-key",
-        Icon: Key,
-        access: "has_scraped_data_access",
-      },
-    ],
-  },
+ 
   {
     title: "Category",
     Icon: Users,
@@ -445,6 +432,20 @@ const menu = [
         url: "/super-admin/productdatabase/upload-report",
         Icon: PackageIcon,
         access: "has_product_db_upload_download_access",
+      },
+    ],
+  },
+  {
+    title: "Scrapping APi Key",
+    Icon: ScrollText,
+    access: "pass",
+    subMenus: [
+      
+      {
+        title: "Scrapped API key",
+        url: "/super-admin/scraper-log/api-key",
+        Icon: Key,
+        access: "has_scraped_data_access",
       },
     ],
   },
